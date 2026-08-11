@@ -15,7 +15,8 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 BOT_OWNERS = [
     1531882555664629861,  
     1535132569534865490,
-    1454570566517260422
+    1454570566517260422,
+    1450827282372497489
 ]
 
 intents = discord.Intents.default()
