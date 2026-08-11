@@ -30,10 +30,10 @@ bot = commands.Bot(command_prefix=(".", "/", "?", "@"), intents=intents, help_co
 current_persona_id = 1
 last_active_persona_id = 1
 bot_stopped = False
-is_spamming = False  # Biến kiểm tra trạng thái spam để chặn AI trả lời
+is_spamming = False  
 spam_task_running = None
 
-CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/f2/1b/fb/f21bfbb4208888a75300e1afddebba6b.gif"
+CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/b3/e4/5f/b3e45f7fe1fb748d8f38cfa39175d6b2.gif"
 
 # ==================== KHO SPAM ĐẦY ĐỦ (209 CÂU CÓ DẤU #) ====================
 ROAST_LINES = [
@@ -291,8 +291,6 @@ async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
                     msg = template.format(username=member.mention)
                 
                 await ctx.send(msg)
-                
-                # Tốc độ 600 ms (0.6 giây) cho mỗi câu
                 await asyncio.sleep(0.6)
         except discord.Forbidden:
             print("[SPAM ERROR]: Bot bị mất quyền (Missing Access) trong kênh này!")
