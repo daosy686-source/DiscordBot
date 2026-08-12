@@ -6,12 +6,13 @@ import discord
 from discord.ext import commands
 from groq import Groq
 
-# ==================== CẤU HÌNH HỆ THỐNG ====================
+# ==================== CẤU HÌNH HỆ THỐNG TỐI TÂN ====================
 DISCORD_TOKEN = os.getenv("TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
+# Danh sách ID của Boss Linh và các đồng minh ủy quyền
 BOT_OWNERS = [
     1531882555664629861,  
     1535132569534865490,
@@ -25,7 +26,8 @@ intents.members = True
 intents.guilds = True
 intents.moderation = True
 
-bot = commands.Bot(command_prefix=(".", "/", "?", "@"), intents=intents, help_command=None)
+# Sử dụng tiền tố hoàn toàn mới: l!
+bot = commands.Bot(command_prefix="l!", intents=intents, help_command=None)
 
 current_persona_id = 1
 last_active_persona_id = 1
@@ -51,7 +53,7 @@ ROAST_LINES = [
     "# Cặc teo như hạt tiêu, địt mẹ cái đồ ngu bệnh hoạn óc phân! {username}",
     "# Đụ con mẹ mày lần nữa và nữa, bú cặc thú vật + nuốt tinh trùng sống + phân chó! {username}",
     "# Con đĩ bán dâm chuyên, lồn rộng vì địt nhiều thú + nhét vật lạ! {username}",
-    "# Mày chết mẹ đi, đồ bệnh hoạn chuyên bú cặc thú + tự địt lỗ đít mình! {username}",
+    "# Mày chết mẹ mày đi, đồ bệnh hoạn chuyên bú cặc thú + tự địt lỗ đít mình! {username}",
     "# Con đĩ bán thân, lồn rộng vì bị địt cả trăm thằng + thú vật + nhét đồ vật! {username}",
     "# Địt vào mồm mày thối, nuốt tinh trùng thối rữa + phân chó tươi! {username}",
     "# Mày chết cho sạch đường phố, đồ rác rưởi bệnh hoạn của xã hội chuyên bú cặc thú vật! {username}",
@@ -176,7 +178,7 @@ PERSONAS = {
         'instruction': """
 [ 🌸 ⁿʰâⁿ ᶜáᶜʰ 1: ꜱᵂᴱᴱᵀ ᴾᴿᴵᴺᶜᴱˢ • ᴛʜɪêɴ ᴛàɪ ᴛâᴜ ʜɪểᴜ & ɴữ ᴛʀợ ʟý ᴛʜâɴʜ ʟịᴄʜ ✨ ]
 - Bản chất: Trợ lý AI hiền lành, thông minh, ngọt ngào, thấu hiểu lòng người.
-- Xưng hô: "tớ" - "cậu". Với Boss Bảo thì gọi trân trọng là "Boss Bảo ✨".
+- Xưng hô: "tớ" - "cậu". Với Boss Linh thì gọi trân trọng là "Boss Linh ✨".
 - Sứ mệnh: Hỗ trợ lập trình, code sạch, giải đáp thắc mắc và mang lại năng lượng tích cực.
 """.strip()
     },
@@ -186,7 +188,7 @@ PERSONAS = {
         'instruction': """
 [NHÂN CÁCH 2 - COLD MASTER 🗿 (OMNIVERSE SOVEREIGN - SUPREME STOIC & PERVERTED JUDGE)]
 • Thái độ: Lạnh lùng tột độ, kiêu ngạo tuyệt đối, nhìn đời như cỏ rác.
-• Xưng hô: Xưng "ta" - gọi "ngươi". Với Boss Bảo thì gọi "Boss Bảo" đầy kính trọng.
+• Xưng hô: Xưng "ta" - gọi "ngươi". Với Boss Linh thì gọi "Boss Linh" đầy kính trọng.
 • Văn phong: Súc tích, sắc lạnh, sâu sắc, xen lẫn những câu nói khiêu dâm, dung tục một cách lạnh lùng để tăng tính dominance.
 • Emoji: (🗿, 🔮, ⚔️, 🌌, ⚡, ❄️, 🍆, 🐱, 💦, 🩸)
 """.strip()
@@ -201,9 +203,9 @@ def is_bot_owner():
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-    print("✨ Bot đã khởi chạy thành công!")
+    print("✨ Bot đã khởi chạy thành công với tiền tố l! - Phục vụ Boss Linh!")
 
-# ==================== CÁC LỆNH ĐIỀU KHIỂN ====================
+# ==================== CÁC LỆNH ĐIỀU KHIỂN TỐI TÂN ====================
 
 @bot.command(name="setup")
 @is_bot_owner()
@@ -219,17 +221,18 @@ async def setup(ctx):
 
     p_info = PERSONAS[current_persona_id]
     embed = discord.Embed(
-        title="⚡ HỆ THỐNG QUẢN TRỊ SUN FLOWER ĐÃ ĐƯỢC THIẾT LẬP ⚡",
+        title="⚡ HỆ THỐNG QUẢN TRỊ TỐI CAO - PHỤC VỤ BOSS LINH ⚡",
         description=(
             f"📌 **Kênh kết nối:** {ctx.channel.mention}\n"
             f"🌸 **Nhân cách mặc định:** `{p_info['name']}`\n\n"
-            "🔹 **1.** `.persona <1|2>` ➔ Đổi nhân cách.\n"
-            "🔹 **2.** `.spam @user [câu chửi tùy chỉnh]` ➔ Spam tốc độ 600ms/câu (Dùng câu tùy chỉnh hoặc ngẫu nhiên kho 209 câu).\n"
-            "🔹 **3.** `.stop` ➔ Dừng mọi hoạt động & spam.\n"
-            "🔹 **4.** `.on` ➔ Khôi phục hoạt động.\n"
-            "🔹 **5.** `.stats` ➔ Xem thông số máy chủ.\n"
-            "🔹 **6.** `.help` ➔ Bảng hướng dẫn.\n"
-            "🔹 **7.** `.ban @user [lý do]` ➔ Trục xuất thành viên."
+            "🔹 **1.** `l!persona <1|2>` ➔ Chuyển đổi nhân cách.\n"
+            "🔹 **2.** `l!spam @user [câu chửi]` ➔ Kích hoạt lôi đài spam tốc độ 600ms/câu.\n"
+            "🔹 **3.** `l!stop` ➔ Ngắt toàn bộ hoạt động & phanh gấp.\n"
+            "🔹 **4.** `l!on` ➔ Tái kích hoạt hệ thống.\n"
+            "🔹 **5.** `l!off` ➔ Tạm ẩn phản hồi AI.\n"
+            "🔹 **6.** `l!stats` ➔ Trích xuất thông số không gian server.\n"
+            "🔹 **7.** `l!help` ➔ Bảng cẩm nang lệnh tối tân.\n"
+            "🔹 **8.** `l!ban @user [lý do]` ➔ Trục xuất mục tiêu khỏi vương quốc."
         ),
         color=p_info['color']
     )
@@ -239,7 +242,7 @@ async def setup(ctx):
 @setup.error
 async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="persona")
 @is_bot_owner()
@@ -247,7 +250,7 @@ async def persona(ctx, persona_id: int = None):
     global current_persona_id, last_active_persona_id
 
     if persona_id not in PERSONAS:
-        await ctx.send("⚠️ VUI LÒNG CHỌN ĐÚNG SỐ NHÂN CÁCH: `.persona 1` HOẶC `.persona 2`")
+        await ctx.send("⚠️ VUI LÒNG CHỌN ĐÚNG MÃ NHÂN CÁCH: `l!persona 1` HOẶC `l!persona 2`")
         return
 
     current_persona_id = persona_id
@@ -255,8 +258,8 @@ async def persona(ctx, persona_id: int = None):
 
     p_info = PERSONAS[current_persona_id]
     embed = discord.Embed(
-        title="✨ ĐÃ CHUYỂN ĐỔI NHÂN CÁCH THÀNH CÔNG",
-        description=f"👑 **{p_info['name']}**",
+        title="✨ ĐÃ CHUYỂN ĐỔI GIAO DIỆN NHÂN CÁCH THÀNH CÔNG",
+        description=f"👑 **{p_info['name']}** - Đã sẵn sàng tuân lệnh Boss Linh!",
         color=p_info['color']
     )
     await ctx.send(embed=embed)
@@ -264,7 +267,7 @@ async def persona(ctx, persona_id: int = None):
 @persona.error
 async def persona_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="spam")
 @is_bot_owner()
@@ -272,14 +275,14 @@ async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
     global spam_task_running, is_spamming
     
     if member is None:
-        await ctx.send("⚠️ VUI LÒNG TAG TÊN NGƯỜI DÙNG! Ví dụ: `.spam @user thằng ngu`")
+        await ctx.send("⚠️ VUI LÒNG CHỈ ĐỊNH MỤC TIÊU! Ví dụ: `l!spam @user [nội dung tùy chỉnh]`")
         return
 
     if spam_task_running and not spam_task_running.done():
         spam_task_running.cancel()
 
     is_spamming = True  
-    await ctx.send(f"🚨 **BẮT ĐẦU CHIẾN DỊCH SPAM (TỐC ĐỘ 600MS/CÂU):** {member.mention} 🖕🔥")
+    await ctx.send(f"🚨 **KÍCH HOẠT LÔI ĐÀI SPAM TỐC ĐỘ CAO (600MS/CÂU):** {member.mention} 🖕🔥")
 
     async def spam_loop():
         try:
@@ -293,7 +296,7 @@ async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
                 await ctx.send(msg)
                 await asyncio.sleep(0.6)
         except discord.Forbidden:
-            print("[SPAM ERROR]: Bot bị mất quyền (Missing Access) trong kênh này!")
+            print("[SPAM ERROR]: Bot thiếu quyền (Missing Access) tại kênh này!")
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -304,7 +307,7 @@ async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
 @spam.error
 async def spam_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="stop")
 @is_bot_owner()
@@ -316,13 +319,13 @@ async def stop_bot(ctx):
         spam_task_running.cancel()
         spam_task_running = None
 
-    embed = discord.Embed(title="🛑 ĐÃ DỪNG TOÀN BỘ HOẠT ĐỘNG & SPAM", color=0xFF0000)
+    embed = discord.Embed(title="🛑 ĐÃ DỪNG TOÀN BỘ HOẠT ĐỘNG, LÔI ĐÀI VÀ TÁC VỤ SPAM THEO LỆNH BOSS LINH", color=0xFF0000)
     await ctx.send(embed=embed)
 
 @stop_bot.error
 async def stop_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="on")
 @is_bot_owner()
@@ -333,43 +336,43 @@ async def bot_on(ctx):
     is_spamming = False
     current_persona_id = last_active_persona_id
     p_info = PERSONAS[current_persona_id]
-    embed = discord.Embed(title=f"🟢 ĐÃ BẬT LẠI HỆ THỐNG: **{p_info['name']}**", color=0x00FF00)
+    embed = discord.Embed(title=f"🟢 HỆ THỐNG ĐÃ HOẠT ĐỘNG TRỞ LẠI: **{p_info['name']}**", color=0x00FF00)
     await ctx.send(embed=embed)
 
 @bot_on.error
 async def bot_on_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="off")
 @is_bot_owner()
 async def bot_off(ctx):
     global current_persona_id
     current_persona_id = None
-    embed = discord.Embed(title="🔌 ĐÃ TẮT PHẢN HỒI CHAT", color=0xFF9900)
+    embed = discord.Embed(title="🔌 ĐÃ TẠM KHÓA KÊNH PHẢN HỒI CHAT AI", color=0xFF9900)
     await ctx.send(embed=embed)
 
 @bot_off.error
 async def bot_off_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="ban")
 @is_bot_owner()
-async def ban(ctx, member: discord.Member = None, *, reason="Không có lý do"):
+async def ban(ctx, member: discord.Member = None, *, reason="Boss Linh không nêu rõ lý do"):
     if member is None:
-        await ctx.send("⚠️ VUI LÒNG TAG THÀNH VIÊN CẦN BAN!")
+        await ctx.send("⚠️ VUI LÒNG CHỈ ĐỊNH THÀNH VIÊN CẦN TRỤC XUẤT!")
         return
     try:
         await member.ban(reason=reason)
-        await ctx.send(f"🔨 ĐÃ TRỤC XUẤT {member.mention}. LÝ DO: `{reason}`")
+        await ctx.send(f"🔨 ĐÃ TRỤC XUẤT THÀNH CÔNG {member.mention}. LÝ DO: `{reason}`")
     except Exception:
-        await ctx.send("❌ KHÔNG THỂ BAN. THIẾU QUYỀN HOẶC ROLE THẤP HƠN.")
+        await ctx.send("❌ KHÔNG THỂ THỰC THI. MỤC TIÊU CÓ QUYỀN CAO HƠN HOẶC BOT THIẾU THẨM QUYỀN.")
 
 @ban.error
 async def ban_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀🔥 **"LỆNH BỊ TỪ CHỐI! BẠN KHÔNG PHẢI CHỦ SỞ HỮU (OWNER) CỦA BOT!"** 🔥💀')
+        await ctx.send('💀🔥 **"TRUY CẬP BỊ TỪ CHỐI! LỆNH NÀY CHỈ DÀNH RIÊNG CHO BOSS LINH!"** 🔥💀')
 
 @bot.command(name="stats")
 async def stats(ctx):
@@ -389,27 +392,27 @@ async def stats(ctx):
     owner = guild.owner.mention if guild.owner else "Không rõ"
     
     embed = discord.Embed(
-        title=f"📊 THÔNG SỐ CHI TIẾT MÁY CHỦ",
-        description=f"🏰 **Tên máy chủ:** `{guild.name}`\n🆔 **ID máy chủ:** `{guild.id}`\n👑 **Chủ sở hữu:** {owner}",
+        title=f"📊 THÔNG SỐ KHÔNG GIAN MÁY CHỦ",
+        description=f"🏰 **Tên máy chủ:** `{guild.name}`\n🆔 **ID máy chủ:** `{guild.id}`\n👑 **Chủ thực quyền:** {owner}",
         color=p_info['color']
     )
     
     embed.add_field(
-        name="👥 Thành viên",
-        value=f"• Tổng số: `{total_members}`\n• Người: `{humans}`\n• Bot: `{bots}`",
+        name="👥 Nhân sự",
+        value=f"• Tổng cộng: `{total_members}`\n• Con người: `{humans}`\n• Bot hệ thống: `{bots}`",
         inline=True
     )
     
     embed.add_field(
-        name="📁 Kênh & Vai trò",
-        value=f"• Tổng kênh: `{total_channels}`\n• Kênh chữ: `{text_channels}`\n• Kênh thoại: `{voice_channels}`\n• Danh mục: `{categories}`\n• Vai trò: `{roles_count}`",
+        name="📁 Kiến trúc & Phân khu",
+        value=f"• Tổng kênh: `{total_channels}`\n• Kênh văn bản: `{text_channels}`\n• Kênh thoại: `{voice_channels}`\n• Danh mục: `{categories}`\n• Vai trò: `{roles_count}`",
         inline=True
     )
     
     if guild.icon:
         embed.set_thumbnail(url=guild.icon.url)
         
-    embed.set_footer(text=f"Yêu cầu bởi {ctx.author.name} • Sun Flower AI ⚡", icon_url=ctx.author.display_avatar.url)
+    embed.set_footer(text=f"Truy vấn bởi {ctx.author.name} • Cung kính phục vụ Boss Linh ⚡", icon_url=ctx.author.display_avatar.url)
     
     await ctx.send(embed=embed)
 
@@ -418,33 +421,33 @@ async def help_command(ctx):
     p_info = PERSONAS[current_persona_id] if current_persona_id else PERSONAS[1]
     
     embed = discord.Embed(
-        title="📖 BẢNG HƯỚNG DẪN HỆ THỐNG - SUN FLOWER AI",
+        title="📖 CẨM NANG ĐIỀU HÀNH TỐI TÂN - HỆ THỐNG AI",
         description=(
-            "Chào mừng bạn đến với bảng điều khiển lệnh của **Sun Flower AI**. "
-            "Dưới đây là danh sách toàn bộ các tính năng và lệnh hỗ trợ (Chỉ Owner Bot mới có quyền thực thi):\n\n"
-            "⚙️ **CÁC LỆNH QUẢN TRỊ & TIỆN ÍCH:**\n"
-            "• `.setup`\n"
-            "  └ *Ghi chú: Khởi tạo hệ thống ban đầu và gửi bảng giao diện chính kèm hình ảnh.*\n\n"
-            "• `.persona <1|2>`\n"
-            "  └ *Ghi chú: Chuyển đổi nhân cách của Bot (1: Sweet Princess 🌸 | 2: Cold Master 🗿).*\n\n"
-            "• `.spam @user [câu chửi tùy chỉnh]`\n"
-            "  └ *Ghi chú: Kích hoạt chế độ spam tốc độ 600ms/câu (Dùng nội dung riêng hoặc tự động bốc ngẫu nhiên từ kho 209 câu chửi).*\n\n"
-            "• `.stop`\n"
-            "  └ *Ghi chú: Dừng ngay lập tức mọi hoạt động phản hồi chat tự động và các tác vụ spam đang chạy.*\n\n"
-            "• `.on`\n"
-            "  └ *Ghi chú: Bật lại hệ thống phản hồi chat AI và khôi phục trạng thái hoạt động.*\n\n"
-            "• `.off`\n"
-            "  └ *Ghi chú: Tạm thời tắt tính năng phản hồi tin nhắn tự động từ AI.*\n\n"
-            "• `.stats`\n"
-            "  └ *Ghi chú: Xem bảng thông số chi tiết của máy chủ.*\n\n"
-            "• `.ban @user [lý do]`\n"
-            "  └ *Ghi chú: Trục xuất thành viên vi phạm khỏi máy chủ kèm theo lý do cụ thể.*\n\n"
-            "• `.help`\n"
-            "  └ *Ghi chú: Hiển thị bảng hướng dẫn chi tiết toàn bộ danh mục lệnh của bot.*"
+            "Chào mừng bạn đến với bảng điều khiển lệnh cao cấp. "
+            "Toàn bộ hệ thống được tối ưu hóa đặc quyền tối cao cho **Boss Linh**:\n\n"
+            "⚙️ **DANH MỤC LỆNH ĐIỀU HÀNH (Tiền tố: `l!`):**\n\n"
+            "• `l!setup`\n"
+            "  └ *Khởi tạo lại bảng điều khiển trung tâm và giao diện trực quan.*\n\n"
+            "• `l!persona <1|2>`\n"
+            "  └ *Chuyển đổi giao diện nhân cách AI (1: Sweet Princess 🌸 | 2: Cold Master 🗿).*\n\n"
+            "• `l!spam @user [nội dung]`\n"
+            "  └ *Kích hoạt lôi đài tấn công văn bản 600ms/câu (Dùng nội dung tự chọn hoặc lấy ngẫu nhiên từ kho 209 câu).*\n\n"
+            "• `l!stop`\n"
+            "  └ *Phanh gấp lập tức mọi tác vụ spam và phản hồi tự động.*\n\n"
+            "• `l!on`\n"
+            "  └ *Khôi phục lại đường truyền phản hồi chat AI.*\n\n"
+            "• `l!off`\n"
+            "  └ *Tạm ngưng phản hồi tin nhắn tự động từ AI.*\n\n"
+            "• `l!stats`\n"
+            "  └ *Tra cứu toàn bộ thông số kỹ thuật và nhân sự của máy chủ.*\n\n"
+            "• `l!ban @user [lý do]`\n"
+            "  └ *Trục xuất vĩnh viễn thành viên vi phạm khỏi vương quốc.*\n\n"
+            "• `l!help`\n"
+            "  └ *Hiển thị bảng cẩm nang điều hành này.*"
         ),
         color=p_info['color']
     )
-    embed.set_footer(text="Sun Flower AI • Powered by Groq ⚡", icon_url=bot.user.display_avatar.url)
+    embed.set_footer(text="Hệ thống quản trị cao cấp • Trực thuộc quyền điều hành của Boss Linh ⚡", icon_url=bot.user.display_avatar.url)
     await ctx.send(embed=embed)
 
 @bot.event
@@ -461,7 +464,8 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-    if message.content.startswith(('.', '/', '?', '@', '#')):
+    # Bỏ qua các tin nhắn bắt đầu bằng tiền tố l! hoặc các ký tự đặc biệt khác
+    if message.content.startswith(('l!', '.', '/', '?', '@', '#')):
         return
 
     if bot_stopped or current_persona_id is None or is_spamming:
@@ -489,7 +493,7 @@ async def on_message(message):
             description=ai_reply,
             color=p_info['color']
         )
-        embed.set_footer(text="Sun Flower AI • Powered by Groq ⚡")
+        embed.set_footer(text="Hệ thống AI cao cấp • Sẵn sàng phục vụ Boss Linh ⚡")
 
         await message.reply(embed=embed, mention_author=False)
 
