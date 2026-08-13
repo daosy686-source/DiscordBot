@@ -41,7 +41,7 @@ USER_COINS = {}
 # Lưu trữ yêu cầu nhân cách tùy chỉnh của member từ lệnh l!setpersona
 CUSTOM_USER_PERSONAS = {}
 
-CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif
+CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"
 
 # ==================== KHO SPAM ĐẦY ĐỦ (209 CÂU CÓ DẤU #) ====================
 ROAST_LINES = [
