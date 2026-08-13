@@ -466,10 +466,14 @@ https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"""
     
     try:
         # Các lệnh tiếp theo...
-    try:
+        
         confirm_embed = discord.Embed(
             title="⚠️ XÁC NHẬN LỆNH NUKE SERVER ⚠️",
-            description=(
+            description="Bạn có chắc chắn muốn thực hiện lệnh này không? Hành động này không thể hoàn tác!"
+        )
+        
+    except Exception as e:
+        print(f"Đã xảy ra lỗi: {e}")
                 f"🔥 **Boss Tuyền kính yêu!**\n\n"
                 f"Lệnh này sẽ:\n"
                 f"• Xóa **TOÀN BỘ** kênh trong server (text/voice/categories)\n"
