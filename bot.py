@@ -1507,4 +1507,3 @@ async def on_message(message):
 if __name__ == "__main__":
     import aiohttp
     bot.run(DISCORD_TOKEN)
-```[cite: 7]
