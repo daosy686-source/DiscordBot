@@ -1111,7 +1111,7 @@ async def setup(ctx):
             "🔹 **3. `l!work`**\n"
             "   └ *Khu vui chơi giải trí dành cho mọi thành viên: Làm việc qua 50 kịch bản ngẫu nhiên để kiếm từ 100 đến 2000 coin sắc hồng mỗi lượt!* 🪙\n\n"
             "🔹 **4. `l!setpersona [yêu cầu]`**\n"
-            "   └ *Dùng 5000 coin tích lũy từ khu vui chơi để sai khiến bot thay đổi nhân cách, hành vi và làm theo mọi yêu cầu kỳ diệu của bạn!* ✨\n\n"
+            "   └ *Dùng 5000 coin tích lũy từ khu vui chơi để sai khiến bot thay đổi nhân cách, hành vi và làm theo mọi ý muốn của bạn!* ✨\n\n"
             "🔹 **5. `l!spam @user [câu chửi tùy chỉnh]`**\n"
             "   └ *Kích hoạt lôi đài chiến dịch tra tấn văn bản tốc độ cao 600ms/câu (Sử dụng câu tùy chỉnh hoặc bốc ngẫu nhiên từ kho 209 câu chửi cực gắt).*\n\n"
             "🔹 **6. `l!stop`**\n"
