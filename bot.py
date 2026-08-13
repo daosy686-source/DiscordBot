@@ -17,7 +17,6 @@ BOT_OWNERS = [
     1531882555664629861,  
     1535132569534865490,
     1454570566517260422,
-    1450827282372497489
 ]
 
 intents = discord.Intents.default()
@@ -1505,4 +1504,4 @@ async def on_message(message):
 if __name__ == "__main__":
     import aiohttp
     bot.run(DISCORD_TOKEN)
-```[cite: 6]
+[cite: 6]
