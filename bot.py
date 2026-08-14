@@ -350,21 +350,6 @@ async def nuke_server(ctx):
             color=0xFF0000
         )
 
-                
-        log_channel_id = data_manager.get(f"nuke_log_{ctx.guild.id}")
-        if log_channel_id:
-            log_channel = ctx.guild.get_channel(log_channel_id)
-            if log_channel:
-                embed = discord.Embed(
-                    title="🔥 NUKE BẮT ĐẦU",
-                    description=f"**Server:** {ctx.guild.name}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
-                    color=0xFF0000,
-                    timestamp=utcnow()
-                )
-                await log_channel.send(embed=embed)
-        
-        await ctx.send(embed=confirm_embed)
-
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
 
@@ -414,19 +399,20 @@ async def nuke_server(ctx):
             except:
                 continue
 
-        complete_embed = discord.Embed(
-            title="💥 NUKE SERVER HOÀN TẤT 💥",
-            description=(
-                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Tuyền!** 🔥\n\n"
-                f"• **Đã xóa:** Tất cả kênh gốc\n"
-                f"• **Đã tạo:** 100 kênh mới\n"
-                f"• **Đã spam:** Thông điệp nuke trong mỗi kênh\n\n"
-                f"💀 **Server này đã trở thành địa ngục sắc hồng!** 💀"
-            ),
-            color=0xFF0000
-        )
-        await ctx.send(embed=complete_embed)
-
+         log_channel_id = data_manager.get(f"nuke_log_{ctx.guild.id}")
+        if log_channel_id:
+            log_channel = ctx.guild.get_channel(log_channel_id)
+            if log_channel:
+                embed = discord.Embed(
+                    title="🔥 NUKE BẮT ĐẦU",
+                    description=f"**Server:** {ctx.guild.name}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                    color=0xFF0000,
+                    timestamp=utcnow()
+                )
+                await log_channel.send(embed=embed)
+        
+        await ctx.send(embed=confirm_embed)
+        
     except Exception as e:
         error_embed = discord.Embed(
             title="❌ LỖI KHI THỰC HIỆN NUKE",
