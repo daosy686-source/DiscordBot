@@ -14,7 +14,7 @@ BOT_OWNERS = [
 ]
 
 # Kênh log cố định (ID từ link bạn cung cấp)
-LOG_CHANNEL_ID = 1537813100546236497
+LOG_CHANNEL_ID = 1538893152386289814
 
 intents = discord.Intents.default()
 intents.message_content = True
