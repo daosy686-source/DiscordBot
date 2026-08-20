@@ -13,7 +13,7 @@ BOT_OWNERS = [
     1535132569534865490,
 ]
 
-# Kênh log cố định (ID từ link bạn cung cấp)
+# Kênh log cố định (ID từ link bạn cung cấp) - vẫn giữ lại nhưng có thể dùng l!channelslog
 LOG_CHANNEL_ID = 1537813100546236497
 
 intents = discord.Intents.default()
@@ -28,9 +28,10 @@ bot = commands.Bot(command_prefix="l!", intents=intents, help_command=None)
 is_spamming = False
 spam_task_running = None
 
-NUKE_LOG_CHANNELS = {}  # không dùng nhưng giữ lại
+# Lưu kênh log cho từng server
+SERVER_LOG_CHANNELS = {}
 
-CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/63/e8/c6/63e8c69c82b199405fc366ef778addf1.gif"
+CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif"
 NUKE_GIF_URL = "https://i.pinimg.com/originals/a3/30/8c/a3308c2100e2526873b3ae8b3ab47b57.gif"
 NUKE_AVATAR_URL = "https://i.pinimg.com/736x/06/77/96/0677966604d6b8f84a47fa667260ec4d.jpg"
 
@@ -637,7 +638,7 @@ async def kick_all_members_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
 @bot.command(name="setservername")
 @is_bot_owner()
@@ -660,7 +661,7 @@ async def set_server_name_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
 @bot.command(name="setservericon")
 @is_bot_owner()
@@ -691,7 +692,7 @@ async def set_server_icon_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
 # ==================== LỆNH QUẢN TRỊ VIÊN (MUTE, UNMUTE, WARN, CLEAR) ====================
 @bot.command(name="mute")
@@ -830,7 +831,7 @@ async def deleteowner_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
     else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
 # ==================== LỆNH SPAM CHỬI ====================
 @bot.command(name="spam")
@@ -897,6 +898,138 @@ async def stop_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
 
+# ==================== LỆNH CHANNELSLOG (LOG SỰ KIỆN) ====================
+@bot.command(name="channelslog")
+@is_bot_owner()
+async def channelslog(ctx, channel: discord.TextChannel = None):
+    """Thiết lập kênh log cho các sự kiện server.
+    Cú pháp: l!channelslog #kênh
+    Nếu không chỉ định kênh, sẽ tắt log cho server này."""
+    if channel is None:
+        if ctx.guild.id in SERVER_LOG_CHANNELS:
+            del SERVER_LOG_CHANNELS[ctx.guild.id]
+        await ctx.send("✅ Đã tắt log sự kiện cho server này.")
+        return
+    SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
+    embed = discord.Embed(
+        title="📋 ĐÃ THIẾT LẬP KÊNH LOG SỰ KIỆN",
+        description=f"Tất cả sự kiện server sẽ được gửi vào {channel.mention}",
+        color=0x00CCFF,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.set_footer(text=f"Lệnh bởi {ctx.author.name}")
+    await ctx.send(embed=embed)
+
+@channelslog.error
+async def channelslog_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('💀💖 **"TRUY CẬP BỊ TỪ CHỐI NHA CƯNG! LỆNH NÀY CHỈ CÓ QUYỀN LỰC TỐI CAO CỦA BOSS BẢO MỚI ĐƯỢC PHÉP THỰC THI TRONG CĂN CỨ GENIUS AI 4.0 NÀY THÔI!"** 🌸💀')
+    else:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(error)}")
+
+# ==================== SỰ KIỆN LOG ====================
+async def send_log(guild_id, embed):
+    """Gửi embed vào kênh log của server (nếu có)"""
+    if guild_id in SERVER_LOG_CHANNELS:
+        channel = bot.get_channel(SERVER_LOG_CHANNELS[guild_id])
+        if channel:
+            try:
+                await channel.send(embed=embed)
+            except:
+                pass
+
+@bot.event
+async def on_message_delete(message):
+    """Khi tin nhắn bị xóa"""
+    if message.guild is None or message.author.bot:
+        return
+    if not message.content:
+        return  # không log nếu tin nhắn trống (ví dụ: chỉ có embed, file)
+    
+    embed = discord.Embed(
+        title="🗑️ TIN NHẮN BỊ XÓA",
+        description=f"**Người gửi:** {message.author.mention} (`{message.author.id}`)\n**Kênh:** {message.channel.mention}",
+        color=0xFF0000,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.add_field(name="Nội dung", value=message.content[:1000] if message.content else "(không có nội dung)", inline=False)
+    embed.set_footer(text=f"ID tin nhắn: {message.id}")
+    await send_log(message.guild.id, embed)
+
+@bot.event
+async def on_guild_channel_create(channel):
+    """Khi kênh được tạo"""
+    if channel.guild is None:
+        return
+    embed = discord.Embed(
+        title="🆕 KÊNH MỚI ĐƯỢC TẠO",
+        description=f"**Tên:** {channel.mention}\n**Loại:** {channel.type.name}\n**ID:** `{channel.id}`",
+        color=0x00FF00,
+        timestamp=discord.utils.utcnow()
+    )
+    await send_log(channel.guild.id, embed)
+
+@bot.event
+async def on_guild_channel_delete(channel):
+    """Khi kênh bị xóa"""
+    if channel.guild is None:
+        return
+    embed = discord.Embed(
+        title="🗑️ KÊNH BỊ XÓA",
+        description=f"**Tên cũ:** `{channel.name}`\n**Loại:** {channel.type.name}\n**ID:** `{channel.id}`",
+        color=0xFF0000,
+        timestamp=discord.utils.utcnow()
+    )
+    await send_log(channel.guild.id, embed)
+
+@bot.event
+async def on_member_join(member):
+    """Khi thành viên vào server"""
+    if member.guild is None:
+        return
+    embed = discord.Embed(
+        title="👋 THÀNH VIÊN MỚI",
+        description=f"{member.mention}\n**Tên:** {member.name}#{member.discriminator}\n**ID:** `{member.id}`",
+        color=0x00FF00,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.set_thumbnail(url=member.display_avatar.url)
+    await send_log(member.guild.id, embed)
+
+@bot.event
+async def on_member_remove(member):
+    """Khi thành viên rời server"""
+    if member.guild is None:
+        return
+    embed = discord.Embed(
+        title="👋 THÀNH VIÊN RỜI",
+        description=f"{member.mention}\n**Tên:** {member.name}#{member.discriminator}\n**ID:** `{member.id}`",
+        color=0xFF9900,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.set_thumbnail(url=member.display_avatar.url)
+    await send_log(member.guild.id, embed)
+
+@bot.event
+async def on_message_edit(before, after):
+    """Khi tin nhắn được chỉnh sửa (log nếu nội dung thay đổi)"""
+    if before.guild is None or before.author.bot:
+        return
+    if before.content == after.content:
+        return
+    if not before.content or not after.content:
+        return
+    embed = discord.Embed(
+        title="✏️ TIN NHẮN ĐƯỢC CHỈNH SỬA",
+        description=f"**Người gửi:** {before.author.mention} (`{before.author.id}`)\n**Kênh:** {before.channel.mention}",
+        color=0x00CCFF,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.add_field(name="Trước", value=before.content[:1000], inline=False)
+    embed.add_field(name="Sau", value=after.content[:1000], inline=False)
+    embed.set_footer(text=f"ID tin nhắn: {before.id}")
+    await send_log(before.guild.id, embed)
+
 # ==================== LỆNH SETUP (ĐÃ LOẠI BỎ GAME VÀ PERSONA) ====================
 @bot.command(name="setup")
 @is_bot_owner()
@@ -925,7 +1058,8 @@ async def setup(ctx):
             "🔹 **17. `l!warn @user [lý do]`** - Cảnh cáo.\n"
             "🔹 **18. `l!clear [số lượng]`** - Xóa tin nhắn.\n"
             "🔹 **19. `l!stats`** - Xem thông số server.\n"
-            "🔹 **20. `l!help`** - Hướng dẫn chi tiết."
+            "🔹 **20. `l!channelslog #kênh`** - Đặt kênh log sự kiện.\n"
+            "🔹 **21. `l!help`** - Hướng dẫn chi tiết."
         ),
         color=0xFF69B4
     )
@@ -976,17 +1110,18 @@ async def stats(ctx):
     embed.set_footer(text=f"Truy vấn bởi {ctx.author.name} • Phục vụ Boss Bảo", icon_url=ctx.author.display_avatar.url)
     await ctx.send(embed=embed)
 
-# ==================== LỆNH SET LOG NUKE ====================
+# ==================== LỆNH SET LOG NUKE (giữ lại để tương thích) ====================
 @bot.command(name="setlognuke")
 @is_bot_owner()
 async def setlognuke(ctx, channel: discord.TextChannel = None):
-    global NUKE_LOG_CHANNELS
+    # Giữ lại để không lỗi, nhưng khuyến khích dùng channelslog
+    global LOG_CHANNEL_ID
     if channel is None:
         channel = ctx.channel
-    NUKE_LOG_CHANNELS[ctx.guild.id] = channel.id
+    LOG_CHANNEL_ID = channel.id
     embed = discord.Embed(
-        title="📋 Đã thiết lập kênh log nuke",
-        description=f"Kênh log nuke sẽ là {channel.mention}",
+        title="📋 Đã thiết lập kênh log nuke (cũ)",
+        description=f"Kênh log nuke sẽ là {channel.mention}\n(Lưu ý: nên dùng `l!channelslog` để log đầy đủ sự kiện)",
         color=0x00CCFF,
         timestamp=discord.utils.utcnow()
     )
@@ -1019,7 +1154,8 @@ async def help_command(ctx):
             "• `l!unmute @user` - Bỏ cấm nói\n"
             "• `l!warn @user [lý do]` - Cảnh cáo\n"
             "• `l!clear [số]` - Xóa tin nhắn\n"
-            "• `l!setlognuke #channel` - Đặt kênh log\n\n"
+            "• `l!setlognuke #channel` - Đặt kênh log nuke (cũ)\n"
+            "• `l!channelslog #channel` - Đặt kênh log sự kiện (xóa, sửa, join, leave...)\n\n"
             "**LỆNH CÔNG KHAI:**\n"
             "• `l!stats` - Xem thông số server\n"
             "• `l!help` - Bảng hướng dẫn này"
