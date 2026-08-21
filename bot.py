@@ -4,6 +4,7 @@ import random
 import discord
 from discord.ext import commands
 import aiohttp
+from datetime import timedelta, datetime
 
 # ==================== CẤU HÌNH HỆ THỐNG ====================
 DISCORD_TOKEN = os.getenv("TOKEN")
@@ -361,11 +362,9 @@ async def check_and_assign_level_roles(member: discord.Member, current_level: in
 async def on_member_join(member):
     if member.guild is None: return
     
-    # Log hệ thống
     embed_log = discord.Embed(title="👋 THÀNH VIÊN MỚI", description=f"{member.mention}", color=0x00FF00)
     await send_log(member.guild.id, embed_log)
 
-    # Chào mừng setup tùy chỉnh
     guild_id = member.guild.id
     if guild_id in WELCOME_CHANNELS:
         ch_id = WELCOME_CHANNELS[guild_id]
@@ -389,13 +388,11 @@ async def on_member_join(member):
 async def on_member_remove(member):
     if member.guild is None: return
     
-    # Log hệ thống
     embed_log = discord.Embed(title="👋 THÀNH VIÊN RỜI", description=f"{member.mention}", color=0xFF9900)
     await send_log(member.guild.id, embed_log)
 
     guild_id = member.guild.id
     
-    # Gửi thư DM nuối tiếc cho người out
     try:
         dm_embed = discord.Embed(
             title="💔 **TẠM BIỆT BẠN NHÉ!** 💔",
@@ -410,7 +407,6 @@ async def on_member_remove(member):
     except:
         pass
 
-    # Gửi thông báo kênh goodbye nếu có cài đặt
     if guild_id in GOODBYE_CHANNELS:
         ch_id = GOODBYE_CHANNELS[guild_id]
         channel = member.guild.get_channel(ch_id)
@@ -798,11 +794,40 @@ async def set_server_icon_error(ctx, error):
     else:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
-# ==================== LỆNH QUẢN TRỊ VIÊN ====================
+# ==================== LỆNH MUTE & UNMUTE (ĐÃ CẬP NHẬT THỜI GIAN VÀ GỬI THƯ DM) ====================
 @bot.command(name="mute")
 @is_bot_owner()
-async def mute(ctx, member: discord.Member, *, reason="Không có lý do"):
+async def mute(ctx, member: discord.Member, duration: str = None, *, reason="Không có lý do"):
     try:
+        # Tính toán thời gian mute nếu có truyền vào (m: phút, d: ngày, w: tuần, t: tháng)
+        time_delta = None
+        duration_text = "Vĩnh viễn"
+        if duration:
+            unit = duration[-1].lower()
+            try:
+                val = int(duration[:-1])
+            except ValueError:
+                await ctx.send("❌ Sai định dạng thời gian! Ví dụ: `10m` (phút), `2d` (ngày), `1w` (tuần), `1t` (tháng).")
+                return
+
+            if unit == 'm':
+                time_delta = timedelta(minutes=val)
+                duration_text = f"{val} phút"
+            elif unit == 'd':
+                time_delta = timedelta(days=val)
+                duration_text = f"{val} ngày"
+            elif unit == 'w':
+                time_delta = timedelta(weeks=val)
+                duration_text = f"{val} tuần"
+            elif unit == 't':
+                time_delta = timedelta(days=val * 30)  # Quy đổi tháng thành 30 ngày
+                duration_text = f"{val} tháng"
+            else:
+                await ctx.send("❌ Đơn vị thời gian không hợp lệ! Dùng: **m** (phút), **d** (ngày), **w** (tuần), **t** (tháng).")
+                return
+
+        # Sử dụng hệ thống Timeout của Discord (Timeout Moderation) hoặc dùng role Muted tùy hệ thống
+        # Dưới đây tích hợp Timeout API chuẩn của Discord kết hợp role Muted
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         if not muted_role:
             muted_role = await ctx.guild.create_role(name="Muted", permissions=discord.Permissions(send_messages=False, speak=False))
@@ -811,13 +836,41 @@ async def mute(ctx, member: discord.Member, *, reason="Không có lý do"):
                     await channel.set_permissions(muted_role, send_messages=False, speak=False)
                 except:
                     pass
+        
         await member.add_roles(muted_role, reason=f"Lệnh từ Boss Bảo - {reason}")
+        
+        # Nếu có thời gian, áp dụng timeout trực tiếp của discord
+        if time_delta:
+            try:
+                await member.timeout(time_delta, reason=reason)
+            except:
+                pass
+
+        # Gửi thông báo công khai trên kênh
         embed = discord.Embed(
             title="🔇 🌈 **ĐÃ MUTE THÀNH VIÊN** 🌈",
-            description=f"👤 {member.mention} đã bị mute.\n📌 Lý do: {reason}",
+            description=f"👤 **Thành viên:** {member.mention}\n⏳ **Thời gian:** {duration_text}\n📌 **Lý do:** {reason}",
             color=0xFF9900
         )
         await ctx.send(embed=embed)
+
+        # Gửi thư DM thông báo cho người bị mute
+        try:
+            dm_embed = discord.Embed(
+                title="🔇 **BẠN ĐÃ BỊ MUTE TRONG SERVER** 🔇",
+                description=(
+                    f"🏰 **Máy chủ:** {ctx.guild.name}\n"
+                    f"⏳ **Thời hạn mute:** {duration_text}\n"
+                    f"📌 **Lý do:** {reason}\n\n"
+                    f"⚠️ Vui lòng rút kinh nghiệm và tuân thủ nội quy server để tránh bị xử phạt nặng hơn nhé!"
+                ),
+                color=0xFF0000
+            )
+            dm_embed.set_footer(text="Hệ thống kiểm duyệt độc quyền của Boss Bảo")
+            await member.send(embed=dm_embed)
+        except:
+            pass
+
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
@@ -826,19 +879,48 @@ async def mute(ctx, member: discord.Member, *, reason="Không có lý do"):
 async def unmute(ctx, member: discord.Member):
     try:
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+        unmuted_status = False
+
         if muted_role and muted_role in member.roles:
             await member.remove_roles(muted_role, reason="Lệnh từ Boss Bảo")
+            unmuted_status = True
+
+        # Gỡ cả timeout của Discord nếu có
+        try:
+            await member.timeout(None, reason="Lệnh unmute từ Boss Bảo")
+            unmuted_status = True
+        except:
+            pass
+
+        if unmuted_status:
             embed = discord.Embed(
-                title="🔊 🌈 **ĐÃ BỎ MUTE** 🌈",
-                description=f"👤 {member.mention} đã được bỏ mute.",
+                title="🔊 🌈 **ĐÃ BỎ MUTE THÀNH VIÊN** 🌈",
+                description=f"👤 {member.mention} đã được bỏ mute và khôi phục quyền trò chuyện.",
                 color=0x00FF00
             )
             await ctx.send(embed=embed)
+
+            # Gửi thư DM thông báo đã được unmute cho họ
+            try:
+                dm_embed = discord.Embed(
+                    title="🔊 **BẠN ĐÃ ĐƯỢC UNMUTE!** 🔊",
+                    description=(
+                        f"✨ Chúc mừng bạn! Lệnh cấm chat tại máy chủ **{ctx.guild.name}** đã được gỡ bỏ.\n"
+                        f"🎉 Bạn có thể tiếp tục trò chuyện bình thường. Hãy giữ gìn nội quy server nhé!"
+                    ),
+                    color=0x00FF00
+                )
+                dm_embed.set_footer(text="Hệ thống kiểm duyệt độc quyền của Boss Bảo")
+                await member.send(embed=dm_embed)
+            except:
+                pass
         else:
-            await ctx.send("⚠️ Không bị mute.")
+            await ctx.send("⚠️ Thành viên này hiện không bị mute.")
+
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
+# ==================== LỆNH WARN & CLEAR ====================
 @bot.command(name="warn")
 @is_bot_owner()
 async def warn(ctx, member: discord.Member, *, reason="Cảnh cáo chung"):
@@ -1022,7 +1104,7 @@ async def setup(ctx):
             "🔹 **12. `l!stop`** - Dừng spam.\n"
             "🔹 **13. `l!addowner`** - Thêm Owner.\n"
             "🔹 **14. `l!deleteowner`** - Xóa Owner.\n"
-            "🔹 **15. `l!mute`** - Cấm nói.\n"
+            "🔹 **15. `l!mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
             "🔹 **16. `l!unmute`** - Bỏ cấm nói.\n"
             "🔹 **17. `l!warn`** - Cảnh cáo.\n"
             "🔹 **18. `l!clear`** - Xóa tin nhắn.\n"
@@ -1076,7 +1158,7 @@ async def help_command(ctx):
             "🔹 **12. `l!stop`** - Dừng mọi hoạt động spam.\n"
             "🔹 **13. `l!addowner`** - Thêm Owner phụ quyền.\n"
             "🔹 **14. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
-            "🔹 **15. `l!mute`** - Cấm nói thành viên vi phạm.\n"
+            "🔹 **15. `l!mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
             "🔹 **16. `l!unmute`** - Bỏ cấm nói thành viên.\n"
             "🔹 **17. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
             "🔹 **18. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
@@ -1098,7 +1180,6 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    # Hệ thống Level tính theo EXP tin nhắn (Ví dụ: 1 tin nhắn = 10 EXP, mỗi 100 EXP lên 1 level, tối đa 670)
     guild_id = message.guild.id if message.guild else None
     if guild_id:
         if guild_id not in USER_LEVELS:
@@ -1111,17 +1192,14 @@ async def on_message(message):
         user_data = USER_LEVELS[guild_id][user_id]
         if user_data["level"] < 670:
             user_data["exp"] += 10
-            # Công thức tính level: cứ mỗi 100 EXP tăng 1 level
             required_exp_for_next = user_data["level"] * 100
             if user_data["exp"] >= required_exp_for_next and user_data["level"] < 670:
                 user_data["level"] += 1
                 new_lv = user_data["level"]
                 
-                # Cấp quyền role tương ứng khi đạt mốc
                 if isinstance(message.author, discord.Member):
                     await check_and_assign_level_roles(message.author, new_lv)
 
-                # Thông báo lên kênh kèm ảnh gif
                 level_embed = discord.Embed(
                     title="🎉 **CHÚC MỪNG LÊN LEVEL!** 🎉",
                     description=f"🌟 {message.author.mention} đã xuất sắc thăng cấp lên **Level {new_lv}**! 🚀",
