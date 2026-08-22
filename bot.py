@@ -368,24 +368,44 @@ async def check_and_assign_level_roles(member: discord.Member, current_level: in
                 except:
                     pass
 
-# ==================== LỆNH CHANNELSLV ====================
-@bot.command(name="channelslv")
-@is_bot_owner()
-async def channelslv(ctx, channel: discord.TextChannel = None):
-    if channel is None:
-        if ctx.guild.id in SERVER_LEVEL_CHANNELS:
-            del SERVER_LEVEL_CHANNELS[ctx.guild.id]
-        await ctx.send("✅ Đã tắt thông báo level.")
-        return
-    SERVER_LEVEL_CHANNELS[ctx.guild.id] = channel.id
-    await ctx.send(f"✅ Đã thiết lập kênh thông báo thăng cấp level là {channel.mention}")
 
-@channelslv.error
-async def channelslv_error(ctx, error):
+
+@bot.command(name="channelslog")
+@is_bot_owner()
+async def channelslog(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        if ctx.guild.id in SERVER_LOG_CHANNELS:
+            del SERVER_LOG_CHANNELS[ctx.guild.id]
+            embed = discord.Embed(
+                title="✅ ĐÃ TẮT LOG SỰ KIỆN",
+                description="🎉 Hệ thống đã ngừng gửi log sự kiện!",
+                color=0x00FF00
+            )
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(
+                title="⚠️ CHƯA CÀI ĐẶT",
+                description="🔹 Hiện chưa có kênh log nào.\n🔹 Cú pháp: `nuked channelslog #kênh`",
+                color=0xFF9900
+            )
+            await ctx.send(embed=embed)
+        return
+    
+    SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
+    embed = discord.Embed(
+        title="✅ ĐÃ THIẾT LẬP KÊNH LOG SỰ KIỆN",
+        description=f"📌 **Kênh:** {channel.mention}\n📋 **Sự kiện log:** Tin nhắn xóa, tạo kênh, xóa kênh, thành viên join/leave\n👑 **Thiết lập bởi:** {ctx.author.mention}",
+        color=0x00FF00
+    )
+    embed.set_footer(text="Hệ thống log tự động phục vụ Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@channelslog.error
+async def channelslog_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked channelslv #kenh`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked channelslog #kênh` hoặc `nuked channelslog` để tắt")
 
 # ==================== LỆNH ADDROLE ====================
 @bot.command(name="addrole")
@@ -488,18 +508,43 @@ async def set_wellcom_error(ctx, error):
     else:
         await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom @user`")
 
+
 @bot.command(name="setgoodbye")
 @is_bot_owner()
-async def set_goodbye(ctx, channel: discord.TextChannel):
+async def set_goodbye(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        if ctx.guild.id in GOODBYE_CHANNELS:
+            del GOODBYE_CHANNELS[ctx.guild.id]
+            embed = discord.Embed(
+                title="✅ ĐÃ TẮT KÊNH TẠM BIỆT",
+                description="🎉 Hệ thống đã ngừng gửi tin nhắn tạm biệt!",
+                color=0x00FF00
+            )
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(
+                title="⚠️ CHƯA CÀI ĐẶT",
+                description="🔹 Hiện chưa có kênh tạm biệt nào được cài đặt.\n🔹 Cú pháp: `nuked setgoodbye #kênh`",
+                color=0xFF9900
+            )
+            await ctx.send(embed=embed)
+        return
+    
     GOODBYE_CHANNELS[ctx.guild.id] = channel.id
-    await ctx.send(f"✅ Đã thiết lập kênh tạm biệt thành công là {channel.mention}")
+    embed = discord.Embed(
+        title="✅ ĐÃ THIẾT LẬP KÊNH TẠM BIỆT",
+        description=f"📌 **Kênh:** {channel.mention}\n👑 **Thiết lập bởi:** {ctx.author.mention}",
+        color=0x00FF00
+    )
+    embed.set_footer(text="Hệ thống tạm biệt tự động phục vụ Boss Bảo 💖")
+    await ctx.send(embed=embed)
 
 @set_goodbye.error
 async def set_goodbye_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked setgoodbye #kenh`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setgoodbye #kênh` hoặc `nuked setgoodbye` để tắt")
 
 # ==================== LỆNH SETLV ====================
 @bot.command(name="setlv")
