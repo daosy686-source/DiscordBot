@@ -1058,6 +1058,90 @@ async def set_server_name_error(ctx, error):
     else:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
+@bot.command(name="channelslv")
+@is_bot_owner()
+async def channelslv(ctx, channel: discord.TextChannel = None):
+    """Cài đặt kênh thông báo level cho server"""
+    try:
+        if channel is None:
+            
+            if ctx.guild.id in SERVER_LEVEL_CHANNELS:
+                del SERVER_LEVEL_CHANNELS[ctx.guild.id]
+                embed = discord.Embed(
+                    title="🔇 ĐÃ TẮT THÔNG BÁO LEVEL",
+                    description="🎉 Hệ thống đã ngừng gửi thông báo thăng cấp!",
+                    color=0x00FF00
+                )
+                embed.set_footer(text="Boss Bảo đã tắt thông báo level 💖")
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(
+                    title="⚠️ CHƯA CÀI ĐẶT KÊNH LEVEL",
+                    description=(
+                        "🔹 Hiện chưa có kênh thông báo level nào được cài đặt.\n"
+                        "🔹 **Cú pháp:** `nuked channelslv #kênh`\n"
+                        "🔹 **Ví dụ:** `nuked channelslv #level`\n\n"
+                        "📌 **Chức năng:** Tự động thông báo khi thành viên lên level"
+                    ),
+                    color=0xFF9900
+                )
+                embed.set_footer(text="Hệ thống level tự động phục vụ Boss Bảo 💖")
+                await ctx.send(embed=embed)
+            return
+
+       
+        SERVER_LEVEL_CHANNELS[ctx.guild.id] = channel.id
+        
+        
+        try:
+            test_embed = discord.Embed(
+                title="🎉 LEVEL SYSTEM ACTIVATED",
+                description=(
+                    f"🔹 Kênh thông báo level đã được cài đặt thành công!\n"
+                    f"🔹 Người cài: {ctx.author.mention}\n"
+                    f"🔹 Server: {ctx.guild.name}\n\n"
+                    f"✨ Khi thành viên lên level, sẽ có thông báo tại đây!"
+                ),
+                color=0x00FF00,
+                timestamp=datetime.now()
+            )
+            test_embed.set_image(url="https://i.pinimg.com/originals/c3/2c/e0/c32ce0a583261b5a296afc194671a5f9.gif")
+            test_embed.set_footer(text="Hệ thống level tự động")
+            await channel.send(embed=test_embed)
+        except:
+            pass
+
+        embed = discord.Embed(
+            title="✅ ĐÃ THIẾT LẬP KÊNH THÔNG BÁO LEVEL",
+            description=(
+                f"📌 **Kênh thông báo:** {channel.mention}\n"
+                f"👑 **Người cài:** {ctx.author.mention}\n"
+                f"⭐ **Chức năng:**\n"
+                f"• Tự động thông báo khi thành viên lên level\n"
+                f"• Hiển thị tên + avatar người lên level\n"
+                f"• Kèm ảnh chúc mừng sinh động\n"
+                f"• Cập nhật role theo level (20, 200, 300, 400, 500, 670)"
+            ),
+            color=0x00FF00
+        )
+        embed.set_thumbnail(url="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif")
+        embed.set_footer(text="Hệ thống level tự động phục vụ Boss Bảo 💖")
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI CÀI KÊNH LEVEL",
+            description=f"⚠️ Đã xảy ra lỗi: `{str(e)}`\n🔹 Vui lòng kiểm tra quyền bot.",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@channelslv.error
+async def channelslv_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 @bot.command(name="setservericon")
 @is_bot_owner()
 async def set_server_icon(ctx, url: str = None):
