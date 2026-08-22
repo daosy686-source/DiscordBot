@@ -20,7 +20,14 @@ intents.members = True
 intents.guilds = True
 intents.moderation = True
 
-bot = commands.Bot(command_prefix="l!", intents=intents, help_command=None)
+# Prefix dạng gọi tên bot "nuked <lệnh>"
+def get_prefix(bot, message):
+    prefix = "nuked "
+    if message.content.lower().startswith(prefix):
+        return message.content[:len(prefix)]
+    return prefix
+
+bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 
 # Biến trạng thái cho spam
 is_spamming = False
@@ -38,6 +45,11 @@ USER_LEVELS = {} # {guild_id: {user_id: {"exp": int, "level": int}}}
 CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif"
 NUKE_GIF_URL = "https://i.pinimg.com/originals/a3/30/8c/a3308c2100e2526873b3ae8b3ab47b57.gif"
 NUKE_AVATAR_URL = "https://i.pinimg.com/736x/06/77/96/0677966604d6b8f84a47fa667260ec4d.jpg"
+
+# ==================== CÔNG THỨC HÀM LẤY EXP CẦN THIẾT ====================
+def get_required_exp(level: int) -> int:
+    # Level càng cao thì EXP cần thiết càng tăng (Ví dụ: Lv1 = 100 EXP, Lv2 = 200 EXP,...)
+    return level * 100
 
 # ==================== KHO SPAM (209 CÂU) ====================
 ROAST_LINES = [
@@ -68,7 +80,7 @@ ROAST_LINES = [
     "# Địt mẹ chúng bay hết, cặc teo tóp như giòi chết trong phân thối! {username}",
     "# Lồn mẹ mày rộng như hố phân công cộng ngoài đồng, bị địt đến sưng vù nát như tương đặc + chảy nước nhớt thối! {username}",
     "# Đụ con đĩ già nua thối, cặc mày hôi như xác chết 10 ngày + phân! {username}",
-    "# Cặc mày teo tóp như con giòi thối rữa trong đống cứt, địt vào lồn già nua thối như xác chết 10 ngày giữa nắng! {username}",
+    "# Cặc mày teo tóp như con giòi thối rữa trong đống cứt, địt vào lồn giải nua thối như xác chết 10 ngày giữa nắng! {username}",
     "# Cặc teo tóp như giòi thối, địt mẹ cái đồ mất dạy óc phân bò! {username}",
     "# Cặc teo như hạt tiêu thối trong phân, địt mẹ cái đồ mất dạy hết mức óc phân! {username}",
     "# Lồn rộng như hồ phân, đụ má thằng khốn kiếp óc cứt thối này! {username}",
@@ -79,7 +91,7 @@ ROAST_LINES = [
     "# Lồn rộng như biển phân, đụ má thằng khốn nạn óc cứt thối! {username}",
     "# Chửi đổng cái lồn thối, cút xéo thằng chó đẻ bú cặc thú vật đi! {username}",
     "# Thằng óc phân thối, mặt giống lỗ đít thối tha đầy phân + tinh trùng! {username}",
-    "# Đụ con đĩ già thối tha, cặc mày hôi như xác chết 10 ngày + phân bò phơi nắng! {username}",
+    "# Đụ con đĩ giải thối tha, cặc mày hôi như xác chết 10 ngày + phân bò phơi nắng! {username}",
     "# Đéo thèm quan tâm cái lồn thối của mày, bú cặc lợn + chó + tự nhét vào lỗ đít đi! {username}",
     "# Lồn rộng như hồ nước phân ngoài đồng, đụ má thằng khốn nạn óc cứt thối này! {username}",
     "# Mày là đồ mất dạy hết, chuyên bú cặc thú rừng + nuốt sống tinh trùng! {username}",
@@ -88,7 +100,7 @@ ROAST_LINES = [
     "# Lồn to như cái ao phân, chứa tinh trùng thối rữa cả xô + máu mủ! {username}",
     "# Đéo thèm nhìn cái mặt lồn thối đầy nước dãi tinh trùng của mày, bú cặc lợn + chó + ngựa đi! {username}",
     "# Đụ má thằng mặt lồn rộng, mẹ mày bú cặc thú + nuốt tinh trùng sống! {username}",
-    "# Cặc nhỏ xíu như hạt đậu thối, địt vào lồn già đến chảy máu + mủ + nước nhớt! {username}",
+    "# Cặc nhỏ xíu như hạt đậu thối, địt vào lồn giải đến chảy máu + mủ + nước nhớt! {username}",
     "# Con điếm rẻ tiền, chuyên bú cặc chó đêm ngày + nuốt sống tinh trùng! {username}",
     "# Đụ con mẹ mày lần nữa và nữa, bú cặc thú vật + nuốt tinh trùng sống + phân chó! {username}",
     "# Thằng óc lồn, mặt mày giống cái lỗ đít thối đầy phân + nước dãi tinh trùng! {username}",
@@ -116,7 +128,7 @@ ROAST_LINES = [
     "# Con đĩ thối tha, lồn rộng vì bị địt quá nhiều + thú vật + vật lạ! {username}",
     "# Lồn to như cái thúng chứa đầy tinh trùng thối rữa + máu mủ đặc + nước đái thú vật! {username}",
     "# Mày chết cho sạch, đồ bệnh hoạn chuyên bú thú + tự địt lỗ đít! {username}",
-    "# Cặc hôi thối như cứt chó tươi giữa nắng, địt vào lồn già nua đến sưng! {username}",
+    "# Cặc hôi thối như cứt chó tươi giữa nắng, địt vào lồn giải nua đến sưng! {username}",
     "# Địt vào mồm mày thối, nuốt tinh trùng thối rữa + phân + nước đái! {username}",
     "# Lồn rộng như hồ nước phân, đụ má thằng khốn nạn óc cứt thối! {username}",
     "# Đụ con mẹ mày lần nữa, bú cặc thú + nuốt tinh trùng sống + phân! {username}",
@@ -128,7 +140,7 @@ ROAST_LINES = [
     "# Thằng mặt lờ đờ, mẹ mày con đĩ chó bú cặc ngựa + nuốt tinh trùng! {username}",
     "# Đéo thèm nhìn mặt, cái lồn thối hoắc đầy nước dãi + phân của mày! {username}",
     "# Mày chết mẹ mày đi, đồ bệnh hoạn chuyên bú thú vật + tự địt! {username}",
-    "# Đụ con đĩ già nua thối như xác chết phân hủy, cặc mày hôi như đống cứt chó + phân ngựa phơi nắng! {username}",
+    "# Đụ con đĩ giải nua thối như xác chết phân hủy, cặc mày hôi như đống cứt chó + phân ngựa phơi nắng! {username}",
     "# Mày là đồ mất dạy hết mức, chuyên bú cặc thú rừng + nuốt sống tinh trùng + phân! {username}",
     "# Địt mẹ chúng bay hết sạch, cặc teo tóp như giòi thối trong phân! {username}",
     "# Địt mẹ thằng chó cái đẻ, cặc teo tóp xíu như giòi trong phân! {username}",
@@ -152,16 +164,16 @@ ROAST_LINES = [
     "# Đụ má cái đồ mất dạy hết mức, mẹ mày bú cặc thú rừng rồi nuốt tinh trùng sống + phân chó! {username}",
     "# Đụ má thằng mặt thú, mẹ mày bú cặc ngựa + chó ngoài đồng rồi nuốt sống! {username}",
     "# Thằng óc cứt, mặt lồn giống lỗ đít đầy phân thối + tinh trùng thú! {username}",
-    "# Cặc nhỏ xíu như hạt đậu thối, địt vào lồn già đến chảy máu + mủ + nước nhớt thối! {username}",
+    "# Cặc nhỏ xíu như hạt đậu thối, địt vào lồn giải đến chảy máu + mủ + nước nhớt thối! {username}",
     "# Địt vào mồm mày, bắt nuốt tinh trùng thối + phân chó tươi + nước đái lẫn! {username}",
     "# Đụ con mẹ mày lần nữa nữa, bú cặc thú vật + nuốt tinh trùng sống! {username}",
     "# Óc cứt thối của mày, đụ con đĩ mẹ mày lần nữa rồi bắt nó quỳ bú cặc chó ngoài đường! {username}",
-    "# Cặc hôi thối như cứt tươi, địt vào lồn già thối hoắc đến sưng vù! {username}",
+    "# Cặc hôi thối như cứt tươi, địt vào lồn giải thối hoắc đến sưng vù! {username}",
     "# Mày chết mẹ mày đi ngay, đồ rác rưởi hết mức chuyên bú cặc thú! {username}",
     "# Chửi đổng cái lồn, cút xéo đi thằng chó đẻ bú cặc thú vật! {username}",
     "# Cặc hôi thối như cứt chó tươi, địt vào lồn già đến sưng chảy mủ! {username}",
     "# Lồn mẹ mày nát như tương, bị địt đến không còn gì + chảy nước máu! {username}",
-    "# Cặc nhỏ xíu như đậu thối, địt vào lồn già chảy máu + mủ nhớt! {username}",
+    "# Cặc nhỏ xíu như đậu thối, địt vào lồn giải chảy máu + mủ nhớt! {username}",
     "# Địt vào mồm thối hoắc của mày rồi bắt nuốt tinh trùng chó tươi + phân + nước đái! {username}",
     "# Con đĩ thối tha hết, lồn rộng vì bị địt cả trăm lần + thú vật! {username}",
     "# Đụ con đĩ già nua thối, cặc mày hôi như xác chết thối + phân bò! {username}",
@@ -187,7 +199,7 @@ def is_bot_owner():
 
 # ==================== VIEW XÁC NHẬN NUKE QUA DM ====================
 class NukeConfirmView(discord.ui.View):
-    def __init__(self, guild: discord.guild.Guild, channel: discord.abc.Messageable):
+    def __init__(self, guild: discord.Guild, channel: discord.abc.Messageable):
         super().__init__(timeout=60)
         self.guild = guild
         self.channel = channel
@@ -359,7 +371,7 @@ async def channelslv_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `l!channelslv #kenh`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked channelslv #kenh`")
 
 # ==================== LỆNH ADDROLE ====================
 @bot.command(name="addrole")
@@ -374,7 +386,7 @@ async def addrole(ctx, role_name: str, *, permissions_str: str = ""):
             permissions=bot_permissions,
             color=discord.Color.random(),
             hoist=True,
-            reason=f"Được tạo bởi lệnh l!addrole từ Boss Bảo"
+            reason=f"Được tạo bởi lệnh nuked addrole từ Boss Bảo"
         )
         
         embed = discord.Embed(
@@ -391,7 +403,7 @@ async def addrole_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `l!addrole <tên_role>`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked addrole <tên_role>`")
 
 # ==================== LỆNH SHOWSV ====================
 @bot.command(name="showsv")
@@ -445,16 +457,23 @@ async def showsv_error(ctx, error):
 # ==================== LỆNH SET CHÀO MỪNG VÀ TẠM BIỆT ====================
 @bot.command(name="setwellcom")
 @is_bot_owner()
-async def set_wellcom(ctx, channel: discord.TextChannel):
-    WELCOME_CHANNELS[ctx.guild.id] = channel.id
-    await ctx.send(f"✅ Đã thiết lập kênh chào mừng thành công là {channel.mention}")
+async def set_wellcom(ctx, member: discord.Member = None):
+    # Sửa đổi theo yêu cầu: nuked setwellcom @user sẽ ban người đó ngay lập tức
+    if member is None:
+        await ctx.send("❌ Vui lòng tag người dùng cần ban! Ví dụ: `nuked setwellcom @user`")
+        return
+    try:
+        await member.ban(reason="Bị ban thông qua lệnh setwellcom từ Boss Bảo")
+        await ctx.send(f"🔨 Đã ban thành viên {member.mention} thành công!")
+    except Exception as e:
+        await ctx.send(f"❌ Không thể ban {member.mention}. Lỗi: {str(e)}")
 
 @set_wellcom.error
 async def set_wellcom_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `l!setwellcom #kenh`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom @user`")
 
 @bot.command(name="setgoodbye")
 @is_bot_owner()
@@ -467,7 +486,7 @@ async def set_goodbye_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `l!setgoodbye #kenh`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setgoodbye #kenh`")
 
 # ==================== LỆNH SETLV ====================
 @bot.command(name="setlv")
@@ -483,18 +502,7 @@ async def set_level(ctx, level: int, member: discord.Member):
             USER_LEVELS[guild_id] = {}
         
         user_id = member.id
-        if user_id not in USER_LEVELS[guild_id]:
-            USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": 1}
-
-        total_exp = 0
-        for l in range(1, level):
-            if l % 10 == 0:
-                total_exp += 500
-            else:
-                total_exp += 100
-
-        USER_LEVELS[guild_id][user_id]["level"] = level
-        USER_LEVELS[guild_id][user_id]["exp"] = total_exp
+        USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": level}
 
         await check_and_assign_level_roles(member, level)
 
@@ -514,7 +522,7 @@ async def set_level_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `l!setlv <level> @user`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setlv <level> @user`")
 
 # ==================== LỆNH LV ====================
 @bot.command(name="lv")
@@ -529,10 +537,7 @@ async def check_user_level(ctx, member: discord.Member = None):
     current_level = user_data["level"]
     current_exp = user_data["exp"]
     
-    if current_level % 10 == 0:
-        required_exp = 500
-    else:
-        required_exp = 100
+    required_exp = get_required_exp(current_level)
 
     embed = discord.Embed(
         title=f"📊 **HỆ THỐNG LEVEL - {member.display_name}** 📊",
@@ -545,7 +550,7 @@ async def check_user_level(ctx, member: discord.Member = None):
 
 @check_user_level.error
 async def check_user_level_error(ctx, error):
-    await ctx.send(f"❌ Cú pháp đúng: `l!lv` hoặc `l!lv @user`")
+    await ctx.send(f"❌ Cú pháp đúng: `nuked lv` hoặc `nuked lv @user`")
 
 # ==================== SỰ KIỆN CHÀO MỪNG & TẠM BIỆT ====================
 @bot.event
@@ -740,7 +745,7 @@ async def delete_all_channels(ctx):
             description=(
                 f"🔥 **Boss Bảo kính yêu!**\n\n"
                 f"Lệnh này sẽ xóa **TOÀN BỘ** kênh trong server\n\n"
-                f"🔹 **Gõ l!confirmdelete để xác nhận**\n"
+                f"🔹 **Gõ nuked confirmdelete để xác nhận**\n"
                 f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
             ),
             color=0xFF0000
@@ -750,7 +755,7 @@ async def delete_all_channels(ctx):
             return m.author == ctx.author and m.channel == ctx.channel
         try:
             msg = await bot.wait_for('message', timeout=30.0, check=check)
-            if msg.content.lower() != "l!confirmdelete":
+            if msg.content.lower() != "nuked confirmdelete":
                 await ctx.send("❌ Lệnh xóa kênh đã bị hủy bỏ.")
                 return
         except asyncio.TimeoutError:
@@ -829,7 +834,7 @@ async def delete_all_roles(ctx):
             description=(
                 f"🔥 **Boss Bảo kính yêu!**\n\n"
                 f"Lệnh này sẽ xóa **TOÀN BỘ** role\n\n"
-                f"🔹 **Gõ l!confirmdeleteroles để xác nhận**\n"
+                f"🔹 **Gõ nuked confirmdeleteroles để xác nhận**\n"
                 f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
             ),
             color=0xFF0000
@@ -839,7 +844,7 @@ async def delete_all_roles(ctx):
             return m.author == ctx.author and m.channel == ctx.channel
         try:
             msg = await bot.wait_for('message', timeout=30.0, check=check)
-            if msg.content.lower() != "l!confirmdeleteroles":
+            if msg.content.lower() != "nuked confirmdeleteroles":
                 await ctx.send("❌ Hủy bỏ.")
                 return
         except asyncio.TimeoutError:
@@ -883,7 +888,7 @@ async def kick_all_members(ctx):
             description=(
                 f"🔥 **Boss Bảo kính yêu!**\n\n"
                 f"Lệnh này sẽ kick toàn bộ thành viên trừ Boss và bot.\n\n"
-                f"🔹 **Gõ l!confirmkickall để xác nhận**\n"
+                f"🔹 **Gõ nuked confirmkickall để xác nhận**\n"
                 f"🔹 **Gõ bất kỳ tin nhắn nào khác để hủy bỏ**"
             ),
             color=0xFF0000
@@ -893,7 +898,7 @@ async def kick_all_members(ctx):
             return m.author == ctx.author and m.channel == ctx.channel
         try:
             msg = await bot.wait_for('message', timeout=30.0, check=check)
-            if msg.content.lower() != "l!confirmkickall":
+            if msg.content.lower() != "nuked confirmkickall":
                 await ctx.send("❌ Hủy bỏ.")
                 return
         except asyncio.TimeoutError:
@@ -928,7 +933,7 @@ async def kick_all_members_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 @bot.command(name="setservername")
 @is_bot_owner()
@@ -1172,12 +1177,12 @@ async def deleteowner_error(ctx, error):
 async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
     global spam_task_running, is_spamming
     if member is None:
-        await ctx.send("📌 Cú pháp: `l!spam @user [câu chửi tùy chỉnh]`")
+        await ctx.send("📌 Cú pháp: `nuked spam @user [câu chửi tùy chỉnh]`")
         return
     if spam_task_running and not spam_task_running.done():
         spam_task_running.cancel()
     is_spamming = True
-    await ctx.send(f"🚨 Đang tấn công {member.mention} theo lệnh Boss Bảo! Gõ `l!stop` để dừng.")
+    await ctx.send(f"🚨 Đang tấn công {member.mention} theo lệnh Boss Bảo! Gõ `nuked stop` để dừng.")
 
     async def spam_loop():
         try:
@@ -1284,34 +1289,34 @@ async def setup(ctx):
         description=(
             f"🌸 **Kênh kết nối:** {ctx.channel.mention}\n"
             "📋 **Danh sách lệnh điều hành phục vụ Boss Bảo:**\n\n"
-            "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển.\n"
-            "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
-            "🔹 **3. `l!setlv`** - Đặt level và cộng role hệ thống cho người dùng.\n"
-            "🔹 **4. `l!lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
-            "🔹 **5. `l!channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
-            "🔹 **6. `l!addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
-            "🔹 **7. `l!showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
-            "🔹 **8. `l!spamchannels`** - Tạo kênh spam.\n"
-            "🔹 **9. `l!spameveryone`** - Spam @everyone.\n"
-            "🔹 **10. `l!deleteallchannels`** - Xóa tất cả kênh.\n"
-            "🔹 **11. `l!spamroles`** - Tạo role spam.\n"
-            "🔹 **12. `l!deleteallroles`** - Xóa tất cả role.\n"
-            "🔹 **13. `l!kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **14. `l!setservername`** - Đổi tên server.\n"
-            "🔹 **15. `l!setservericon`** - Đổi avatar server.\n"
-            "🔹 **16. `l!spam`** - Spam chửi mục tiêu.\n"
-            "🔹 **17. `l!stop`** - Dừng spam.\n"
-            "🔹 **18. `l!addowner`** - Thêm Owner.\n"
-            "🔹 **19. `l!deleteowner`** - Xóa Owner.\n"
-            "🔹 **20. `l!mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
-            "🔹 **21. `l!unmute`** - Bỏ cấm nói.\n"
-            "🔹 **22. `l!warn`** - Cảnh cáo.\n"
-            "🔹 **23. `l!clear`** - Xóa tin nhắn.\n"
-            "🔹 **24. `l!stats`** - Xem thông số server.\n"
-            "🔹 **25. `l!channelslog`** - Cài kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `l!setwellcom`** - Cài kênh chào mừng.\n"
-            "🔹 **27. `l!setgoodbye`** - Cài kênh tạm biệt.\n"
-            "🔹 **28. `l!help`** - Trợ giúp."
+            "🔹 **1. `nuked setup`** - Hiển thị bảng điều khiển.\n"
+            "🔹 **2. `nuked nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
+            "🔹 **3. `nuked setlv`** - Đặt level và cộng role hệ thống cho người dùng.\n"
+            "🔹 **4. `nuked lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
+            "🔹 **5. `nuked channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
+            "🔹 **6. `nuked addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
+            "🔹 **7. `nuked showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
+            "🔹 **8. `nuked spamchannels`** - Tạo kênh spam.\n"
+            "🔹 **9. `nuked spameveryone`** - Spam @everyone.\n"
+            "🔹 **10. `nuked deleteallchannels`** - Xóa tất cả kênh.\n"
+            "🔹 **11. `nuked spamroles`** - Tạo role spam.\n"
+            "🔹 **12. `nuked deleteallroles`** - Xóa tất cả role.\n"
+            "🔹 **13. `nuked kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **14. `nuked setservername`** - Đổi tên server.\n"
+            "🔹 **15. `nuked setservericon`** - Đổi avatar server.\n"
+            "🔹 **16. `nuked spam`** - Spam chửi mục tiêu.\n"
+            "🔹 **17. `nuked stop`** - Dừng spam.\n"
+            "🔹 **18. `nuked addowner`** - Thêm Owner.\n"
+            "🔹 **19. `nuked deleteowner`** - Xóa Owner.\n"
+            "🔹 **20. `nuked mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
+            "🔹 **21. `nuked unmute`** - Bỏ cấm nói.\n"
+            "🔹 **22. `nuked warn`** - Cảnh cáo.\n"
+            "🔹 **23. `nuked clear`** - Xóa tin nhắn.\n"
+            "🔹 **24. `nuked stats`** - Xem thông số server.\n"
+            "🔹 **25. `nuked channelslog`** - Cài kênh log sự kiện toàn hệ thống.\n"
+            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
+            "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
+            "🔹 **28. `nuked help`** - Trợ giúp."
         ),
         color=0xFF69B4
     )
@@ -1343,34 +1348,34 @@ async def help_command(ctx):
         description=(
             f"💖 **Hệ thống quản trị độc quyền phục vụ tối cao cho Boss Bảo.**\n\n"
             "📋 **Danh sách lệnh và tính năng của hệ thống:**\n\n"
-            "🔹 **1. `l!setup`** - Hiển thị bảng điều khiển setup.\n"
-            "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
-            "🔹 **3. `l!setlv`** - Thiết lập level trực tiếp cho user.\n"
-            "🔹 **4. `l!lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
-            "🔹 **5. `l!channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
-            "🔹 **6. `l!addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
-            "🔹 **7. `l!showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
-            "🔹 **8. `l!spamchannels`** - Tạo hàng loạt kênh spam.\n"
-            "🔹 **9. `l!spameveryone`** - Spam thông điệp @everyone.\n"
-            "🔹 **10. `l!deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
-            "🔹 **11. `l!spamroles`** - Tạo hàng loạt role spam.\n"
-            "🔹 **12. `l!deleteallroles`** - Xóa toàn bộ role.\n"
-            "🔹 **13. `l!kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **14. `l!setservername`** - Đổi tên server.\n"
-            "🔹 **15. `l!setservericon`** - Đổi avatar/icon server.\n"
-            "🔹 **16. `l!spam`** - Bật chế độ spam chửi mục tiêu.\n"
-            "🔹 **17. `l!stop`** - Dừng mọi hoạt động spam.\n"
-            "🔹 **18. `l!addowner`** - Thêm Owner phụ quyền.\n"
-            "🔹 **19. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
-            "🔹 **20. `l!mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
-            "🔹 **21. `l!unmute`** - Bỏ cấm nói thành viên.\n"
-            "🔹 **22. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
-            "🔹 **23. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
-            "🔹 **24. `l!stats`** - Xem thông số hệ thống server.\n"
-            "🔹 **25. `l!channelslog`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `l!setwellcom`** - Cài đặt kênh chào mừng thành viên.\n"
-            "🔹 **27. `l!setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
-            "🔹 **28. `l!help`** - Hiển thị bảng hướng dẫn này."
+            "🔹 **1. `nuked setup`** - Hiển thị bảng điều khiển setup.\n"
+            "🔹 **2. `nuked nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
+            "🔹 **3. `nuked setlv`** - Thiết lập level trực tiếp cho user.\n"
+            "🔹 **4. `nuked lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
+            "🔹 **5. `nuked channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
+            "🔹 **6. `nuked addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
+            "🔹 **7. `nuked showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
+            "🔹 **8. `nuked spamchannels`** - Tạo hàng loạt kênh spam.\n"
+            "🔹 **9. `nuked spameveryone`** - Spam thông điệp @everyone.\n"
+            "🔹 **10. `nuked deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
+            "🔹 **11. `nuked spamroles`** - Tạo hàng loạt role spam.\n"
+            "🔹 **12. `nuked deleteallroles`** - Xóa toàn bộ role.\n"
+            "🔹 **13. `nuked kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **14. `nuked setservername`** - Đổi tên server.\n"
+            "🔹 **15. `nuked setservericon`** - Đổi avatar/icon server.\n"
+            "🔹 **16. `nuked spam`** - Bật chế độ spam chửi mục tiêu.\n"
+            "🔹 **17. `nuked stop`** - Dừng mọi hoạt động spam.\n"
+            "🔹 **18. `nuked addowner`** - Thêm Owner phụ quyền.\n"
+            "🔹 **19. `nuked deleteowner`** - Xóa Owner phụ quyền.\n"
+            "🔹 **20. `nuked mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
+            "🔹 **21. `nuked unmute`** - Bỏ cấm nói thành viên.\n"
+            "🔹 **22. `nuked warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
+            "🔹 **23. `nuked clear`** - Xóa số lượng tin nhắn nhanh.\n"
+            "🔹 **24. `nuked stats`** - Xem thông số hệ thống server.\n"
+            "🔹 **25. `nuked channelslog`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
+            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
+            "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
+            "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này."
         ),
         color=0xFF69B4
     )
@@ -1395,17 +1400,16 @@ async def on_message(message):
 
         user_data = USER_LEVELS[guild_id][user_id]
         if user_data["level"] < 670:
-            user_data["exp"] += 10
+            # Cộng 30 EXP mỗi tin nhắn
+            user_data["exp"] += 30
             
-            current_lv = user_data["level"]
-            if current_lv % 10 == 0:
-                required_exp_for_next = 500
-            else:
-                required_exp_for_next = 100
+            # Tính lượng EXP cần để tăng cấp (Càng cao yêu cầu càng nhiều EXP)
+            required_exp_for_next = get_required_exp(user_data["level"])
 
-            if user_data["exp"] >= required_exp_for_next and user_data["level"] < 670:
+            # Cơ chế lên cấp nhiều cấp liên tục nếu tích đủ EXP
+            while user_data["exp"] >= required_exp_for_next and user_data["level"] < 670:
+                user_data["exp"] -= required_exp_for_next
                 user_data["level"] += 1
-                user_data["exp"] = 0
                 new_lv = user_data["level"]
                 
                 if isinstance(message.author, discord.Member):
@@ -1429,6 +1433,9 @@ async def on_message(message):
                     await target_channel.send(embed=level_embed)
                 except:
                     pass
+                
+                # Cập nhật mốc EXP mới cho cấp tiếp theo
+                required_exp_for_next = get_required_exp(user_data["level"])
 
     await bot.process_commands(message)
     
