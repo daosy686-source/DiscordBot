@@ -371,42 +371,84 @@ async def check_and_assign_level_roles(member: discord.Member, current_level: in
 
 
 
+# ==================== LỆNH CHANNELSLOG (LOG SỰ KIỆN) ====================
 @bot.command(name="channelslog")
 @is_bot_owner()
 async def channelslog(ctx, channel: discord.TextChannel = None):
-    if channel is None:
-        if ctx.guild.id in SERVER_LOG_CHANNELS:
-            del SERVER_LOG_CHANNELS[ctx.guild.id]
-            embed = discord.Embed(
-                title="✅ ĐÃ TẮT LOG SỰ KIỆN",
-                description="🎉 Hệ thống đã ngừng gửi log sự kiện!",
-                color=0x00FF00
+    """Cài đặt kênh log sự kiện cho server"""
+    try:
+        if channel is None:
+            # TẮT LOG
+            if ctx.guild.id in SERVER_LOG_CHANNELS:
+                del SERVER_LOG_CHANNELS[ctx.guild.id]
+                embed = discord.Embed(
+                    title="🔇 ĐÃ TẮT LOG SỰ KIỆN",
+                    description="🎉 Hệ thống đã ngừng gửi log sự kiện!",
+                    color=0x00FF00
+                )
+                embed.set_footer(text="Boss Bảo đã tắt log 💖")
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(
+                    title="⚠️ CHƯA CÀI ĐẶT LOG",
+                    description=(
+                        "🔹 Hiện chưa có kênh log nào được cài đặt.\n"
+                        "🔹 **Cú pháp:** `nuked channelslog #kênh`\n"
+                        "🔹 **Ví dụ:** `nuked channelslog #log`"
+                    ),
+                    color=0xFF9900
+                )
+                embed.set_footer(text="Hệ thống log tự động phục vụ Boss Bảo 💖")
+                await ctx.send(embed=embed)
+            return
+
+        # CÀI ĐẶT LOG
+        SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
+        
+        # Test gửi log thử
+        try:
+            test_embed = discord.Embed(
+                title="✅ LOG SYSTEM ACTIVATED",
+                description=f"🔹 Kênh log đã được cài đặt thành công!\n🔹 Người cài: {ctx.author.mention}\n🔹 Server: {ctx.guild.name}",
+                color=0x00FF00,
+                timestamp=datetime.now()
             )
-            await ctx.send(embed=embed)
-        else:
-            embed = discord.Embed(
-                title="⚠️ CHƯA CÀI ĐẶT",
-                description="🔹 Hiện chưa có kênh log nào.\n🔹 Cú pháp: `nuked channelslog #kênh`",
-                color=0xFF9900
-            )
-            await ctx.send(embed=embed)
-        return
-    
-    SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
-    embed = discord.Embed(
-        title="✅ ĐÃ THIẾT LẬP KÊNH LOG SỰ KIỆN",
-        description=f"📌 **Kênh:** {channel.mention}\n📋 **Sự kiện log:** Tin nhắn xóa, tạo kênh, xóa kênh, thành viên join/leave\n👑 **Thiết lập bởi:** {ctx.author.mention}",
-        color=0x00FF00
-    )
-    embed.set_footer(text="Hệ thống log tự động phục vụ Boss Bảo 💖")
-    await ctx.send(embed=embed)
+            test_embed.set_footer(text="Hệ thống log tự động")
+            await channel.send(embed=test_embed)
+        except:
+            pass
+
+        embed = discord.Embed(
+            title="✅ ĐÃ THIẾT LẬP KÊNH LOG SỰ KIỆN",
+            description=(
+                f"📌 **Kênh log:** {channel.mention}\n"
+                f"👑 **Người cài:** {ctx.author.mention}\n"
+                f"📋 **Sự kiện được log:**\n"
+                f"• 🗑️ Tin nhắn bị xóa\n"
+                f"• 🆕 Kênh mới được tạo\n"
+                f"• 🗑️ Kênh bị xóa\n"
+                f"• 👋 Thành viên join/leave\n"
+                f"• ⚡ Các sự kiện quan trọng khác"
+            ),
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống log tự động phục vụ Boss Bảo 💖")
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI CÀI LOG",
+            description=f"⚠️ Đã xảy ra lỗi: `{str(e)}`\n🔹 Vui lòng kiểm tra quyền bot.",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
 
 @channelslog.error
 async def channelslog_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked channelslog #kênh` hoặc `nuked channelslog` để tắt")
+        await ctx.send(f"❌ Lỗi: {str(error)}")
 
 # ==================== LỆNH ADDROLE ====================
 @bot.command(name="addrole")
