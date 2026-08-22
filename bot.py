@@ -371,10 +371,10 @@ async def check_and_assign_level_roles(member: discord.Member, current_level: in
 
 
 
-# ==================== LỆNH CHANNELSLOG (LOG SỰ KIỆN) ====================
-@bot.command(name="channelslog")
+# ==================== LỆNH LOG (SET LOG SỰ KIỆN) ====================
+@bot.command(name="log")  # 👈 ĐỔI TÊN Ở ĐÂY
 @is_bot_owner()
-async def channelslog(ctx, channel: discord.TextChannel = None):
+async def setlog(ctx, channel: discord.TextChannel = None):  # 👈 ĐỔI TÊN HÀM Ở ĐÂY
     """Cài đặt kênh log sự kiện cho server"""
     try:
         if channel is None:
@@ -393,8 +393,8 @@ async def channelslog(ctx, channel: discord.TextChannel = None):
                     title="⚠️ CHƯA CÀI ĐẶT LOG",
                     description=(
                         "🔹 Hiện chưa có kênh log nào được cài đặt.\n"
-                        "🔹 **Cú pháp:** `nuked channelslog #kênh`\n"
-                        "🔹 **Ví dụ:** `nuked channelslog #log`"
+                        "🔹 **Cú pháp:** `nuked log #kênh`\n"
+                        "🔹 **Ví dụ:** `nuked log #log`"
                     ),
                     color=0xFF9900
                 )
@@ -443,13 +443,12 @@ async def channelslog(ctx, channel: discord.TextChannel = None):
         )
         await ctx.send(embed=error_embed)
 
-@channelslog.error
-async def channelslog_error(ctx, error):
+@setlog.error
+async def setlog_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
-
 # ==================== LỆNH ADDROLE ====================
 @bot.command(name="addrole")
 @is_bot_owner()
@@ -1414,7 +1413,7 @@ async def setup(ctx):
             "🔹 **22. `nuked warn`** - Cảnh cáo.\n"
             "🔹 **23. `nuked clear`** - Xóa tin nhắn.\n"
             "🔹 **24. `nuked stats`** - Xem thông số server.\n"
-            "🔹 **25. `nuked channelslog`** - Cài kênh log sự kiện toàn hệ thống.\n"
+            "🔹 **25. `nuked log`** - Cài kênh log sự kiện toàn hệ thống.\n"
             "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
             "🔹 **28. `nuked help`** - Trợ giúp."
@@ -1473,7 +1472,7 @@ async def help_command(ctx):
             "🔹 **22. `nuked warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
             "🔹 **23. `nuked clear`** - Xóa số lượng tin nhắn nhanh.\n"
             "🔹 **24. `nuked stats`** - Xem thông số hệ thống server.\n"
-            "🔹 **25. `nuked channelslog`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
+            "🔹 **25. `nuked log`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
             "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
             "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này."
