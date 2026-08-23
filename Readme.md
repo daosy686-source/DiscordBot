@@ -180,10 +180,10 @@
 ```bash
 git clone https://github.com/daosy686-source/DiscordBot.git
 cd DiscordBot
-📜 LICENSE
-MIT License - Free to use and modify.
 
-text
+### 📜 LICENSE
+
+**MIT License** - Free to use and modify.
 MIT License
 
 Copyright (c) 2026 BẢO
@@ -205,8 +205,41 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-⭐ STAR
-<p align="center"> <img src="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif" width="400"> </p><p align="center"> <b>🔥 Nếu bạn thấy bot hữu ích, hãy cho tôi một ⭐ nhé! 🔥</b> </p><p align="center"> <b>Made with ❤️ by BẢO</b><br> <b>📌 Version 3.0 - 2026</b> </p>
-🎯 THỐNG KÊ
-<p align="center"> <img src="https://img.shields.io/badge/Commands-50%2B-blue?style=for-the-badge"> <img src="https://img.shields.io/badge/Features-30%2B-green?style=for-the-badge"> <img src="https://img.shields.io/badge/Lines%20of%20Code-3000%2B-orange?style=for-the-badge"> <img src="https://img.shields.io/badge/Stars-Welcome-yellow?style=for-the-badge"> </p>
-<p align="center"> <b>🚀 Chạy là dùng được! 🔥</b> </p> ```
+
+text
+
+---
+
+## ⭐ STAR
+
+<p align="center">
+  <img src="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif" width="400">
+</p>
+
+<p align="center">
+  <b>🔥 Nếu bạn thấy bot hữu ích, hãy cho tôi một ⭐ nhé! 🔥</b>
+</p>
+
+---
+
+## 📊 THỐNG KÊ
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Commands-50%2B-blue?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Features-30%2B-green?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Lines%20of%20Code-3000%2B-orange?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Stars-Welcome-yellow?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Status-Online-brightgreen?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Version-3.0-red?style=for-the-badge">
+</p>
+
+---
+
+<p align="center">
+  <b>🚀 Chạy là dùng được! 🔥</b>
+</p>
+
+<p align="center">
+  <b>Made with ❤️ by BẢO</b><br>
+  <b>📌 Version 3.0 - 2026</b>
+</p>
