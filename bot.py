@@ -1767,7 +1767,7 @@ async def setup(ctx):
 "🔹 **36. `nuked removerole`** - Xóa role của người.\n"
 "🔹 **37. `nuked lock`** - Khóa kênh.\n"
 "🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
-"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\"
+"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị."
         ),
         color=0xFF69B4
     )
@@ -1838,7 +1838,7 @@ async def help_command(ctx):
 "🔹 **36. `nuked removerole`** - Xóa role của người.\n"
 "🔹 **37. `nuked lock`** - Khóa kênh.\n"
 "🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
-"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\"
+"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị."
         ),
         color=0xFF69B4
     )
