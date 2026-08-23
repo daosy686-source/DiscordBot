@@ -12,7 +12,7 @@ DISCORD_TOKEN = os.getenv("TOKEN")
 
 # Danh sách ID của Boss Bảo và các đồng minh ủy quyền
 BOT_OWNERS = [
-    1540585511842881616, 1536264763427000391
+    1540585511842881616, 
 ]
 
 intents = discord.Intents.default()
