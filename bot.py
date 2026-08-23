@@ -1057,7 +1057,262 @@ async def set_server_name_error(ctx, error):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(e)}")
+# ==================== LỆNH QUẢN TRỊ BỔ SUNG ====================
 
+@bot.command(name="kick")
+@is_bot_owner()
+async def kick_user(ctx, member: discord.Member, *, reason: str = "Không có lý do"):
+    """Kick 1 thành viên"""
+    try:
+        if member.id == ctx.author.id:
+            await ctx.send("❌ Không thể kick chính mình!")
+            return
+        if member.id in BOT_OWNERS:
+            await ctx.send("❌ Không thể kick Owner!")
+            return
+        await member.kick(reason=reason)
+        embed = discord.Embed(
+            title="👢 ĐÃ KICK THÀNH VIÊN",
+            description=f"👤 **Người bị kick:** {member.mention}\n📌 **Lý do:** {reason}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0xFF9900
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="ban")
+@is_bot_owner()
+async def ban_user(ctx, member: discord.Member, *, reason: str = "Không có lý do"):
+    """Ban 1 thành viên"""
+    try:
+        if member.id == ctx.author.id:
+            await ctx.send("❌ Không thể ban chính mình!")
+            return
+        if member.id in BOT_OWNERS:
+            await ctx.send("❌ Không thể ban Owner!")
+            return
+        await member.ban(reason=reason)
+        embed = discord.Embed(
+            title="🔨 ĐÃ BAN THÀNH VIÊN",
+            description=f"👤 **Người bị ban:** {member.mention}\n📌 **Lý do:** {reason}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0xFF0000
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="unban")
+@is_bot_owner()
+async def unban_user(ctx, user_id: int, *, reason: str = "Không có lý do"):
+    """Unban 1 thành viên"""
+    try:
+        user = await bot.fetch_user(user_id)
+        await ctx.guild.unban(user, reason=reason)
+        embed = discord.Embed(
+            title="✅ ĐÃ UNBAN THÀNH VIÊN",
+            description=f"👤 **Người được unban:** {user.mention}\n📌 **Lý do:** {reason}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="createchannel")
+@is_bot_owner()
+async def create_channel(ctx, *, name: str):
+    """Tạo kênh mới"""
+    try:
+        channel = await ctx.guild.create_text_channel(name)
+        embed = discord.Embed(
+            title="🆕 ĐÃ TẠO KÊNH MỚI",
+            description=f"📌 **Tên kênh:** {channel.mention}\n👑 **Người tạo:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="deletechannel")
+@is_bot_owner()
+async def delete_channel(ctx, channel: discord.TextChannel = None):
+    """Xóa kênh"""
+    if channel is None:
+        channel = ctx.channel
+    try:
+        channel_name = channel.name
+        await channel.delete()
+        embed = discord.Embed(
+            title="🗑️ ĐÃ XÓA KÊNH",
+            description=f"📌 **Tên kênh:** `{channel_name}`\n👑 **Người xóa:** {ctx.author.mention}",
+            color=0xFF0000
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="purge")
+@is_bot_owner()
+async def purge_all(ctx, confirm: str = None):
+    """Xóa TOÀN BỘ tin nhắn trong server"""
+    if confirm is None or confirm.lower() != "all":
+        await ctx.send("⚠️ **CẢNH BÁO!** Lệnh này sẽ xóa TOÀN BỘ tin nhắn trong server!\n🔹 Gõ `nuked purge all` để xác nhận.")
+        return
+    
+    embed = discord.Embed(
+        title="🧹 ĐANG XÓA TOÀN BỘ TIN NHẮN...",
+        description="⏳ Đang xử lý, vui lòng đợi...",
+        color=0xFF9900
+    )
+    await ctx.send(embed=embed)
+    
+    try:
+        total_deleted = 0
+        for channel in ctx.guild.channels:
+            if isinstance(channel, discord.TextChannel):
+                try:
+                    deleted = await channel.purge(limit=1000)
+                    total_deleted += len(deleted)
+                    await asyncio.sleep(1)
+                except:
+                    pass
+        
+        embed = discord.Embed(
+            title="✅ ĐÃ XÓA TOÀN BỘ TIN NHẮN",
+            description=f"🧹 Đã xóa tổng cộng **{total_deleted}** tin nhắn trong server!\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="role")
+@is_bot_owner()
+async def add_role_to_user(ctx, member: discord.Member, *, role_name: str):
+    """Thêm role cho người dùng"""
+    try:
+        role = discord.utils.get(ctx.guild.roles, name=role_name)
+        if not role:
+            await ctx.send(f"❌ Không tìm thấy role `{role_name}`!")
+            return
+        await member.add_roles(role, reason=f"Lệnh từ Boss Bảo")
+        embed = discord.Embed(
+            title="✅ ĐÃ THÊM ROLE",
+            description=f"👤 **Người nhận:** {member.mention}\n🎭 **Role:** {role.mention}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="removerole")
+@is_bot_owner()
+async def remove_role_from_user(ctx, member: discord.Member, *, role_name: str):
+    """Xóa role của người dùng"""
+    try:
+        role = discord.utils.get(ctx.guild.roles, name=role_name)
+        if not role:
+            await ctx.send(f"❌ Không tìm thấy role `{role_name}`!")
+            return
+        await member.remove_roles(role, reason=f"Lệnh từ Boss Bảo")
+        embed = discord.Embed(
+            title="✅ ĐÃ XÓA ROLE",
+            description=f"👤 **Người bị xóa:** {member.mention}\n🎭 **Role:** {role.mention}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0xFF9900
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="lock")
+@is_bot_owner()
+async def lock_channel(ctx, channel: discord.TextChannel = None):
+    """Khóa kênh (không ai gửi tin nhắn)"""
+    if channel is None:
+        channel = ctx.channel
+    try:
+        await channel.set_permissions(ctx.guild.default_role, send_messages=False)
+        embed = discord.Embed(
+            title="🔒 ĐÃ KHÓA KÊNH",
+            description=f"📌 **Kênh:** {channel.mention}\n🔒 Đã khóa, không ai có thể gửi tin nhắn!\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0xFF0000
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@bot.command(name="unlock")
+@is_bot_owner()
+async def unlock_channel(ctx, channel: discord.TextChannel = None):
+    """Mở khóa kênh"""
+    if channel is None:
+        channel = ctx.channel
+    try:
+        await channel.set_permissions(ctx.guild.default_role, send_messages=True)
+        embed = discord.Embed(
+            title="🔓 ĐÃ MỞ KHÓA KÊNH",
+            description=f"📌 **Kênh:** {channel.mention}\n🔓 Đã mở khóa, mọi người có thể gửi tin nhắn!\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+# ==================== LỆNH XEM TẤT CẢ LỆNH QUẢN TRỊ ====================
+@bot.command(name="admincmd")
+@is_bot_owner()
+async def admin_commands(ctx):
+    """Xem tất cả lệnh quản trị"""
+    embed = discord.Embed(
+        title="👑 DANH SÁCH LỆNH QUẢN TRỊ",
+        description="📋 Tất cả lệnh dành cho Boss Bảo:\n",
+        color=0xFFD700
+    )
+    commands_list = [
+        "`nuked kick @user` - Kick thành viên",
+        "`nuked ban @user` - Ban thành viên",
+        "`nuked unban <id>` - Unban thành viên",
+        "`nuked createchannel <tên>` - Tạo kênh mới",
+        "`nuked deletechannel #kênh` - Xóa kênh",
+        "`nuked purge all` - Xóa toàn bộ tin nhắn",
+        "`nuked role @user <role>` - Thêm role",
+        "`nuked removerole @user <role>` - Xóa role",
+        "`nuked lock #kênh` - Khóa kênh",
+        "`nuked unlock #kênh` - Mở khóa kênh",
+        "`nuked mute @user` - Mute thành viên",
+        "`nuked unmute @user` - Unmute thành viên",
+        "`nuked warn @user` - Cảnh cáo thành viên",
+        "`nuked clear <số>` - Xóa tin nhắn",
+        "`nuked spam @user` - Spam chửi",
+        "`nuked stop` - Dừng spam",
+        "`nuked kickall` - Kick toàn bộ",
+        "`nuked deleteallchannels` - Xóa tất cả kênh",
+        "`nuked deleteallroles` - Xóa tất cả role",
+        "`nuked spamroles` - Tạo role spam",
+        "`nuked spamchannels` - Tạo kênh spam",
+        "`nuked setservername` - Đổi tên server",
+        "`nuked setservericon` - Đổi icon server",
+        "`nuked addrole <tên>` - Tạo role mới",
+        "`nuked showsv` - Xem danh sách server",
+        "`nuked nuke` - NUKE SERVER",
+        "`nuked setup` - Bảng điều khiển",
+        "`nuked log #kênh` - Cài kênh log",
+        "`nuked channelslv #kênh` - Cài kênh level",
+        "`nuked setlv <level> @user` - Set level",
+        "`nuked lv @user` - Xem level"
+    ]
+    embed.add_field(name="📋 LỆNH QUẢN TRỊ", value="\n".join(commands_list), inline=False)
+    embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖")
+    await ctx.send(embed=embed)
 @bot.command(name="channelslv")
 @is_bot_owner()
 async def channelslv(ctx, channel: discord.TextChannel = None):
@@ -1500,7 +1755,19 @@ async def setup(ctx):
             "🔹 **25. `nuked log`** - Cài kênh log sự kiện toàn hệ thống.\n"
             "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
-            "🔹 **28. `nuked help`** - Trợ giúp."
+            "🔹 **28. `nuked help`** - Trợ giúp.\n"
+            # Trong lệnh setup, thêm vào danh sách:
+"🔹 **29. `nuked kick`** - Kick thành viên.\n"
+"🔹 **30. `nuked ban`** - Ban thành viên.\n"
+"🔹 **31. `nuked unban`** - Unban thành viên.\n"
+"🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
+"🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
+"🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
+"🔹 **35. `nuked role`** - Thêm role cho người.\n"
+"🔹 **36. `nuked removerole`** - Xóa role của người.\n"
+"🔹 **37. `nuked lock`** - Khóa kênh.\n"
+"🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
+"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\"
         ),
         color=0xFF69B4
     )
@@ -1559,7 +1826,19 @@ async def help_command(ctx):
             "🔹 **25. `nuked log`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
             "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
-            "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này."
+            "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này.\n"
+            # Trong lệnh setup, thêm vào danh sách:
+"🔹 **29. `nuked kick`** - Kick thành viên.\n"
+"🔹 **30. `nuked ban`** - Ban thành viên.\n"
+"🔹 **31. `nuked unban`** - Unban thành viên.\n"
+"🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
+"🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
+"🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
+"🔹 **35. `nuked role`** - Thêm role cho người.\n"
+"🔹 **36. `nuked removerole`** - Xóa role của người.\n"
+"🔹 **37. `nuked lock`** - Khóa kênh.\n"
+"🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
+"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\"
         ),
         color=0xFF69B4
     )
