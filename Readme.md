@@ -177,7 +177,7 @@
 - Railway / VPS / Replit
 
 ### 1️⃣ Clone repository
-```bash
+
 git clone https://github.com/daosy686-source/DiscordBot.git
 cd DiscordBot
 
