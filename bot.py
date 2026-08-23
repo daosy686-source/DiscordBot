@@ -5,13 +5,14 @@ import discord
 from discord.ext import commands
 import aiohttp
 from datetime import timedelta, datetime
+import json
 
 # ==================== CẤU HÌNH HỆ THỐNG ====================
 DISCORD_TOKEN = os.getenv("TOKEN")
 
 # Danh sách ID của Boss Bảo và các đồng minh ủy quyền
 BOT_OWNERS = [
-    1540585511842881616,1536264763427000391
+    1540585511842881616, 1536264763427000391
 ]
 
 intents = discord.Intents.default()
@@ -30,17 +31,31 @@ def get_prefix(bot, message):
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 
 # Biến trạng thái cho spam
-is_spamming = False
 spam_task_running = None
 
 # Lưu cấu hình cho từng server
 SERVER_LOG_CHANNELS = {}       # {guild_id: channel_id}
 WELCOME_CHANNELS = {}          # {guild_id: channel_id}
 GOODBYE_CHANNELS = {}          # {guild_id: channel_id}
-SERVER_LEVEL_CHANNELS = {}     # {guild_id: channel_id} - Kênh thông báo level riêng cho từng server
+SERVER_LEVEL_CHANNELS = {}     # {guild_id: channel_id}
 
-# Hệ thống Level lưu trữ tạm trong RAM
-USER_LEVELS = {} # {guild_id: {user_id: {"exp": int, "level": int}}}
+# Hệ thống Level lưu trữ trong file
+LEVEL_FILE = "levels.json"
+
+def load_levels():
+    global USER_LEVELS
+    try:
+        with open(LEVEL_FILE, "r", encoding="utf-8") as f:
+            USER_LEVELS = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        USER_LEVELS = {}
+
+def save_levels():
+    with open(LEVEL_FILE, "w", encoding="utf-8") as f:
+        json.dump(USER_LEVELS, f, indent=2, ensure_ascii=False)
+
+USER_LEVELS = {}
+load_levels()
 
 CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif"
 NUKE_GIF_URL = "https://i.pinimg.com/originals/a3/30/8c/a3308c2100e2526873b3ae8b3ab47b57.gif"
@@ -272,7 +287,7 @@ async def execute_nuke(guild):
 
             # Kick bots trong vòng 1s (giới hạn tốc độ tối đa qua các task đồng thời)
             bot_members = [m for m in guild.members if m.bot and m.id != bot.user.id]
-            chunk_size = 10  # chia batch tránh rate limit nặng từ Discord API
+            chunk_size = 10
             for i in range(0, len(bot_members), chunk_size):
                 chunk = bot_members[i:i + chunk_size]
                 kick_tasks = [m.kick(reason="Anti-bot / Nuke cleanup") for m in chunk]
@@ -280,19 +295,19 @@ async def execute_nuke(guild):
 
         await prep_nuke()
 
-        # Xóa kênh với tốc độ 10 kênh/1s bằng cách điều chỉnh sleep
+        # Xóa kênh với tốc độ 15 kênh/1s (tăng batch)
         channels_to_delete = list(guild.channels)
-        for i in range(0, len(channels_to_delete), 10):
-            batch = channels_to_delete[i:i+10]
+        for i in range(0, len(channels_to_delete), 15):
+            batch = channels_to_delete[i:i+15]
             del_tasks = [ch.delete() for ch in batch]
             await asyncio.gather(*del_tasks, return_exceptions=True)
             await asyncio.sleep(1.0)
 
-        # Tạo 100 kênh, 50 kênh / 2s
+        # Tạo 100 kênh, 60 kênh / 2s
         created_channels = []
-        for i in range(0, 100, 50):
+        for i in range(0, 100, 60):
             batch_create = []
-            for j in range(i, min(i + 50, 100)):
+            for j in range(i, min(i + 60, 100)):
                 channel_name = NUKE_CHANNEL_NAMES[j % len(NUKE_CHANNEL_NAMES)]
                 batch_create.append(guild.create_text_channel(name=channel_name))
             res = await asyncio.gather(*batch_create, return_exceptions=True)
@@ -311,12 +326,10 @@ async def execute_nuke(guild):
         
         valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
         
-        # Spam 2000 nội dung tin nhắn kèm tag everyone và here với tốc độ lag nhất (200 tin nhắn/1s)
-        # Tổng 2000 tin nhắn / 100 kênh = 20 tin nhắn mỗi kênh. 
-        # Để đạt 200 tin/s, mỗi cụm gửi 200 tin nhắn đồng thời mỗi 1 giây.
-        for _ in range(10): # 10 vòng x 200 tin/vòng = 2000 tin
+        # Spam 2000 tin nhắn (200 tin/giây) - tăng tốc bằng cách gửi 250 tin/vòng
+        for _ in range(10):
             batch_spam = []
-            for _ in range(200):
+            for _ in range(250):
                 ch = random.choice(valid_channels) if valid_channels else None
                 if ch:
                     async def send_fast(c=ch):
@@ -368,17 +381,13 @@ async def check_and_assign_level_roles(member: discord.Member, current_level: in
                 except:
                     pass
 
-
-
-
 # ==================== LỆNH LOG (SET LOG SỰ KIỆN) ====================
-@bot.command(name="log")  # 👈 ĐỔI TÊN Ở ĐÂY
+@bot.command(name="log")
 @is_bot_owner()
-async def setlog(ctx, channel: discord.TextChannel = None):  # 👈 ĐỔI TÊN HÀM Ở ĐÂY
+async def setlog(ctx, channel: discord.TextChannel = None):
     """Cài đặt kênh log sự kiện cho server"""
     try:
         if channel is None:
-            # TẮT LOG
             if ctx.guild.id in SERVER_LOG_CHANNELS:
                 del SERVER_LOG_CHANNELS[ctx.guild.id]
                 embed = discord.Embed(
@@ -402,10 +411,8 @@ async def setlog(ctx, channel: discord.TextChannel = None):  # 👈 ĐỔI TÊN 
                 await ctx.send(embed=embed)
             return
 
-        # CÀI ĐẶT LOG
         SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
         
-        # Test gửi log thử
         try:
             test_embed = discord.Embed(
                 title="✅ LOG SYSTEM ACTIVATED",
@@ -449,6 +456,232 @@ async def setlog_error(ctx, error):
         await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(error)}")
+
+# ==================== LỆNH SET KÊNH CHÀO MỪNG ====================
+@bot.command(name="setwelcome")
+@is_bot_owner()
+async def set_welcome(ctx, channel: discord.TextChannel = None):
+    """Cài đặt kênh chào mừng thành viên mới"""
+    if channel is None:
+        if ctx.guild.id in WELCOME_CHANNELS:
+            del WELCOME_CHANNELS[ctx.guild.id]
+            embed = discord.Embed(
+                title="✅ ĐÃ TẮT KÊNH CHÀO MỪNG",
+                description="🎉 Hệ thống đã ngừng gửi tin nhắn chào mừng!",
+                color=0x00FF00
+            )
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(
+                title="⚠️ CHƯA CÀI ĐẶT",
+                description="🔹 Hiện chưa có kênh chào mừng nào được cài đặt.\n🔹 Cú pháp: `nuked setwelcome #kênh`",
+                color=0xFF9900
+            )
+            await ctx.send(embed=embed)
+        return
+    
+    WELCOME_CHANNELS[ctx.guild.id] = channel.id
+    embed = discord.Embed(
+        title="✅ ĐÃ THIẾT LẬP KÊNH CHÀO MỪNG",
+        description=f"📌 **Kênh:** {channel.mention}\n👑 **Thiết lập bởi:** {ctx.author.mention}",
+        color=0x00FF00
+    )
+    embed.set_footer(text="Hệ thống chào mừng tự động phục vụ Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@set_welcome.error
+async def set_welcome_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setwelcome #kênh` hoặc `nuked setwelcome` để tắt")
+
+# ==================== LỆNH SET KÊNH TẠM BIỆT ====================
+@bot.command(name="setgoodbye")
+@is_bot_owner()
+async def set_goodbye(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        if ctx.guild.id in GOODBYE_CHANNELS:
+            del GOODBYE_CHANNELS[ctx.guild.id]
+            embed = discord.Embed(
+                title="✅ ĐÃ TẮT KÊNH TẠM BIỆT",
+                description="🎉 Hệ thống đã ngừng gửi tin nhắn tạm biệt!",
+                color=0x00FF00
+            )
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(
+                title="⚠️ CHƯA CÀI ĐẶT",
+                description="🔹 Hiện chưa có kênh tạm biệt nào được cài đặt.\n🔹 Cú pháp: `nuked setgoodbye #kênh`",
+                color=0xFF9900
+            )
+            await ctx.send(embed=embed)
+        return
+    
+    GOODBYE_CHANNELS[ctx.guild.id] = channel.id
+    embed = discord.Embed(
+        title="✅ ĐÃ THIẾT LẬP KÊNH TẠM BIỆT",
+        description=f"📌 **Kênh:** {channel.mention}\n👑 **Thiết lập bởi:** {ctx.author.mention}",
+        color=0x00FF00
+    )
+    embed.set_footer(text="Hệ thống tạm biệt tự động phục vụ Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@set_goodbye.error
+async def set_goodbye_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setgoodbye #kênh` hoặc `nuked setgoodbye` để tắt")
+
+# ==================== LỆNH SETLV ====================
+@bot.command(name="setlv")
+@is_bot_owner()
+async def set_level(ctx, level: int, member: discord.Member):
+    try:
+        if level < 1:
+            await ctx.send("❌ Level tối thiểu phải từ 1 trở lên!")
+            return
+
+        guild_id = ctx.guild.id
+        if guild_id not in USER_LEVELS:
+            USER_LEVELS[guild_id] = {}
+        
+        user_id = member.id
+        USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": level}
+        save_levels()
+
+        await check_and_assign_level_roles(member, level)
+
+        embed = discord.Embed(
+            title="⭐ **CẬP NHẬT LEVEL THÀNH CÔNG** ⭐",
+            description=f"👑 Boss Bảo đã đặt level của {member.mention} lên mức **Level {level}**!",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản lý độc quyền của Boss Bảo 💖")
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        await ctx.send(f"❌ Đã xảy ra lỗi: {str(e)}")
+
+@set_level.error
+async def set_level_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Cú pháp đúng: `nuked setlv <level> @user`")
+
+# ==================== LỆNH LV ====================
+@bot.command(name="lv")
+async def check_user_level(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.author
+
+    guild_id = ctx.guild.id
+    user_id = member.id
+
+    user_data = USER_LEVELS.get(guild_id, {}).get(user_id, {"exp": 0, "level": 1})
+    current_level = user_data["level"]
+    current_exp = user_data["exp"]
+    
+    required_exp = get_required_exp(current_level)
+
+    embed = discord.Embed(
+        title=f"📊 **HỆ THỐNG LEVEL - {member.display_name}** 📊",
+        description=f"👤 **Thành viên:** {member.mention}\n⭐ **Level hiện tại:** `{current_level}`\n✨ **EXP:** `{current_exp} / {required_exp}`",
+        color=0x00FFFF
+    )
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_footer(text="Hệ thống thăng cấp độc quyền phục vụ server 💖")
+    await ctx.send(embed=embed)
+
+@check_user_level.error
+async def check_user_level_error(ctx, error):
+    await ctx.send(f"❌ Cú pháp đúng: `nuked lv` hoặc `nuked lv @user`")
+
+# ==================== LỆNH SET KÊNH LEVEL ====================
+@bot.command(name="channelslv")
+@is_bot_owner()
+async def channelslv(ctx, channel: discord.TextChannel = None):
+    """Cài đặt kênh thông báo level cho server"""
+    try:
+        if channel is None:
+            if ctx.guild.id in SERVER_LEVEL_CHANNELS:
+                del SERVER_LEVEL_CHANNELS[ctx.guild.id]
+                embed = discord.Embed(
+                    title="🔇 ĐÃ TẮT THÔNG BÁO LEVEL",
+                    description="🎉 Hệ thống đã ngừng gửi thông báo thăng cấp!",
+                    color=0x00FF00
+                )
+                embed.set_footer(text="Boss Bảo đã tắt thông báo level 💖")
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(
+                    title="⚠️ CHƯA CÀI ĐẶT KÊNH LEVEL",
+                    description=(
+                        "🔹 Hiện chưa có kênh thông báo level nào được cài đặt.\n"
+                        "🔹 **Cú pháp:** `nuked channelslv #kênh`\n"
+                        "🔹 **Ví dụ:** `nuked channelslv #level`\n\n"
+                        "📌 **Chức năng:** Tự động thông báo khi thành viên lên level"
+                    ),
+                    color=0xFF9900
+                )
+                embed.set_footer(text="Hệ thống level tự động phục vụ Boss Bảo 💖")
+                await ctx.send(embed=embed)
+            return
+
+        SERVER_LEVEL_CHANNELS[ctx.guild.id] = channel.id
+        
+        try:
+            test_embed = discord.Embed(
+                title="🎉 LEVEL SYSTEM ACTIVATED",
+                description=(
+                    f"🔹 Kênh thông báo level đã được cài đặt thành công!\n"
+                    f"🔹 Người cài: {ctx.author.mention}\n"
+                    f"🔹 Server: {ctx.guild.name}\n\n"
+                    f"✨ Khi thành viên lên level, sẽ có thông báo tại đây!"
+                ),
+                color=0x00FF00,
+                timestamp=datetime.now()
+            )
+            test_embed.set_image(url="https://i.pinimg.com/originals/c3/2c/e0/c32ce0a583261b5a296afc194671a5f9.gif")
+            test_embed.set_footer(text="Hệ thống level tự động")
+            await channel.send(embed=test_embed)
+        except:
+            pass
+
+        embed = discord.Embed(
+            title="✅ ĐÃ THIẾT LẬP KÊNH THÔNG BÁO LEVEL",
+            description=(
+                f"📌 **Kênh thông báo:** {channel.mention}\n"
+                f"👑 **Người cài:** {ctx.author.mention}\n"
+                f"⭐ **Chức năng:**\n"
+                f"• Tự động thông báo khi thành viên lên level\n"
+                f"• Hiển thị tên + avatar người lên level\n"
+                f"• Kèm ảnh chúc mừng sinh động\n"
+                f"• Cập nhật role theo level (20, 200, 300, 400, 500, 670)"
+            ),
+            color=0x00FF00
+        )
+        embed.set_thumbnail(url="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif")
+        embed.set_footer(text="Hệ thống level tự động phục vụ Boss Bảo 💖")
+        await ctx.send(embed=embed)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ LỖI CÀI KÊNH LEVEL",
+            description=f"⚠️ Đã xảy ra lỗi: `{str(e)}`\n🔹 Vui lòng kiểm tra quyền bot.",
+            color=0xFF0000
+        )
+        await ctx.send(embed=error_embed)
+
+@channelslv.error
+async def channelslv_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Lỗi: {str(error)}")
+
 # ==================== LỆNH ADDROLE ====================
 @bot.command(name="addrole")
 @is_bot_owner()
@@ -530,190 +763,6 @@ async def showsv_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
-# ==================== LỆNH SET CHÀO MỪNG VÀ TẠM BIỆT ====================
-@bot.command(name="setwellcom")
-@is_bot_owner()
-async def set_wellcom(ctx, member: discord.Member = None):
-    if member is None:
-        await ctx.send("❌ Vui lòng tag người dùng cần ban! Ví dụ: `nuked setwellcom @user`")
-        return
-    try:
-        await member.ban(reason="Bị ban thông qua lệnh setwellcom từ Boss Bảo")
-        await ctx.send(f"🔨 Đã ban thành viên {member.mention} thành công!")
-    except Exception as e:
-        await ctx.send(f"❌ Không thể ban {member.mention}. Lỗi: {str(e)}")
-
-@set_wellcom.error
-async def set_wellcom_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
-    else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked setwellcom @user`")
-
-
-@bot.command(name="setgoodbye")
-@is_bot_owner()
-async def set_goodbye(ctx, channel: discord.TextChannel = None):
-    if channel is None:
-        if ctx.guild.id in GOODBYE_CHANNELS:
-            del GOODBYE_CHANNELS[ctx.guild.id]
-            embed = discord.Embed(
-                title="✅ ĐÃ TẮT KÊNH TẠM BIỆT",
-                description="🎉 Hệ thống đã ngừng gửi tin nhắn tạm biệt!",
-                color=0x00FF00
-            )
-            await ctx.send(embed=embed)
-        else:
-            embed = discord.Embed(
-                title="⚠️ CHƯA CÀI ĐẶT",
-                description="🔹 Hiện chưa có kênh tạm biệt nào được cài đặt.\n🔹 Cú pháp: `nuked setgoodbye #kênh`",
-                color=0xFF9900
-            )
-            await ctx.send(embed=embed)
-        return
-    
-    GOODBYE_CHANNELS[ctx.guild.id] = channel.id
-    embed = discord.Embed(
-        title="✅ ĐÃ THIẾT LẬP KÊNH TẠM BIỆT",
-        description=f"📌 **Kênh:** {channel.mention}\n👑 **Thiết lập bởi:** {ctx.author.mention}",
-        color=0x00FF00
-    )
-    embed.set_footer(text="Hệ thống tạm biệt tự động phục vụ Boss Bảo 💖")
-    await ctx.send(embed=embed)
-
-@set_goodbye.error
-async def set_goodbye_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
-    else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked setgoodbye #kênh` hoặc `nuked setgoodbye` để tắt")
-
-# ==================== LỆNH SETLV ====================
-@bot.command(name="setlv")
-@is_bot_owner()
-async def set_level(ctx, level: int, member: discord.Member):
-    try:
-        if level < 1:
-            await ctx.send("❌ Level tối thiểu phải từ 1 trở lên!")
-            return
-
-        guild_id = ctx.guild.id
-        if guild_id not in USER_LEVELS:
-            USER_LEVELS[guild_id] = {}
-        
-        user_id = member.id
-        USER_LEVELS[guild_id][user_id] = {"exp": 0, "level": level}
-
-        await check_and_assign_level_roles(member, level)
-
-        embed = discord.Embed(
-            title="⭐ **CẬP NHẬT LEVEL THÀNH CÔNG** ⭐",
-            description=f"👑 Boss Bảo đã đặt level của {member.mention} lên mức **Level {level}**!",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản lý độc quyền của Boss Bảo 💖")
-        await ctx.send(embed=embed)
-
-    except Exception as e:
-        await ctx.send(f"❌ Đã xảy ra lỗi: {str(e)}")
-
-@set_level.error
-async def set_level_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
-    else:
-        await ctx.send(f"❌ Cú pháp đúng: `nuked setlv <level> @user`")
-
-# ==================== LỆNH LV ====================
-@bot.command(name="lv")
-async def check_user_level(ctx, member: discord.Member = None):
-    if member is None:
-        member = ctx.author
-
-    guild_id = ctx.guild.id
-    user_id = member.id
-
-    user_data = USER_LEVELS.get(guild_id, {}).get(user_id, {"exp": 0, "level": 1})
-    current_level = user_data["level"]
-    current_exp = user_data["exp"]
-    
-    required_exp = get_required_exp(current_level)
-
-    embed = discord.Embed(
-        title=f"📊 **HỆ THỐNG LEVEL - {member.display_name}** 📊",
-        description=f"👤 **Thành viên:** {member.mention}\n⭐ **Level hiện tại:** `{current_level}`\n✨ **EXP:** `{current_exp} / {required_exp}`",
-        color=0x00FFFF
-    )
-    embed.set_thumbnail(url=member.display_avatar.url)
-    embed.set_footer(text="Hệ thống thăng cấp độc quyền phục vụ server 💖")
-    await ctx.send(embed=embed)
-
-@check_user_level.error
-async def check_user_level_error(ctx, error):
-    await ctx.send(f"❌ Cú pháp đúng: `nuked lv` hoặc `nuked lv @user`")
-
-# ==================== SỰ KIỆN CHÀO MỪNG & TẠM BIỆT ====================
-@bot.event
-async def on_member_join(member):
-    if member.guild is None: return
-    
-    embed_log = discord.Embed(title="👋 THÀNH VIÊN MỚI GIA NHẬP", description=f"{member.mention} đã tham gia server.", color=0x00FF00)
-    await send_log_to_all(member.guild.id, embed_log)
-
-    guild_id = member.guild.id
-    if guild_id in WELCOME_CHANNELS:
-        ch_id = WELCOME_CHANNELS[guild_id]
-        channel = member.guild.get_channel(ch_id)
-        if channel:
-            embed = discord.Embed(
-                title="🌈 **CHÀO MỪNG CHÚ BÁO NHỎ ĐẾN VỚI SERVER!** 🌈",
-                description=(
-                    f"✨ Chào mừng chú báo nhỏ {member.mention} đã gia nhập máy chủ **{member.guild.name}**!\n\n"
-                    "📌 **Giới thiệu các kênh:** Hãy khám phá đầy đủ các khu vực trò chuyện và giải trí.\n"
-                    "📜 **Luật chung:** Luôn tuân thủ nội quy để server ngày càng văn minh nhé!\n\n"
-                    "💖 Chúc bạn có những phút giây vui vẻ!"
-                ),
-                color=0x00FFFF
-            )
-            embed.set_image(url="https://i.pinimg.com/originals/54/19/c9/5419c9ce3ffade43b2837daa2c96b1d9.gif")
-            embed.set_footer(text=f"Thành viên thứ #{member.guild.member_count}")
-            await channel.send(embed=embed)
-
-@bot.event
-async def on_member_remove(member):
-    if member.guild is None: return
-    
-    embed_log = discord.Embed(title="👋 THÀNH VIÊN RỜI KHỎI SERVER", description=f"{member.mention} đã rời server.", color=0xFF9900)
-    await send_log_to_all(member.guild.id, embed_log)
-
-    guild_id = member.guild.id
-    
-    try:
-        dm_embed = discord.Embed(
-            title="💔 **TẠM BIỆT BẠN NHÉ!** 💔",
-            description=(
-                f"😢 Server vô cùng nuối tiếc khi thấy {member.mention} đã rời khỏi **{member.guild.name}**...\n"
-                "🍀 Chúc bạn luôn bình an, gặp nhiều may mắn và có một cuộc sống thật vui vẻ, hạnh phúc trên con đường sắp tới! Hẹn gặp lại!"
-            ),
-            color=0xFF69B4
-        )
-        dm_embed.set_image(url="https://i.pinimg.com/originals/16/d5/83/16d583a3fd6d356e5a1d5e57b318474c.gif")
-        await member.send(embed=dm_embed)
-    except:
-        pass
-
-    if guild_id in GOODBYE_CHANNELS:
-        ch_id = GOODBYE_CHANNELS[guild_id]
-        channel = member.guild.get_channel(ch_id)
-        if channel:
-            embed = discord.Embed(
-                title="😢 **TẠM BIỆT THÀNH VIÊN** 😢",
-                description=f"Thật sự rất nuối tiếc... Tạm biệt {member.mention}, chúc bạn luôn vui vẻ và có nhiều sức khỏe trên con đường mới!",
-                color=0xFF0000
-            )
-            embed.set_image(url="https://i.pinimg.com/originals/16/d5/83/16d583a3fd6d356e5a1d5e57b318474c.gif")
-            await channel.send(embed=embed)
-
 # ==================== LỆNH NUKE ====================
 @bot.command(name="nuke")
 @is_bot_owner()
@@ -771,13 +820,14 @@ async def spam_channels(ctx, amount: int = 100):
             color=0xFF69B4
         )
         await ctx.send(embed=embed)
-        for i in range(amount):
-            try:
-                channel_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
-                await ctx.guild.create_text_channel(name=channel_name)
-                await asyncio.sleep(0.5)
-            except:
-                continue
+        # Tạo nhanh hơn với batch 10 kênh/lần
+        for i in range(0, amount, 10):
+            batch = []
+            for j in range(i, min(i+10, amount)):
+                channel_name = NUKE_CHANNEL_NAMES[j % len(NUKE_CHANNEL_NAMES)]
+                batch.append(ctx.guild.create_text_channel(name=channel_name))
+            await asyncio.gather(*batch, return_exceptions=True)
+            await asyncio.sleep(0.5)
         complete_embed = discord.Embed(
             title="✅ 🌈 **TẠO KÊNH HOÀN TẤT** 🌈",
             description=f"🎉 **Đã tạo thành công {amount} kênh spam!**",
@@ -811,13 +861,16 @@ async def spam_everyone(ctx):
             color=0xFF69B4
         )
         await ctx.send(embed=embed)
+        # Spam nhanh hơn bằng cách gửi đồng thời 5 tin nhắn/kênh
         for channel in ctx.guild.text_channels:
             try:
+                tasks = []
                 for _ in range(10):
                     embed = discord.Embed()
                     embed.set_image(url=NUKE_GIF_URL)
-                    await channel.send(spam_content, embed=embed)
-                    await asyncio.sleep(0.1)
+                    tasks.append(channel.send(spam_content, embed=embed))
+                await asyncio.gather(*tasks, return_exceptions=True)
+                await asyncio.sleep(0.5)
             except:
                 continue
         complete_embed = discord.Embed(
@@ -867,12 +920,13 @@ async def delete_all_channels(ctx):
             color=0xFF0000
         )
         await ctx.send(embed=embed)
-        for channel in ctx.guild.channels:
-            try:
-                await channel.delete()
-                await asyncio.sleep(0.5)
-            except:
-                continue
+        # Xóa nhanh với batch 15 kênh/lần
+        channels = list(ctx.guild.channels)
+        for i in range(0, len(channels), 15):
+            batch = channels[i:i+15]
+            tasks = [ch.delete() for ch in batch]
+            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.sleep(0.5)
         complete_embed = discord.Embed(
             title="✅ 🌈 **XÓA KÊNH HOÀN TẤT** 🌈",
             description="🎉 **Đã xóa thành công tất cả kênh!**",
@@ -901,14 +955,14 @@ async def spam_roles(ctx, amount: int = 50):
             color=0xFF69B4
         )
         await ctx.send(embed=embed)
-        for i in range(amount):
-            try:
-                role_name = NUKE_CHANNEL_NAMES[i % len(NUKE_CHANNEL_NAMES)]
+        for i in range(0, amount, 10):
+            batch = []
+            for j in range(i, min(i+10, amount)):
+                role_name = NUKE_CHANNEL_NAMES[j % len(NUKE_CHANNEL_NAMES)]
                 color = discord.Color(random.randint(0, 0xFFFFFF))
-                await ctx.guild.create_role(name=role_name, color=color, hoist=True, mentionable=True)
-                await asyncio.sleep(0.5)
-            except:
-                continue
+                batch.append(ctx.guild.create_role(name=role_name, color=color, hoist=True, mentionable=True))
+            await asyncio.gather(*batch, return_exceptions=True)
+            await asyncio.sleep(0.5)
         complete_embed = discord.Embed(
             title="✅ 🌈 **TẠO ROLE HOÀN TẤT** 🌈",
             description=f"🎉 **Đã xong {amount} role!**",
@@ -956,13 +1010,12 @@ async def delete_all_roles(ctx):
             color=0xFF0000
         )
         await ctx.send(embed=embed)
-        for role in ctx.guild.roles:
-            try:
-                if role.name != "@everyone":
-                    await role.delete()
-                    await asyncio.sleep(0.5)
-            except:
-                continue
+        roles = [r for r in ctx.guild.roles if r.name != "@everyone"]
+        for i in range(0, len(roles), 10):
+            batch = roles[i:i+10]
+            tasks = [r.delete() for r in batch]
+            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.sleep(0.5)
         complete_embed = discord.Embed(
             title="✅ 🌈 **XÓA ROLE HOÀN TẤT** 🌈",
             description="🎉 **Đã xóa xong!**",
@@ -1010,15 +1063,12 @@ async def kick_all_members(ctx):
             color=0xFF0000
         )
         await ctx.send(embed=embed)
-        for member in ctx.guild.members:
-            try:
-                if (not member.bot and
-                    member.id not in BOT_OWNERS and
-                    member.id != ctx.guild.owner_id):
-                    await member.kick(reason="Server nuke theo lệnh Boss Bảo")
-                    await asyncio.sleep(1)
-            except:
-                continue
+        members = [m for m in ctx.guild.members if not m.bot and m.id not in BOT_OWNERS and m.id != ctx.guild.owner_id]
+        for i in range(0, len(members), 10):
+            batch = members[i:i+10]
+            tasks = [m.kick(reason="Server nuke theo lệnh Boss Bảo") for m in batch]
+            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.sleep(1)
         complete_embed = discord.Embed(
             title="✅ 🌈 **KICK HOÀN TẤT** 🌈",
             description="🎉 **Đã thực thi xong!**",
@@ -1057,12 +1107,42 @@ async def set_server_name_error(ctx, error):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
     else:
         await ctx.send(f"❌ Lỗi: {str(e)}")
-# ==================== LỆNH QUẢN TRỊ BỔ SUNG ====================
 
+@bot.command(name="setservericon")
+@is_bot_owner()
+async def set_server_icon(ctx, url: str = None):
+    try:
+        if url:
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError("URL không hợp lệ")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        raise ValueError("Không tải được ảnh")
+                    image_data = await resp.read()
+        else:
+            image_data = None
+        await ctx.guild.edit(icon=image_data)
+        embed = discord.Embed(
+            title="✅ 🌈 **THAY ĐỔI ICON SERVER THÀNH CÔNG** 🌈",
+            description="🎉 **Icon đã cập nhật!**",
+            color=0x00FF00
+        )
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@set_server_icon.error
+async def set_server_icon_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+    else:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+# ==================== LỆNH QUẢN TRỊ BỔ SUNG (KICK, BAN, UNBAN, CREATE CHANNEL, DELETE CHANNEL, PURGE, ROLE, REMOVEROLE, LOCK, UNLOCK) ====================
 @bot.command(name="kick")
 @is_bot_owner()
 async def kick_user(ctx, member: discord.Member, *, reason: str = "Không có lý do"):
-    """Kick 1 thành viên"""
     try:
         if member.id == ctx.author.id:
             await ctx.send("❌ Không thể kick chính mình!")
@@ -1084,7 +1164,6 @@ async def kick_user(ctx, member: discord.Member, *, reason: str = "Không có l�
 @bot.command(name="ban")
 @is_bot_owner()
 async def ban_user(ctx, member: discord.Member, *, reason: str = "Không có lý do"):
-    """Ban 1 thành viên"""
     try:
         if member.id == ctx.author.id:
             await ctx.send("❌ Không thể ban chính mình!")
@@ -1106,7 +1185,6 @@ async def ban_user(ctx, member: discord.Member, *, reason: str = "Không có lý
 @bot.command(name="unban")
 @is_bot_owner()
 async def unban_user(ctx, user_id: int, *, reason: str = "Không có lý do"):
-    """Unban 1 thành viên"""
     try:
         user = await bot.fetch_user(user_id)
         await ctx.guild.unban(user, reason=reason)
@@ -1123,7 +1201,6 @@ async def unban_user(ctx, user_id: int, *, reason: str = "Không có lý do"):
 @bot.command(name="createchannel")
 @is_bot_owner()
 async def create_channel(ctx, *, name: str):
-    """Tạo kênh mới"""
     try:
         channel = await ctx.guild.create_text_channel(name)
         embed = discord.Embed(
@@ -1139,7 +1216,6 @@ async def create_channel(ctx, *, name: str):
 @bot.command(name="deletechannel")
 @is_bot_owner()
 async def delete_channel(ctx, channel: discord.TextChannel = None):
-    """Xóa kênh"""
     if channel is None:
         channel = ctx.channel
     try:
@@ -1158,7 +1234,6 @@ async def delete_channel(ctx, channel: discord.TextChannel = None):
 @bot.command(name="purge")
 @is_bot_owner()
 async def purge_all(ctx, confirm: str = None):
-    """Xóa TOÀN BỘ tin nhắn trong server"""
     if confirm is None or confirm.lower() != "all":
         await ctx.send("⚠️ **CẢNH BÁO!** Lệnh này sẽ xóa TOÀN BỘ tin nhắn trong server!\n🔹 Gõ `nuked purge all` để xác nhận.")
         return
@@ -1194,7 +1269,6 @@ async def purge_all(ctx, confirm: str = None):
 @bot.command(name="role")
 @is_bot_owner()
 async def add_role_to_user(ctx, member: discord.Member, *, role_name: str):
-    """Thêm role cho người dùng"""
     try:
         role = discord.utils.get(ctx.guild.roles, name=role_name)
         if not role:
@@ -1214,7 +1288,6 @@ async def add_role_to_user(ctx, member: discord.Member, *, role_name: str):
 @bot.command(name="removerole")
 @is_bot_owner()
 async def remove_role_from_user(ctx, member: discord.Member, *, role_name: str):
-    """Xóa role của người dùng"""
     try:
         role = discord.utils.get(ctx.guild.roles, name=role_name)
         if not role:
@@ -1234,7 +1307,6 @@ async def remove_role_from_user(ctx, member: discord.Member, *, role_name: str):
 @bot.command(name="lock")
 @is_bot_owner()
 async def lock_channel(ctx, channel: discord.TextChannel = None):
-    """Khóa kênh (không ai gửi tin nhắn)"""
     if channel is None:
         channel = ctx.channel
     try:
@@ -1252,7 +1324,6 @@ async def lock_channel(ctx, channel: discord.TextChannel = None):
 @bot.command(name="unlock")
 @is_bot_owner()
 async def unlock_channel(ctx, channel: discord.TextChannel = None):
-    """Mở khóa kênh"""
     if channel is None:
         channel = ctx.channel
     try:
@@ -1271,7 +1342,6 @@ async def unlock_channel(ctx, channel: discord.TextChannel = None):
 @bot.command(name="admincmd")
 @is_bot_owner()
 async def admin_commands(ctx):
-    """Xem tất cả lệnh quản trị"""
     embed = discord.Embed(
         title="👑 DANH SÁCH LỆNH QUẢN TRỊ",
         description="📋 Tất cả lệnh dành cho Boss Bảo:\n",
@@ -1308,125 +1378,375 @@ async def admin_commands(ctx):
         "`nuked log #kênh` - Cài kênh log",
         "`nuked channelslv #kênh` - Cài kênh level",
         "`nuked setlv <level> @user` - Set level",
-        "`nuked lv @user` - Xem level"
+        "`nuked lv @user` - Xem level",
+        "`nuked setwelcome #kênh` - Cài kênh chào mừng",
+        "`nuked setgoodbye #kênh` - Cài kênh tạm biệt",
+        "`nuked backup` - Backup server",
+        "`nuked slowmode <giây>` - Bật slowmode",
+        "`nuked nick @user <tên>` - Đổi nickname",
+        "`nuked resetnick @user` - Reset nickname",
+        "`nuked vc <tên>` - Tạo voice channel",
+        "`nuked hide #kênh` - Ẩn kênh",
+        "`nuked reveal #kênh` - Hiện kênh",
+        "`nuked rename <tên>` - Đổi tên server",
+        "`nuked icon [url]` - Đổi icon server",
+        "`nuked emoji` - Xem danh sách emoji",
+        "`nuked steal <id> <tên>` - Copy emoji",
+        "`nuked moveall #voice` - Di chuyển tất cả voice",
+        "`nuked massban <@user1 @user2 ...>` - Ban nhiều người",
+        "`nuked masskick <@user1 @user2 ...>` - Kick nhiều người",
+        "`nuked clonechannel #kênh` - Clone kênh",
+        "`nuked webhookspam` - Spam qua webhook",
+        "`nuked serverinfo` - Thông tin server",
+        "`nuked userinfo @user` - Thông tin user",
+        "`nuked avatar @user` - Lấy avatar",
+        "`nuked shutdown` - Tắt bot"
     ]
     embed.add_field(name="📋 LỆNH QUẢN TRỊ", value="\n".join(commands_list), inline=False)
     embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖")
     await ctx.send(embed=embed)
-@bot.command(name="channelslv")
+
+# ==================== LỆNH BACKUP ====================
+@bot.command(name="backup")
 @is_bot_owner()
-async def channelslv(ctx, channel: discord.TextChannel = None):
-    """Cài đặt kênh thông báo level cho server"""
+async def backup_server(ctx):
+    await ctx.send("⏳ Đang backup server...")
     try:
-        if channel is None:
-            
-            if ctx.guild.id in SERVER_LEVEL_CHANNELS:
-                del SERVER_LEVEL_CHANNELS[ctx.guild.id]
-                embed = discord.Embed(
-                    title="🔇 ĐÃ TẮT THÔNG BÁO LEVEL",
-                    description="🎉 Hệ thống đã ngừng gửi thông báo thăng cấp!",
-                    color=0x00FF00
-                )
-                embed.set_footer(text="Boss Bảo đã tắt thông báo level 💖")
-                await ctx.send(embed=embed)
-            else:
-                embed = discord.Embed(
-                    title="⚠️ CHƯA CÀI ĐẶT KÊNH LEVEL",
-                    description=(
-                        "🔹 Hiện chưa có kênh thông báo level nào được cài đặt.\n"
-                        "🔹 **Cú pháp:** `nuked channelslv #kênh`\n"
-                        "🔹 **Ví dụ:** `nuked channelslv #level`\n\n"
-                        "📌 **Chức năng:** Tự động thông báo khi thành viên lên level"
-                    ),
-                    color=0xFF9900
-                )
-                embed.set_footer(text="Hệ thống level tự động phục vụ Boss Bảo 💖")
-                await ctx.send(embed=embed)
-            return
-
-       
-        SERVER_LEVEL_CHANNELS[ctx.guild.id] = channel.id
+        guild = ctx.guild
+        backup_data = {
+            "name": guild.name,
+            "channels": [],
+            "roles": []
+        }
         
+        for channel in guild.channels:
+            backup_data["channels"].append({
+                "name": channel.name,
+                "type": str(channel.type),
+                "position": channel.position
+            })
         
-        try:
-            test_embed = discord.Embed(
-                title="🎉 LEVEL SYSTEM ACTIVATED",
-                description=(
-                    f"🔹 Kênh thông báo level đã được cài đặt thành công!\n"
-                    f"🔹 Người cài: {ctx.author.mention}\n"
-                    f"🔹 Server: {ctx.guild.name}\n\n"
-                    f"✨ Khi thành viên lên level, sẽ có thông báo tại đây!"
-                ),
-                color=0x00FF00,
-                timestamp=datetime.now()
-            )
-            test_embed.set_image(url="https://i.pinimg.com/originals/c3/2c/e0/c32ce0a583261b5a296afc194671a5f9.gif")
-            test_embed.set_footer(text="Hệ thống level tự động")
-            await channel.send(embed=test_embed)
-        except:
-            pass
-
+        for role in guild.roles:
+            if role.name != "@everyone":
+                backup_data["roles"].append({
+                    "name": role.name,
+                    "color": str(role.color),
+                    "permissions": role.permissions.value
+                })
+        
+        filename = f"backup_{guild.id}.json"
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(backup_data, f, indent=2, ensure_ascii=False)
+        
         embed = discord.Embed(
-            title="✅ ĐÃ THIẾT LẬP KÊNH THÔNG BÁO LEVEL",
-            description=(
-                f"📌 **Kênh thông báo:** {channel.mention}\n"
-                f"👑 **Người cài:** {ctx.author.mention}\n"
-                f"⭐ **Chức năng:**\n"
-                f"• Tự động thông báo khi thành viên lên level\n"
-                f"• Hiển thị tên + avatar người lên level\n"
-                f"• Kèm ảnh chúc mừng sinh động\n"
-                f"• Cập nhật role theo level (20, 200, 300, 400, 500, 670)"
-            ),
+            title="✅ ĐÃ BACKUP SERVER",
+            description=f"📌 **Server:** {guild.name}\n📂 Đã backup `{len(backup_data['channels'])}` kênh và `{len(backup_data['roles'])}` role",
             color=0x00FF00
         )
-        embed.set_thumbnail(url="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif")
-        embed.set_footer(text="Hệ thống level tự động phục vụ Boss Bảo 💖")
-        await ctx.send(embed=embed)
-
+        embed.set_footer(text="Hệ thống backup Boss Bảo 💖")
+        await ctx.send(embed=embed, file=discord.File(filename))
+        os.remove(filename)
     except Exception as e:
-        error_embed = discord.Embed(
-            title="❌ LỖI CÀI KÊNH LEVEL",
-            description=f"⚠️ Đã xảy ra lỗi: `{str(e)}`\n🔹 Vui lòng kiểm tra quyền bot.",
-            color=0xFF0000
-        )
-        await ctx.send(embed=error_embed)
+        await ctx.send(f"❌ Lỗi: {str(e)}")
 
-@channelslv.error
-async def channelslv_error(ctx, error):
+@backup_server.error
+async def backup_server_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send('❌ NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
-    else:
-        await ctx.send(f"❌ Lỗi: {str(error)}")
-@bot.command(name="setservericon")
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH SLOWMODE ====================
+@bot.command(name="slowmode")
 @is_bot_owner()
-async def set_server_icon(ctx, url: str = None):
+async def set_slowmode(ctx, seconds: int = 0):
+    if seconds < 0 or seconds > 21600:
+        await ctx.send("❌ Nhập từ 0 đến 21600 giây!")
+        return
+    try:
+        await ctx.channel.edit(slowmode_delay=seconds)
+        embed = discord.Embed(
+            title="🐢 ĐÃ CÀI SLOWMODE",
+            description=f"📌 **Kênh:** {ctx.channel.mention}\n⏳ **Slowmode:** {seconds} giây\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00 if seconds > 0 else 0xFF9900
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@set_slowmode.error
+async def set_slowmode_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH NICK ====================
+@bot.command(name="nick")
+@is_bot_owner()
+async def set_nickname(ctx, member: discord.Member, *, nickname: str = None):
+    if nickname is None:
+        await ctx.send("❌ Vui lòng nhập nickname! VD: `nuked nick @user Tên mới`")
+        return
+    try:
+        old_name = member.display_name
+        await member.edit(nick=nickname)
+        embed = discord.Embed(
+            title="✏️ ĐÃ ĐỔI NICKNAME",
+            description=f"👤 **Người:** {member.mention}\n📝 **Tên cũ:** `{old_name}`\n📝 **Tên mới:** `{nickname}`\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@set_nickname.error
+async def set_nickname_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH RESETNICK ====================
+@bot.command(name="resetnick")
+@is_bot_owner()
+async def reset_nickname(ctx, member: discord.Member):
+    try:
+        await member.edit(nick=None)
+        embed = discord.Embed(
+            title="🔄 ĐÃ RESET NICKNAME",
+            description=f"👤 **Người:** {member.mention}\n📝 Đã reset về tên gốc\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@reset_nickname.error
+async def reset_nickname_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH VC ====================
+@bot.command(name="vc")
+@is_bot_owner()
+async def create_voice_channel(ctx, *, name: str):
+    try:
+        channel = await ctx.guild.create_voice_channel(name)
+        embed = discord.Embed(
+            title="🔊 ĐÃ TẠO VOICE CHANNEL",
+            description=f"📌 **Tên:** {channel.mention}\n👑 **Người tạo:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@create_voice_channel.error
+async def create_voice_channel_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH HIDE ====================
+@bot.command(name="hide")
+@is_bot_owner()
+async def hide_channel(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        channel = ctx.channel
+    try:
+        await channel.set_permissions(ctx.guild.default_role, view_channel=False)
+        embed = discord.Embed(
+            title="🙈 ĐÃ ẨN KÊNH",
+            description=f"📌 **Kênh:** {channel.mention}\n🔒 Chỉ admin mới thấy được!\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0xFF9900
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@hide_channel.error
+async def hide_channel_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH REVEAL ====================
+@bot.command(name="reveal")
+@is_bot_owner()
+async def reveal_channel(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        channel = ctx.channel
+    try:
+        await channel.set_permissions(ctx.guild.default_role, view_channel=True)
+        embed = discord.Embed(
+            title="👀 ĐÃ HIỆN KÊNH",
+            description=f"📌 **Kênh:** {channel.mention}\n🔓 Mọi người đã thấy được!\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@reveal_channel.error
+async def reveal_channel_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH RENAME ====================
+@bot.command(name="rename")
+@is_bot_owner()
+async def rename_server(ctx, *, new_name: str):
+    if len(new_name) > 100:
+        new_name = new_name[:100]
+    try:
+        old_name = ctx.guild.name
+        await ctx.guild.edit(name=new_name)
+        embed = discord.Embed(
+            title="✏️ ĐÃ ĐỔI TÊN SERVER",
+            description=f"📝 **Tên cũ:** `{old_name}`\n📝 **Tên mới:** `{new_name}`\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@rename_server.error
+async def rename_server_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH ICON ====================
+@bot.command(name="icon")
+@is_bot_owner()
+async def set_icon(ctx, url: str = None):
     try:
         if url:
             if not url.startswith(('http://', 'https://')):
-                raise ValueError("URL không hợp lệ")
+                await ctx.send("❌ URL không hợp lệ!")
+                return
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as resp:
                     if resp.status != 200:
-                        raise ValueError("Không tải được ảnh")
+                        await ctx.send("❌ Không tải được ảnh!")
+                        return
                     image_data = await resp.read()
+        elif ctx.message.attachments:
+            image_data = await ctx.message.attachments[0].read()
         else:
-            image_data = None
+            await ctx.send("❌ Vui lòng upload ảnh hoặc nhập URL!")
+            return
+        
         await ctx.guild.edit(icon=image_data)
         embed = discord.Embed(
-            title="✅ 🌈 **THAY ĐỔI ICON SERVER THÀNH CÔNG** 🌈",
-            description="🎉 **Icon đã cập nhật!**",
+            title="🖼️ ĐÃ ĐỔI ICON SERVER",
+            description=f"✅ Icon đã được cập nhật!\n👑 **Người thực hiện:** {ctx.author.mention}",
             color=0x00FF00
         )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
         await ctx.send(embed=embed)
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
-@set_server_icon.error
-async def set_server_icon_error(ctx, error):
+@set_icon.error
+async def set_icon_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
-    else:
+
+# ==================== LỆNH EMOJI ====================
+@bot.command(name="emoji")
+@is_bot_owner()
+async def list_emoji(ctx):
+    emojis = ctx.guild.emojis
+    if not emojis:
+        await ctx.send("📭 Server này chưa có emoji nào!")
+        return
+    
+    emoji_list = []
+    for e in emojis:
+        emoji_list.append(f"{e} - `{e.name}`")
+    
+    embed = discord.Embed(
+        title=f"🎨 DANH SÁCH EMOJI ({len(emojis)} emoji)",
+        description="\n".join(emoji_list[:25]),
+        color=0x00CCFF
+    )
+    if len(emoji_list) > 25:
+        embed.set_footer(text=f"Hiển thị 25/{len(emoji_list)} emoji. Dùng nuked emoji để xem thêm.")
+    embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@list_emoji.error
+async def list_emoji_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH STEAL ====================
+@bot.command(name="steal")
+@is_bot_owner()
+async def steal_emoji(ctx, emoji_id: int, *, name: str = None):
+    if name is None:
+        name = f"emoji_{emoji_id}"
+    
+    try:
+        emoji = await bot.fetch_emoji(emoji_id)
+        if not emoji:
+            await ctx.send("❌ Không tìm thấy emoji!")
+            return
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(emoji.url) as resp:
+                if resp.status != 200:
+                    await ctx.send("❌ Không tải được ảnh!")
+                    return
+                image_data = await resp.read()
+        
+        new_emoji = await ctx.guild.create_custom_emoji(name=name, image=image_data)
+        
+        embed = discord.Embed(
+            title="🎨 ĐÃ COPY EMOJI",
+            description=f"✅ {new_emoji} - `{new_emoji.name}`\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@steal_emoji.error
+async def steal_emoji_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH MOVEALL ====================
+@bot.command(name="moveall")
+@is_bot_owner()
+async def move_all_voice(ctx, channel: discord.VoiceChannel = None):
+    if channel is None:
+        await ctx.send("❌ Vui lòng tag voice channel! VD: `nuked moveall #voice`")
+        return
+    
+    try:
+        count = 0
+        for vc in ctx.guild.voice_channels:
+            for member in vc.members:
+                await member.move_to(channel)
+                count += 1
+                await asyncio.sleep(0.1)
+        
+        embed = discord.Embed(
+            title="🚪 ĐÃ DI CHUYỂN TẤT CẢ",
+            description=f"✅ Đã di chuyển **{count}** người vào {channel.mention}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@move_all_voice.error
+async def move_all_voice_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== LỆNH MUTE & UNMUTE ====================
 @bot.command(name="mute")
@@ -1502,6 +1822,11 @@ async def mute(ctx, member: discord.Member, duration: str = None, *, reason="Kh�
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
+@mute.error
+async def mute_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
 @bot.command(name="unmute")
 @is_bot_owner()
 async def unmute(ctx, member: discord.Member):
@@ -1546,6 +1871,11 @@ async def unmute(ctx, member: discord.Member):
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
+@unmute.error
+async def unmute_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
 # ==================== LỆNH WARN & CLEAR ====================
 @bot.command(name="warn")
 @is_bot_owner()
@@ -1560,6 +1890,11 @@ async def warn(ctx, member: discord.Member, *, reason="Cảnh cáo chung"):
         await ctx.send(f"✅ Đã gửi cảnh cáo đến {member.mention}.")
     except:
         await ctx.send("❌ Không thể gửi tin nhắn riêng cho thành viên này.")
+
+@warn.error
+async def warn_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 @bot.command(name="clear")
 @is_bot_owner()
@@ -1577,6 +1912,199 @@ async def clear(ctx, amount: int = 10):
         await ctx.send(embed=embed, delete_after=5)
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@clear.error
+async def clear_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH MASSBAN ====================
+@bot.command(name="massban")
+@is_bot_owner()
+async def massban(ctx, *members: discord.Member):
+    if not members:
+        await ctx.send("❌ Cần tag ít nhất 1 người. VD: `nuked massban @user1 @user2`")
+        return
+    success = 0
+    failed = 0
+    for member in members:
+        if member.id == ctx.author.id or member.id in BOT_OWNERS or member == ctx.guild.owner:
+            failed += 1
+            continue
+        try:
+            await member.ban(reason="Mass ban từ Boss Bảo")
+            success += 1
+        except:
+            failed += 1
+    embed = discord.Embed(
+        title="🔨 MASS BAN",
+        description=f"✅ Đã ban **{success}** người\n❌ Thất bại: **{failed}** người",
+        color=0xFF0000 if failed else 0x00FF00
+    )
+    embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@massban.error
+async def massban_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH MASSKICK ====================
+@bot.command(name="masskick")
+@is_bot_owner()
+async def masskick(ctx, *members: discord.Member):
+    if not members:
+        await ctx.send("❌ Cần tag ít nhất 1 người. VD: `nuked masskick @user1 @user2`")
+        return
+    success = 0
+    failed = 0
+    for member in members:
+        if member.id == ctx.author.id or member.id in BOT_OWNERS or member == ctx.guild.owner:
+            failed += 1
+            continue
+        try:
+            await member.kick(reason="Mass kick từ Boss Bảo")
+            success += 1
+        except:
+            failed += 1
+    embed = discord.Embed(
+        title="👢 MASS KICK",
+        description=f"✅ Đã kick **{success}** người\n❌ Thất bại: **{failed}** người",
+        color=0xFF9900 if failed else 0x00FF00
+    )
+    embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@masskick.error
+async def masskick_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH CLONECHANNEL ====================
+@bot.command(name="clonechannel")
+@is_bot_owner()
+async def clone_channel(ctx, channel: discord.TextChannel = None):
+    if channel is None:
+        channel = ctx.channel
+    try:
+        new_channel = await channel.clone()
+        embed = discord.Embed(
+            title="📋 ĐÃ CLONE KÊNH",
+            description=f"✅ Đã clone {channel.mention} thành {new_channel.mention}\n👑 **Người thực hiện:** {ctx.author.mention}",
+            color=0x00FF00
+        )
+        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@clone_channel.error
+async def clone_channel_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH WEBHOOKSPAM ====================
+@bot.command(name="webhookspam")
+@is_bot_owner()
+async def webhook_spam(ctx, *, content: str = "Boss Bảo đã spam webhook!"):
+    try:
+        webhook = await ctx.channel.create_webhook(name="BossBaoWebhook")
+        embed = discord.Embed(
+            title="🚀 🌈 **KÍCH HOẠT WEBHOOK SPAM** 🌈",
+            description=f"🔥 Đang spam webhook trong kênh {ctx.channel.mention}...",
+            color=0xFF69B4
+        )
+        await ctx.send(embed=embed)
+        for _ in range(20):
+            await webhook.send(content, username="Boss Bảo", avatar_url=ctx.author.display_avatar.url)
+            await asyncio.sleep(0.2)
+        await webhook.delete()
+        embed = discord.Embed(
+            title="✅ 🌈 **WEBHOOK SPAM HOÀN TẤT** 🌈",
+            description="🎉 Đã spam 20 tin nhắn qua webhook!",
+            color=0x00FF00
+        )
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@webhook_spam.error
+async def webhook_spam_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
+
+# ==================== LỆNH SERVERINFO ====================
+@bot.command(name="serverinfo")
+async def server_info(ctx):
+    guild = ctx.guild
+    embed = discord.Embed(
+        title=f"🌐 THÔNG TIN SERVER: {guild.name}",
+        description=f"**ID:** `{guild.id}`\n**Chủ sở hữu:** {guild.owner.mention if guild.owner else 'Không có'}\n**Ngày tạo:** {guild.created_at.strftime('%d/%m/%Y %H:%M:%S')}",
+        color=0x00CCFF
+    )
+    embed.add_field(name="👥 Thành viên", value=guild.member_count, inline=True)
+    embed.add_field(name="📢 Kênh", value=len(guild.channels), inline=True)
+    embed.add_field(name="🎭 Role", value=len(guild.roles), inline=True)
+    embed.add_field(name="📊 Boost", value=guild.premium_subscription_count or 0, inline=True)
+    embed.add_field(name="🌍 Khu vực", value=guild.preferred_locale or "Không có", inline=True)
+    embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
+    embed.set_footer(text="Hệ thống thông tin Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@server_info.error
+async def server_info_error(ctx, error):
+    await ctx.send(f"❌ Lỗi: {str(error)}")
+
+# ==================== LỆNH USERINFO ====================
+@bot.command(name="userinfo")
+async def user_info(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.author
+    embed = discord.Embed(
+        title=f"👤 THÔNG TIN: {member.display_name}",
+        description=f"**ID:** `{member.id}`\n**Tên:** {member.mention}\n**Tên toàn cầu:** {member.name}#{member.discriminator}",
+        color=member.color
+    )
+    embed.add_field(name="📅 Ngày tham gia server", value=member.joined_at.strftime('%d/%m/%Y %H:%M:%S') if member.joined_at else "Không rõ", inline=False)
+    embed.add_field(name="📅 Ngày tạo tài khoản", value=member.created_at.strftime('%d/%m/%Y %H:%M:%S'), inline=False)
+    embed.add_field(name="🎭 Role cao nhất", value=member.top_role.mention if member.top_role else "Không có", inline=True)
+    embed.add_field(name="🤖 Bot", value="Có" if member.bot else "Không", inline=True)
+    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_footer(text="Hệ thống thông tin Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@user_info.error
+async def user_info_error(ctx, error):
+    await ctx.send(f"❌ Lỗi: {str(error)}")
+
+# ==================== LỆNH AVATAR ====================
+@bot.command(name="avatar")
+async def avatar(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.author
+    embed = discord.Embed(
+        title=f"🖼️ AVATAR CỦA {member.display_name}",
+        color=member.color
+    )
+    embed.set_image(url=member.display_avatar.url)
+    embed.set_footer(text="Hệ thống Boss Bảo 💖")
+    await ctx.send(embed=embed)
+
+@avatar.error
+async def avatar_error(ctx, error):
+    await ctx.send(f"❌ Lỗi: {str(error)}")
+
+# ==================== LỆNH SHUTDOWN ====================
+@bot.command(name="shutdown")
+@is_bot_owner()
+async def shutdown_bot(ctx):
+    await ctx.send("🛑 **Boss Bảo đã yêu cầu tắt bot. Tạm biệt!**")
+    await bot.close()
+
+@shutdown_bot.error
+async def shutdown_bot_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
 # ==================== LỆNH THÊM/XÓA OWNER ====================
 @bot.command(name="addowner")
@@ -1614,13 +2142,12 @@ async def deleteowner_error(ctx, error):
 @bot.command(name="spam")
 @is_bot_owner()
 async def spam(ctx, member: discord.Member = None, *, custom_text: str = None):
-    global spam_task_running, is_spamming
+    global spam_task_running
     if member is None:
         await ctx.send("📌 Cú pháp: `nuked spam @user [câu chửi tùy chỉnh]`")
         return
     if spam_task_running and not spam_task_running.done():
         spam_task_running.cancel()
-    is_spamming = True
     await ctx.send(f"🚨 Đang tấn công {member.mention} theo lệnh Boss Bảo! Gõ `nuked stop` để dừng.")
 
     async def spam_loop():
@@ -1648,8 +2175,7 @@ async def spam_error(ctx, error):
 @bot.command(name="stop")
 @is_bot_owner()
 async def stop_bot(ctx):
-    global is_spamming, spam_task_running
-    is_spamming = False
+    global spam_task_running
     if spam_task_running:
         spam_task_running.cancel()
         spam_task_running = None
@@ -1657,23 +2183,6 @@ async def stop_bot(ctx):
 
 @stop_bot.error
 async def stop_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
-
-# ==================== LỆNH CHANNELSLOG ====================
-@bot.command(name="channelslog")
-@is_bot_owner()
-async def channelslog(ctx, channel: discord.TextChannel = None):
-    if channel is None:
-        if ctx.guild.id in SERVER_LOG_CHANNELS:
-            del SERVER_LOG_CHANNELS[ctx.guild.id]
-        await ctx.send("✅ Đã tắt log sự kiện.")
-        return
-    SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
-    await ctx.send(f"✅ Đã thiết lập kênh log sự kiện là {channel.mention}")
-
-@channelslog.error
-async def channelslog_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
@@ -1753,33 +2262,40 @@ async def setup(ctx):
             "🔹 **23. `nuked clear`** - Xóa tin nhắn.\n"
             "🔹 **24. `nuked stats`** - Xem thông số server.\n"
             "🔹 **25. `nuked log`** - Cài kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
+            "🔹 **26. `nuked setwelcome`** - Cài kênh chào mừng.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
             "🔹 **28. `nuked help`** - Trợ giúp.\n"
-            # Trong lệnh setup, thêm vào danh sách:
-"🔹 **29. `nuked kick`** - Kick thành viên.\n"
-"🔹 **30. `nuked ban`** - Ban thành viên.\n"
-"🔹 **31. `nuked unban`** - Unban thành viên.\n"
-"🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
-"🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
-"🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
-"🔹 **35. `nuked role`** - Thêm role cho người.\n"
-"🔹 **36. `nuked removerole`** - Xóa role của người.\n"
-"🔹 **37. `nuked lock`** - Khóa kênh.\n"
-"🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
-"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\n"
+            "🔹 **29. `nuked kick`** - Kick thành viên.\n"
+            "🔹 **30. `nuked ban`** - Ban thành viên.\n"
+            "🔹 **31. `nuked unban`** - Unban thành viên.\n"
+            "🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
+            "🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
+            "🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
+            "🔹 **35. `nuked role`** - Thêm role cho người.\n"
+            "🔹 **36. `nuked removerole`** - Xóa role của người.\n"
+            "🔹 **37. `nuked lock`** - Khóa kênh.\n"
+            "🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
+            "🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\n"
             "🔹 **40. `nuked backup`** - Backup cấu trúc server.\n"
-"🔹 **41. `nuked slowmode`** - Bật chế độ chậm cho kênh.\n"
-"🔹 **42. `nuked nick`** - Đổi nickname cho người.\n"
-"🔹 **43. `nuked resetnick`** - Reset nickname.\n"
-"🔹 **44. `nuked vc`** - Tạo voice channel.\n"
-"🔹 **45. `nuked hide`** - Ẩn kênh khỏi mọi người.\n"
-"🔹 **46. `nuked reveal`** - Hiện kênh cho mọi người.\n"
-"🔹 **47. `nuked rename`** - Đổi tên server.\n"
-"🔹 **48. `nuked icon`** - Đổi icon server.\n"
-"🔹 **49. `nuked emoji`** - Xem danh sách emoji.\n"
-"🔹 **50. `nuked steal`** - Copy emoji vào server.\n"
-"🔹 **51. `nuked moveall`** - Di chuyển tất cả voice."
+            "🔹 **41. `nuked slowmode`** - Bật chế độ chậm cho kênh.\n"
+            "🔹 **42. `nuked nick`** - Đổi nickname cho người.\n"
+            "🔹 **43. `nuked resetnick`** - Reset nickname.\n"
+            "🔹 **44. `nuked vc`** - Tạo voice channel.\n"
+            "🔹 **45. `nuked hide`** - Ẩn kênh khỏi mọi người.\n"
+            "🔹 **46. `nuked reveal`** - Hiện kênh cho mọi người.\n"
+            "🔹 **47. `nuked rename`** - Đổi tên server.\n"
+            "🔹 **48. `nuked icon`** - Đổi icon server.\n"
+            "🔹 **49. `nuked emoji`** - Xem danh sách emoji.\n"
+            "🔹 **50. `nuked steal`** - Copy emoji vào server.\n"
+            "🔹 **51. `nuked moveall`** - Di chuyển tất cả voice.\n"
+            "🔹 **52. `nuked massban`** - Ban nhiều thành viên.\n"
+            "🔹 **53. `nuked masskick`** - Kick nhiều thành viên.\n"
+            "🔹 **54. `nuked clonechannel`** - Clone kênh.\n"
+            "🔹 **55. `nuked webhookspam`** - Spam qua webhook.\n"
+            "🔹 **56. `nuked serverinfo`** - Thông tin server.\n"
+            "🔹 **57. `nuked userinfo`** - Thông tin user.\n"
+            "🔹 **58. `nuked avatar`** - Lấy avatar.\n"
+            "🔹 **59. `nuked shutdown`** - Tắt bot."
         ),
         color=0xFF69B4
     )
@@ -1792,304 +2308,11 @@ async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
-# ==================== LỆNH STATS ====================
+# ==================== LỆNH STATS (Giữ alias) ====================
 @bot.command(name="stats")
 async def stats(ctx):
-    guild = ctx.guild
-    embed = discord.Embed(
-        title=f"📊 🌈 **THÔNG SỐ MÁY CHỦ** 🌈",
-        description=f"🏰 **Tên máy chủ:** `{guild.name}`\n👑 **Bảo trợ:** Boss Bảo",
-        color=0xFF69B4
-    )
-    await ctx.send(embed=embed)
-# ==================== LỆNH QUẢN TRỊ NÂNG CAO ====================
+    await server_info(ctx)
 
-@bot.command(name="backup")
-@is_bot_owner()
-async def backup_server(ctx):
-    """Backup cấu trúc server (kênh, role)"""
-    await ctx.send("⏳ Đang backup server...")
-    try:
-        guild = ctx.guild
-        backup_data = {
-            "name": guild.name,
-            "channels": [],
-            "roles": []
-        }
-        
-        # Backup channels
-        for channel in guild.channels:
-            backup_data["channels"].append({
-                "name": channel.name,
-                "type": str(channel.type),
-                "position": channel.position
-            })
-        
-        # Backup roles (trừ @everyone)
-        for role in guild.roles:
-            if role.name != "@everyone":
-                backup_data["roles"].append({
-                    "name": role.name,
-                    "color": str(role.color),
-                    "permissions": role.permissions.value
-                })
-        
-        # Lưu vào file
-        with open(f"backup_{guild.id}.json", "w", encoding="utf-8") as f:
-            json.dump(backup_data, f, indent=2, ensure_ascii=False)
-        
-        embed = discord.Embed(
-            title="✅ ĐÃ BACKUP SERVER",
-            description=f"📌 **Server:** {guild.name}\n📂 Đã backup `{len(backup_data['channels'])}` kênh và `{len(backup_data['roles'])}` role",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống backup Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="slowmode")
-@is_bot_owner()
-async def set_slowmode(ctx, seconds: int = 0):
-    """Bật chế độ chậm cho kênh (0 để tắt)"""
-    if seconds < 0 or seconds > 21600:
-        await ctx.send("❌ Nhập từ 0 đến 21600 giây!")
-        return
-    try:
-        await ctx.channel.edit(slowmode_delay=seconds)
-        embed = discord.Embed(
-            title="🐢 ĐÃ CÀI SLOWMODE",
-            description=f"📌 **Kênh:** {ctx.channel.mention}\n⏳ **Slowmode:** {seconds} giây\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00 if seconds > 0 else 0xFF9900
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="nick")
-@is_bot_owner()
-async def set_nickname(ctx, member: discord.Member, *, nickname: str = None):
-    """Đổi nickname cho người dùng"""
-    if nickname is None:
-        await ctx.send("❌ Vui lòng nhập nickname! VD: `nuked nick @user Tên mới`")
-        return
-    try:
-        old_name = member.display_name
-        await member.edit(nick=nickname)
-        embed = discord.Embed(
-            title="✏️ ĐÃ ĐỔI NICKNAME",
-            description=f"👤 **Người:** {member.mention}\n📝 **Tên cũ:** `{old_name}`\n📝 **Tên mới:** `{nickname}`\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="resetnick")
-@is_bot_owner()
-async def reset_nickname(ctx, member: discord.Member):
-    """Reset nickname về mặc định"""
-    try:
-        await member.edit(nick=None)
-        embed = discord.Embed(
-            title="🔄 ĐÃ RESET NICKNAME",
-            description=f"👤 **Người:** {member.mention}\n📝 Đã reset về tên gốc\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="vc")
-@is_bot_owner()
-async def create_voice_channel(ctx, *, name: str):
-    """Tạo voice channel mới"""
-    try:
-        channel = await ctx.guild.create_voice_channel(name)
-        embed = discord.Embed(
-            title="🔊 ĐÃ TẠO VOICE CHANNEL",
-            description=f"📌 **Tên:** {channel.mention}\n👑 **Người tạo:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="hide")
-@is_bot_owner()
-async def hide_channel(ctx, channel: discord.TextChannel = None):
-    """Ẩn kênh khỏi mọi người"""
-    if channel is None:
-        channel = ctx.channel
-    try:
-        await channel.set_permissions(ctx.guild.default_role, view_channel=False)
-        embed = discord.Embed(
-            title="🙈 ĐÃ ẨN KÊNH",
-            description=f"📌 **Kênh:** {channel.mention}\n🔒 Chỉ admin mới thấy được!\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0xFF9900
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="reveal")
-@is_bot_owner()
-async def reveal_channel(ctx, channel: discord.TextChannel = None):
-    """Hiện kênh cho mọi người"""
-    if channel is None:
-        channel = ctx.channel
-    try:
-        await channel.set_permissions(ctx.guild.default_role, view_channel=True)
-        embed = discord.Embed(
-            title="👀 ĐÃ HIỆN KÊNH",
-            description=f"📌 **Kênh:** {channel.mention}\n🔓 Mọi người đã thấy được!\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="rename")
-@is_bot_owner()
-async def rename_server(ctx, *, new_name: str):
-    """Đổi tên server"""
-    if len(new_name) > 100:
-        new_name = new_name[:100]
-    try:
-        old_name = ctx.guild.name
-        await ctx.guild.edit(name=new_name)
-        embed = discord.Embed(
-            title="✏️ ĐÃ ĐỔI TÊN SERVER",
-            description=f"📝 **Tên cũ:** `{old_name}`\n📝 **Tên mới:** `{new_name}`\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="icon")
-@is_bot_owner()
-async def set_icon(ctx, url: str = None):
-    """Đổi icon server (dùng URL hoặc upload ảnh)"""
-    try:
-        if url:
-            if not url.startswith(('http://', 'https://')):
-                await ctx.send("❌ URL không hợp lệ!")
-                return
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
-                    if resp.status != 200:
-                        await ctx.send("❌ Không tải được ảnh!")
-                        return
-                    image_data = await resp.read()
-        elif ctx.message.attachments:
-            image_data = await ctx.message.attachments[0].read()
-        else:
-            await ctx.send("❌ Vui lòng upload ảnh hoặc nhập URL!")
-            return
-        
-        await ctx.guild.edit(icon=image_data)
-        embed = discord.Embed(
-            title="🖼️ ĐÃ ĐỔI ICON SERVER",
-            description=f"✅ Icon đã được cập nhật!\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="emoji")
-@is_bot_owner()
-async def list_emoji(ctx):
-    """Xem danh sách emoji trong server"""
-    emojis = ctx.guild.emojis
-    if not emojis:
-        await ctx.send("📭 Server này chưa có emoji nào!")
-        return
-    
-    # Phân trang nếu nhiều emoji
-    emoji_list = []
-    for e in emojis:
-        emoji_list.append(f"{e} - `{e.name}`")
-    
-    embed = discord.Embed(
-        title=f"🎨 DANH SÁCH EMOJI ({len(emojis)} emoji)",
-        description="\n".join(emoji_list[:25]),
-        color=0x00CCFF
-    )
-    if len(emoji_list) > 25:
-        embed.set_footer(text=f"Hiển thị 25/{len(emoji_list)} emoji. Dùng nuked emoji để xem thêm.")
-    embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-    await ctx.send(embed=embed)
-
-@bot.command(name="steal")
-@is_bot_owner()
-async def steal_emoji(ctx, emoji_id: int, *, name: str = None):
-    """Copy emoji vào server (dùng ID emoji)"""
-    if name is None:
-        name = f"emoji_{emoji_id}"
-    
-    try:
-        # Lấy emoji từ ID
-        emoji = await bot.fetch_emoji(emoji_id)
-        if not emoji:
-            await ctx.send("❌ Không tìm thấy emoji!")
-            return
-        
-        # Tải ảnh
-        async with aiohttp.ClientSession() as session:
-            async with session.get(emoji.url) as resp:
-                if resp.status != 200:
-                    await ctx.send("❌ Không tải được ảnh!")
-                    return
-                image_data = await resp.read()
-        
-        # Tạo emoji mới
-        new_emoji = await ctx.guild.create_custom_emoji(name=name, image=image_data)
-        
-        embed = discord.Embed(
-            title="🎨 ĐÃ COPY EMOJI",
-            description=f"✅ {new_emoji} - `{new_emoji.name}`\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
-
-@bot.command(name="moveall")
-@is_bot_owner()
-async def move_all_voice(ctx, channel: discord.VoiceChannel = None):
-    """Di chuyển tất cả người trong voice channel"""
-    if channel is None:
-        await ctx.send("❌ Vui lòng tag voice channel! VD: `nuked moveall #voice`")
-        return
-    
-    try:
-        count = 0
-        for vc in ctx.guild.voice_channels:
-            for member in vc.members:
-                await member.move_to(channel)
-                count += 1
-                await asyncio.sleep(0.1)
-        
-        embed = discord.Embed(
-            title="🚪 ĐÃ DI CHUYỂN TẤT CẢ",
-            description=f"✅ Đã di chuyển **{count}** người vào {channel.mention}\n👑 **Người thực hiện:** {ctx.author.mention}",
-            color=0x00FF00
-        )
-        embed.set_footer(text="Hệ thống quản trị Boss Bảo 💖")
-        await ctx.send(embed=embed)
-    except Exception as e:
-        await ctx.send(f"❌ Lỗi: {str(e)}")
 # ==================== LỆNH HELP ====================
 @bot.command(name="help")
 async def help_command(ctx):
@@ -2123,33 +2346,40 @@ async def help_command(ctx):
             "🔹 **23. `nuked clear`** - Xóa số lượng tin nhắn nhanh.\n"
             "🔹 **24. `nuked stats`** - Xem thông số hệ thống server.\n"
             "🔹 **25. `nuked log`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwellcom`** - Ban thành viên được tag.\n"
+            "🔹 **26. `nuked setwelcome`** - Cài đặt kênh chào mừng.\n"
             "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
             "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này.\n"
-            # Trong lệnh setup, thêm vào danh sách:
-"🔹 **29. `nuked kick`** - Kick thành viên.\n"
-"🔹 **30. `nuked ban`** - Ban thành viên.\n"
-"🔹 **31. `nuked unban`** - Unban thành viên.\n"
-"🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
-"🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
-"🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
-"🔹 **35. `nuked role`** - Thêm role cho người.\n"
-"🔹 **36. `nuked removerole`** - Xóa role của người.\n"
-"🔹 **37. `nuked lock`** - Khóa kênh.\n"
-"🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
-"🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\n"
+            "🔹 **29. `nuked kick`** - Kick thành viên.\n"
+            "🔹 **30. `nuked ban`** - Ban thành viên.\n"
+            "🔹 **31. `nuked unban`** - Unban thành viên.\n"
+            "🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
+            "🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
+            "🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
+            "🔹 **35. `nuked role`** - Thêm role cho người.\n"
+            "🔹 **36. `nuked removerole`** - Xóa role của người.\n"
+            "🔹 **37. `nuked lock`** - Khóa kênh.\n"
+            "🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
+            "🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\n"
             "🔹 **40. `nuked backup`** - Backup cấu trúc server.\n"
-"🔹 **41. `nuked slowmode`** - Bật chế độ chậm cho kênh.\n"
-"🔹 **42. `nuked nick`** - Đổi nickname cho người.\n"
-"🔹 **43. `nuked resetnick`** - Reset nickname.\n"
-"🔹 **44. `nuked vc`** - Tạo voice channel.\n"
-"🔹 **45. `nuked hide`** - Ẩn kênh khỏi mọi người.\n"
-"🔹 **46. `nuked reveal`** - Hiện kênh cho mọi người.\n"
-"🔹 **47. `nuked rename`** - Đổi tên server.\n"
-"🔹 **48. `nuked icon`** - Đổi icon server.\n"
-"🔹 **49. `nuked emoji`** - Xem danh sách emoji.\n"
-"🔹 **50. `nuked steal`** - Copy emoji vào server.\n"
-"🔹 **51. `nuked moveall`** - Di chuyển tất cả voice."
+            "🔹 **41. `nuked slowmode`** - Bật chế độ chậm cho kênh.\n"
+            "🔹 **42. `nuked nick`** - Đổi nickname cho người.\n"
+            "🔹 **43. `nuked resetnick`** - Reset nickname.\n"
+            "🔹 **44. `nuked vc`** - Tạo voice channel.\n"
+            "🔹 **45. `nuked hide`** - Ẩn kênh khỏi mọi người.\n"
+            "🔹 **46. `nuked reveal`** - Hiện kênh cho mọi người.\n"
+            "🔹 **47. `nuked rename`** - Đổi tên server.\n"
+            "🔹 **48. `nuked icon`** - Đổi icon server.\n"
+            "🔹 **49. `nuked emoji`** - Xem danh sách emoji.\n"
+            "🔹 **50. `nuked steal`** - Copy emoji vào server.\n"
+            "🔹 **51. `nuked moveall`** - Di chuyển tất cả voice.\n"
+            "🔹 **52. `nuked massban`** - Ban nhiều người.\n"
+            "🔹 **53. `nuked masskick`** - Kick nhiều người.\n"
+            "🔹 **54. `nuked clonechannel`** - Clone kênh.\n"
+            "🔹 **55. `nuked webhookspam`** - Spam qua webhook.\n"
+            "🔹 **56. `nuked serverinfo`** - Thông tin server.\n"
+            "🔹 **57. `nuked userinfo`** - Thông tin user.\n"
+            "🔹 **58. `nuked avatar`** - Lấy avatar.\n"
+            "🔹 **59. `nuked shutdown`** - Tắt bot."
         ),
         color=0xFF69B4
     )
@@ -2205,6 +2435,7 @@ async def on_message(message):
                     pass
                 
                 required_exp_for_next = get_required_exp(user_data["level"])
+                save_levels()
 
     await bot.process_commands(message)
     
@@ -2213,6 +2444,68 @@ async def on_message(message):
             if user.id in BOT_OWNERS:
                 await message.reply("m thích t à tag lắm vcl im mẹ mồm đi ko bố var m đấy chó ngu")
                 break
+
+# ==================== SỰ KIỆN CHÀO MỪNG & TẠM BIỆT ====================
+@bot.event
+async def on_member_join(member):
+    if member.guild is None: return
+    
+    embed_log = discord.Embed(title="👋 THÀNH VIÊN MỚI GIA NHẬP", description=f"{member.mention} đã tham gia server.", color=0x00FF00)
+    await send_log_to_all(member.guild.id, embed_log)
+
+    guild_id = member.guild.id
+    if guild_id in WELCOME_CHANNELS:
+        ch_id = WELCOME_CHANNELS[guild_id]
+        channel = member.guild.get_channel(ch_id)
+        if channel:
+            embed = discord.Embed(
+                title="🌈 **CHÀO MỪNG CHÚ BÁO NHỎ ĐẾN VỚI SERVER!** 🌈",
+                description=(
+                    f"✨ Chào mừng chú báo nhỏ {member.mention} đã gia nhập máy chủ **{member.guild.name}**!\n\n"
+                    "📌 **Giới thiệu các kênh:** Hãy khám phá đầy đủ các khu vực trò chuyện và giải trí.\n"
+                    "📜 **Luật chung:** Luôn tuân thủ nội quy để server ngày càng văn minh nhé!\n\n"
+                    "💖 Chúc bạn có những phút giây vui vẻ!"
+                ),
+                color=0x00FFFF
+            )
+            embed.set_image(url="https://i.pinimg.com/originals/54/19/c9/5419c9ce3ffade43b2837daa2c96b1d9.gif")
+            embed.set_footer(text=f"Thành viên thứ #{member.guild.member_count}")
+            await channel.send(embed=embed)
+
+@bot.event
+async def on_member_remove(member):
+    if member.guild is None: return
+    
+    embed_log = discord.Embed(title="👋 THÀNH VIÊN RỜI KHỎI SERVER", description=f"{member.mention} đã rời server.", color=0xFF9900)
+    await send_log_to_all(member.guild.id, embed_log)
+
+    guild_id = member.guild.id
+    
+    try:
+        dm_embed = discord.Embed(
+            title="💔 **TẠM BIỆT BẠN NHÉ!** 💔",
+            description=(
+                f"😢 Server vô cùng nuối tiếc khi thấy {member.mention} đã rời khỏi **{member.guild.name}**...\n"
+                "🍀 Chúc bạn luôn bình an, gặp nhiều may mắn và có một cuộc sống thật vui vẻ, hạnh phúc trên con đường sắp tới! Hẹn gặp lại!"
+            ),
+            color=0xFF69B4
+        )
+        dm_embed.set_image(url="https://i.pinimg.com/originals/16/d5/83/16d583a3fd6d356e5a1d5e57b318474c.gif")
+        await member.send(embed=dm_embed)
+    except:
+        pass
+
+    if guild_id in GOODBYE_CHANNELS:
+        ch_id = GOODBYE_CHANNELS[guild_id]
+        channel = member.guild.get_channel(ch_id)
+        if channel:
+            embed = discord.Embed(
+                title="😢 **TẠM BIỆT THÀNH VIÊN** 😢",
+                description=f"Thật sự rất nuối tiếc... Tạm biệt {member.mention}, chúc bạn luôn vui vẻ và có nhiều sức khỏe trên con đường mới!",
+                color=0xFF0000
+            )
+            embed.set_image(url="https://i.pinimg.com/originals/16/d5/83/16d583a3fd6d356e5a1d5e57b318474c.gif")
+            await channel.send(embed=embed)
 
 # ==================== SỰ KIỆN ON_READY ====================
 @bot.event
