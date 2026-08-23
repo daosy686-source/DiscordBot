@@ -177,13 +177,13 @@
 - Railway / VPS / Replit
 
 ### 1️⃣ Clone repository
-bash
+```bash
 git clone https://github.com/daosy686-source/DiscordBot.git
 cd DiscordBot
-
-### 📜 LICENSE
+📜 LICENSE
 MIT License - Free to use and modify.
 
+text
 MIT License
 
 Copyright (c) 2026 BẢO
@@ -193,12 +193,20 @@ of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions...
+furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ⭐ STAR
-<p align="center"> <img src="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif" width="400"> </p><p align="center"> <b>🔥 Nếu bạn thấy bot hữu ích, hãy cho tôi một ⭐ nhé! 🔥</b> </p>
-
-<p align="center"> <b>Made with ❤️ by BẢO</b><br> <b>📌 Version 3.0 - 2026</b> </p>
+<p align="center"> <img src="https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif" width="400"> </p><p align="center"> <b>🔥 Nếu bạn thấy bot hữu ích, hãy cho tôi một ⭐ nhé! 🔥</b> </p><p align="center"> <b>Made with ❤️ by BẢO</b><br> <b>📌 Version 3.0 - 2026</b> </p>
 🎯 THỐNG KÊ
 <p align="center"> <img src="https://img.shields.io/badge/Commands-50%2B-blue?style=for-the-badge"> <img src="https://img.shields.io/badge/Features-30%2B-green?style=for-the-badge"> <img src="https://img.shields.io/badge/Lines%20of%20Code-3000%2B-orange?style=for-the-badge"> <img src="https://img.shields.io/badge/Stars-Welcome-yellow?style=for-the-badge"> </p>
-<p align="center"> <b>🚀 Chạy là dùng được! 🔥</b> </p>
+<p align="center"> <b>🚀 Chạy là dùng được! 🔥</b> </p> ```
