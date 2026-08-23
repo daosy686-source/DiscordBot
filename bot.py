@@ -1342,12 +1342,8 @@ async def unlock_channel(ctx, channel: discord.TextChannel = None):
 @bot.command(name="admincmd")
 @is_bot_owner()
 async def admin_commands(ctx):
-    embed = discord.Embed(
-        title="👑 DANH SÁCH LỆNH QUẢN TRỊ",
-        description="📋 Tất cả lệnh dành cho Boss Bảo:\n",
-        color=0xFFD700
-    )
-    commands_list = [
+    """Hiển thị danh sách đầy đủ các lệnh quản trị (chia nhiều field)"""
+    all_commands = [
         "`nuked kick @user` - Kick thành viên",
         "`nuked ban @user` - Ban thành viên",
         "`nuked unban <id>` - Unban thành viên",
@@ -1358,7 +1354,7 @@ async def admin_commands(ctx):
         "`nuked removerole @user <role>` - Xóa role",
         "`nuked lock #kênh` - Khóa kênh",
         "`nuked unlock #kênh` - Mở khóa kênh",
-        "`nuked mute @user` - Mute thành viên",
+        "`nuked mute @user [thời gian]` - Mute thành viên",
         "`nuked unmute @user` - Unmute thành viên",
         "`nuked warn @user` - Cảnh cáo thành viên",
         "`nuked clear <số>` - Xóa tin nhắn",
@@ -1402,7 +1398,21 @@ async def admin_commands(ctx):
         "`nuked avatar @user` - Lấy avatar",
         "`nuked shutdown` - Tắt bot"
     ]
-    embed.add_field(name="📋 LỆNH QUẢN TRỊ", value="\n".join(commands_list), inline=False)
+    
+    # Chia danh sách thành các field, mỗi field tối đa 50 lệnh (~800 ký tự)
+    embed = discord.Embed(
+        title="👑 DANH SÁCH LỆNH QUẢN TRỊ",
+        description="📋 Tất cả lệnh dành cho Boss Bảo (mỗi field hiển thị một phần):",
+        color=0xFFD700
+    )
+    
+    chunk_size = 15  # Số lệnh mỗi field để đảm bảo không vượt 1024 ký tự
+    for i in range(0, len(all_commands), chunk_size):
+        chunk = all_commands[i:i+chunk_size]
+        field_name = f"📌 Nhóm {i//chunk_size + 1}"
+        field_value = "\n".join(chunk)
+        embed.add_field(name=field_name, value=field_value, inline=False)
+    
     embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖")
     await ctx.send(embed=embed)
 
