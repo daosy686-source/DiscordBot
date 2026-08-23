@@ -1,4 +1,4 @@
-# ☠️ NUKE BOT - HOT WAR BOT ULTIMATE
+# ☠️ NUKE BOT - HOT WAR - GG.KZ3N/KZ4N - HOT WAR
 
 > **💀 Bot Discord quản trị tối cao với khả năng Nuke server siêu mạnh - Độc quyền bởi BẢO**
 
