@@ -178,8 +178,8 @@
 
 ### 1️⃣ Clone repository
 
-git clone https://github.com/daosy686-source/DiscordBot.git
-cd DiscordBot
+```git clone https://github.com/daosy686-source/DiscordBot.git```
+```cd DiscordBot```
 
 ### 📜 LICENSE
 
