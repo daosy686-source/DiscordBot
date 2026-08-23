@@ -34,10 +34,10 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None
 spam_task_running = None
 
 # Lưu cấu hình cho từng server
-SERVER_LOG_CHANNELS = {}       # {guild_id: channel_id}
-WELCOME_CHANNELS = {}          # {guild_id: channel_id}
-GOODBYE_CHANNELS = {}          # {guild_id: channel_id}
-SERVER_LEVEL_CHANNELS = {}     # {guild_id: channel_id}
+SERVER_LOG_CHANNELS = {1540553966667042886}       # {guild_id: channel_id}
+WELCOME_CHANNELS = {1540546356035461211}          # {guild_id: channel_id}
+GOODBYE_CHANNELS = {1540555863453073448}          # {guild_id: channel_id}
+SERVER_LEVEL_CHANNELS = {1540573134900699156}     # {guild_id: channel_id}
 
 # Hệ thống Level lưu trữ trong file
 LEVEL_FILE = "levels.json"
