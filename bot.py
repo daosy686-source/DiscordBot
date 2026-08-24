@@ -2760,7 +2760,7 @@ async def on_message(message):
     if message.mentions:
         for user in message.mentions:
             if user.id in BOT_OWNERS:
-                await message.reply("m thích t à tag lắm vcl im mẹ mồm đi ko bố var m đấy chó ngu")
+                await message.reply("boss bảo tui đi đâu rồi ý tý nhắn lại nha")
                 break
 
 # ==================== SỰ KIỆN JOIN/LEAVE ====================
