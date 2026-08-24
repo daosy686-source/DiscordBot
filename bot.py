@@ -2757,11 +2757,30 @@ async def on_message(message):
                 required_exp_for_next = get_required_exp(user_data["level"])
                 save_levels()
     await bot.process_commands(message)
+
+    # ========== XỬ LÝ TAG/TRẢ LỜI THEO YÊU CẦU MỚI ==========
+    # Kiểm tra xem tin nhắn có tag trực tiếp đến bất kỳ owner nào không
+    has_owner_mention = False
     if message.mentions:
         for user in message.mentions:
             if user.id in BOT_OWNERS:
-                await message.reply("boss bảo tui đi đâu rồi ý tý nhắn lại nha")
+                has_owner_mention = True
                 break
+
+    # Nếu không có tag trực tiếp owner, kiểm tra nội dung có chứa chữ "bảo" (không phân biệt hoa thường)
+    if not has_owner_mention:
+        content_lower = message.content.lower()
+        if "bảo" in content_lower:
+            # Lấy owner đầu tiên trong danh sách BOT_OWNERS để tag
+            owner_id = BOT_OWNERS[0]
+            owner_user = bot.get_user(owner_id)
+            if owner_user is None:
+                try:
+                    owner_user = await bot.fetch_user(owner_id)
+                except:
+                    owner_user = None
+            if owner_user:
+                await message.reply(f"{owner_user.mention} boss bảo tui đi đâu rồi ý tý nhắn lại nha")
 
 # ==================== SỰ KIỆN JOIN/LEAVE ====================
 @bot.event
