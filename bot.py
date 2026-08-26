@@ -59,7 +59,7 @@ USER_LEVELS = {}
 load_levels()
 
 CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif"
-NUKE_GIF_URL = "https://i.pinimg.com/originals/a3/30/8c/a3308c2100e2526873b3ae8b3ab47b57.gif"
+NUKE_GIF_URL = "https://media.discordapp.net/attachments/1541456087105151066/1542122209156538388/739ed3f3955356f06352d43eb649168a.gif?ex=6a9014b9&is=6a8ec339&hm=3ec421cedab61dea731230ee0ee1327c900406c15b333adbdd4003452727f06e&="
 NUKE_AVATAR_URL = "https://i.pinimg.com/736x/06/77/96/0677966604d6b8f84a47fa667260ec4d.jpg"
 
 # ==================== CÔNG THỨC HÀM LẤY EXP CẦN THIẾT ====================
@@ -203,8 +203,8 @@ NUKE_CHANNEL_NAMES = [
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝔸̉𝕆 𝔻𝔼̣ℙ ℤ𝔸𝕀",
     "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝕆ℕ 𝕋𝕆ℙ",
     "☠️𝔻𝔼𝕋ℝ𝕆𝕐𝔼𝔻 𝔹𝕐 𝔹𝕆𝕋 ℕ𝕌𝕂𝔼 𝔼ℤ 𝕋𝕆ℙ",
-    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝕋ℍ𝕀 𝔻𝔼̣ℙ 𝔾𝔸́𝕀,
-    "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀"
+    "☠️ℕ𝕌𝕂𝔼 𝔹𝕐 𝕋ℍ𝕀 𝔻𝔼̣ℙ 𝔾𝔸́𝕀",
+    "☠️𝔼ℤ 𝕋𝕆ℙ 𝔸ℕ𝕋𝕀",
 ]
 
 def is_bot_owner():
