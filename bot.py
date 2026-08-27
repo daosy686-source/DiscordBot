@@ -13,7 +13,7 @@ DISCORD_TOKEN = os.getenv("TOKEN")
 
 # Danh sách ID của Boss Bảo và các đồng minh ủy quyền
 BOT_OWNERS = [
-    1540585511842881616,1542453882263707759, 
+    1540585511842881616,1542453882263707759,1502969774202814625, 
 ]
 
 intents = discord.Intents.default()
@@ -42,6 +42,7 @@ SERVER_LEVEL_CHANNELS = {}     # {guild_id: channel_id}
 
 # Hệ thống Level lưu trữ trong file
 LEVEL_FILE = "levels.json"
+CONFIG_FILE = "config.json"
 
 def load_levels():
     global USER_LEVELS
@@ -55,8 +56,33 @@ def save_levels():
     with open(LEVEL_FILE, "w", encoding="utf-8") as f:
         json.dump(USER_LEVELS, f, indent=2, ensure_ascii=False)
 
+def load_config():
+    global SERVER_LOG_CHANNELS, WELCOME_CHANNELS, GOODBYE_CHANNELS, SERVER_LEVEL_CHANNELS, BOT_OWNERS
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        SERVER_LOG_CHANNELS = data.get("log_channels", {})
+        WELCOME_CHANNELS = data.get("welcome_channels", {})
+        GOODBYE_CHANNELS = data.get("goodbye_channels", {})
+        SERVER_LEVEL_CHANNELS = data.get("level_channels", {})
+        BOT_OWNERS = data.get("owners", BOT_OWNERS)
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+def save_config():
+    data = {
+        "log_channels": SERVER_LOG_CHANNELS,
+        "welcome_channels": WELCOME_CHANNELS,
+        "goodbye_channels": GOODBYE_CHANNELS,
+        "level_channels": SERVER_LEVEL_CHANNELS,
+        "owners": BOT_OWNERS
+    }
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
 USER_LEVELS = {}
 load_levels()
+load_config()
 
 CUSTOM_SETUP_GIF = "https://i.pinimg.com/originals/7a/41/bb/7a41bb51fe3babe0c6cee161f85df62c.gif"
 NUKE_GIF_URL = "https://media.discordapp.net/attachments/1541456087105151066/1542122209156538388/739ed3f3955356f06352d43eb649168a.gif?ex=6a9014b9&is=6a8ec339&hm=3ec421cedab61dea731230ee0ee1327c900406c15b333adbdd4003452727f06e&="
@@ -222,7 +248,6 @@ class NukeConfirmView(discord.ui.View):
     async def on_timeout(self):
         for item in self.children:
             item.disabled = True
-        # Tìm tin nhắn gốc và sửa? không cần
 
     @discord.ui.button(label="🟢 ĐỒNG Ý NUKE SERVER", style=discord.ButtonStyle.green)
     async def confirm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -386,6 +411,7 @@ async def setlog(ctx, channel: discord.TextChannel = None):
         if channel is None:
             if ctx.guild.id in SERVER_LOG_CHANNELS:
                 del SERVER_LOG_CHANNELS[ctx.guild.id]
+                save_config()
                 embed = discord.Embed(
                     title="🔇 ĐÃ TẮT LOG SỰ KIỆN",
                     description="🎉 Hệ thống đã ngừng gửi log sự kiện!",
@@ -408,6 +434,7 @@ async def setlog(ctx, channel: discord.TextChannel = None):
             return
 
         SERVER_LOG_CHANNELS[ctx.guild.id] = channel.id
+        save_config()
         try:
             test_embed = discord.Embed(
                 title="✅ LOG SYSTEM ACTIVATED",
@@ -459,6 +486,7 @@ async def set_welcome(ctx, channel: discord.TextChannel = None):
     if channel is None:
         if ctx.guild.id in WELCOME_CHANNELS:
             del WELCOME_CHANNELS[ctx.guild.id]
+            save_config()
             embed = discord.Embed(
                 title="✅ ĐÃ TẮT KÊNH CHÀO MỪNG",
                 description="🎉 Hệ thống đã ngừng gửi tin nhắn chào mừng!",
@@ -474,6 +502,7 @@ async def set_welcome(ctx, channel: discord.TextChannel = None):
             await ctx.send(embed=embed)
         return
     WELCOME_CHANNELS[ctx.guild.id] = channel.id
+    save_config()
     embed = discord.Embed(
         title="✅ ĐÃ THIẾT LẬP KÊNH CHÀO MỪNG",
         description=f"📌 **Kênh:** {channel.mention}\n👑 **Thiết lập bởi:** {ctx.author.mention}",
@@ -496,6 +525,7 @@ async def set_goodbye(ctx, channel: discord.TextChannel = None):
     if channel is None:
         if ctx.guild.id in GOODBYE_CHANNELS:
             del GOODBYE_CHANNELS[ctx.guild.id]
+            save_config()
             embed = discord.Embed(
                 title="✅ ĐÃ TẮT KÊNH TẠM BIỆT",
                 description="🎉 Hệ thống đã ngừng gửi tin nhắn tạm biệt!",
@@ -511,6 +541,7 @@ async def set_goodbye(ctx, channel: discord.TextChannel = None):
             await ctx.send(embed=embed)
         return
     GOODBYE_CHANNELS[ctx.guild.id] = channel.id
+    save_config()
     embed = discord.Embed(
         title="✅ ĐÃ THIẾT LẬP KÊNH TẠM BIỆT",
         description=f"📌 **Kênh:** {channel.mention}\n👑 **Thiết lập bởi:** {ctx.author.mention}",
@@ -590,6 +621,7 @@ async def channelslv(ctx, channel: discord.TextChannel = None):
         if channel is None:
             if ctx.guild.id in SERVER_LEVEL_CHANNELS:
                 del SERVER_LEVEL_CHANNELS[ctx.guild.id]
+                save_config()
                 embed = discord.Embed(
                     title="🔇 ĐÃ TẮT THÔNG BÁO LEVEL",
                     description="🎉 Hệ thống đã ngừng gửi thông báo thăng cấp!",
@@ -612,6 +644,7 @@ async def channelslv(ctx, channel: discord.TextChannel = None):
                 await ctx.send(embed=embed)
             return
         SERVER_LEVEL_CHANNELS[ctx.guild.id] = channel.id
+        save_config()
         try:
             test_embed = discord.Embed(
                 title="🎉 LEVEL SYSTEM ACTIVATED",
@@ -2188,6 +2221,7 @@ async def addowner(ctx, target: discord.User):
         await ctx.send(f"❌ **{target}** đã là Owner của Boss Bảo rồi!")
         return
     BOT_OWNERS.append(target.id)
+    save_config()
     await ctx.send(f"✅ Đã thêm **{target}** vào danh sách đồng minh tối cao của Boss Bảo!")
 
 @addowner.error
@@ -2205,6 +2239,7 @@ async def deleteowner(ctx, target: discord.User):
         await ctx.send(f"❌ Không tìm thấy Owner **{target}**!")
         return
     BOT_OWNERS.remove(target.id)
+    save_config()
     await ctx.send(f"🗑️ Đã xóa **{target}** khỏi danh sách.")
 
 @deleteowner.error
@@ -2520,7 +2555,19 @@ async def guithu(ctx, member: discord.Member, *, noidung: str = None):
         await ctx.send("📌 Cú pháp: `nuked guithu @user nội dung`")
         return
     try:
-        await ctx.send(f"Thưa bạn {member.mention} có người muốn gửi thư cho bạn với nội dung: {noidung}")
+        embed = discord.Embed(
+            title="💌 Bạn có thư mới!",
+            description=(
+                f"👤 **Người gửi:** {ctx.author.mention}\n\n"
+                f"📝 **Nội dung:**\n{noidung}"
+            ),
+            color=0x00FF00
+        )
+        embed.set_footer(text="💖 Chúc bạn một ngày tốt lành!")
+        await member.send(embed=embed)
+        await ctx.send(f"✅ Đã gửi thư đến {member.mention} thành công!")
+    except discord.Forbidden:
+        await ctx.send(f"❌ Không thể gửi tin nhắn riêng cho {member.mention}. Họ có thể đã chặn DM.")
     except Exception as e:
         await ctx.send(f"❌ Lỗi: {str(e)}")
 
@@ -2528,208 +2575,156 @@ async def guithu(ctx, member: discord.Member, *, noidung: str = None):
 async def guithu_error(ctx, error):
     await ctx.send(f"❌ Lỗi: {str(error)}")
 
-# ==================== HỆ THỐNG LOG ====================
-async def send_log_to_all(source_guild_id, embed):
-    for g_id, ch_id in SERVER_LOG_CHANNELS.items():
-        channel = bot.get_channel(ch_id)
-        if channel:
-            try:
-                await channel.send(embed=embed)
-            except:
-                pass
+# ==================== HỆ THỐNG MENU TƯƠNG TÁC ====================
+HELP_CATEGORIES = {
+    "🛡️ Quản lý Mod": [
+        "`nuked kick @user` - Kick thành viên",
+        "`nuked ban @user` - Ban thành viên",
+        "`nuked unban <id>` - Unban thành viên",
+        "`nuked mute @user [thời gian]` - Mute thành viên",
+        "`nuked unmute @user` - Unmute thành viên",
+        "`nuked warn @user` - Cảnh cáo thành viên",
+        "`nuked kickall` - Kick toàn bộ thành viên",
+        "`nuked massban` - Ban nhiều người",
+        "`nuked masskick` - Kick nhiều người",
+        "`nuked timeout @user <thời gian>` - Timeout thành viên",
+        "`nuked clearuser @user` - Xóa tin nhắn của user",
+    ],
+    "📢 Quản lý Kênh": [
+        "`nuked createchannel <tên>` - Tạo kênh mới",
+        "`nuked deletechannel #kênh` - Xóa kênh",
+        "`nuked createcategory <tên>` - Tạo category",
+        "`nuked renamechannel #kênh <tên mới>` - Đổi tên kênh",
+        "`nuked lock #kênh` - Khóa kênh",
+        "`nuked unlock #kênh` - Mở khóa kênh",
+        "`nuked hide #kênh` - Ẩn kênh",
+        "`nuked reveal #kênh` - Hiện kênh",
+        "`nuked clonechannel #kênh` - Clone kênh",
+        "`nuked vc <tên>` - Tạo voice channel",
+        "`nuked settopic #kênh <nội dung>` - Đặt chủ đề kênh",
+        "`nuked setnsfw #kênh <true/false>` - Bật/tắt NSFW",
+        "`nuked deleteallchannels` - Xóa tất cả kênh",
+        "`nuked spamchannels` - Tạo kênh spam",
+        "`nuked slowmode <giây>` - Bật slowmode",
+    ],
+    "🎭 Quản lý Role": [
+        "`nuked addrole <tên>` - Tạo role mới",
+        "`nuked role @user <role>` - Thêm role cho người",
+        "`nuked removerole @user <role>` - Xóa role của người",
+        "`nuked spamroles` - Tạo role spam",
+        "`nuked deleteallroles` - Xóa tất cả role",
+        "`nuked listroles` - Liệt kê role",
+    ],
+    "📊 Hệ thống Level": [
+        "`nuked setlv <level> @user` - Set level",
+        "`nuked lv [@user]` - Xem level",
+        "`nuked channelslv #kênh` - Cài kênh thông báo level",
+    ],
+    "🎉 Chào mừng & Tạm biệt": [
+        "`nuked setwelcome #kênh` - Cài kênh chào mừng",
+        "`nuked setgoodbye #kênh` - Cài kênh tạm biệt",
+    ],
+    "📋 Log & Thông tin": [
+        "`nuked log #kênh` - Cài kênh log",
+        "`nuked serverinfo` - Thông tin server",
+        "`nuked userinfo @user` - Thông tin user",
+        "`nuked avatar @user` - Lấy avatar",
+        "`nuked membercount` - Số lượng thành viên",
+        "`nuked listchannels` - Danh sách kênh",
+    ],
+    "⚠️ Spam & Nuke": [
+        "`nuked spam @user` - Spam chửi",
+        "`nuked stop` - Dừng spam",
+        "`nuked spameveryone` - Spam @everyone",
+        "`nuked nuke` - NUKE SERVER",
+        "`nuked webhookspam` - Spam qua webhook",
+    ],
+    "⚙️ Cấu hình Server": [
+        "`nuked setservername <tên>` - Đổi tên server",
+        "`nuked setservericon [url]` - Đổi icon server",
+        "`nuked rename <tên>` - Đổi tên server (alias)",
+        "`nuked icon [url]` - Đổi icon server (alias)",
+        "`nuked backup` - Backup server",
+        "`nuked restore` - Khôi phục server",
+        "`nuked shutdown` - Tắt bot",
+    ],
+    "👑 Quản lý Owner": [
+        "`nuked addowner @user` - Thêm Owner",
+        "`nuked deleteowner @user` - Xóa Owner",
+        "`nuked showsv` - Xem danh sách server",
+    ],
+    "🔊 Voice & Emoji": [
+        "`nuked moveall #voice` - Di chuyển tất cả voice",
+        "`nuked move @user #voice` - Di chuyển 1 người",
+        "`nuked deafen @user` - Làm điếc",
+        "`nuked undeafen @user` - Bỏ điếc",
+        "`nuked emoji` - Danh sách emoji",
+        "`nuked steal <id> <tên>` - Copy emoji",
+    ],
+    "✉️ Tiện ích": [
+        "`nuked guithu @user <nội dung>` - Gửi thư cho user",
+        "`nuked nick @user <tên>` - Đổi nickname",
+        "`nuked resetnick @user` - Reset nickname",
+        "`nuked clear <số>` - Xóa tin nhắn",
+        "`nuked purge all` - Xóa toàn bộ tin nhắn server",
+    ],
+}
 
-@bot.event
-async def on_message_delete(message):
-    if message.guild is None or message.author.bot or not message.content:
-        return
-    embed = discord.Embed(
-        title="🗑️ TIN NHẮN BỊ XÓA", 
-        description=f"**Server:** `{message.guild.name}`\n**Người gửi:** {message.author.mention}\n**Kênh:** {message.channel.mention}", 
-        color=0xFF0000
-    )
-    embed.add_field(name="Nội dung", value=message.content[:1000], inline=False)
-    await send_log_to_all(message.guild.id, embed)
+class HelpView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        for category_name in HELP_CATEGORIES.keys():
+            button = discord.ui.Button(
+                label=category_name,
+                style=discord.ButtonStyle.primary,
+                custom_id=category_name
+            )
+            button.callback = self.make_callback(category_name)
+            self.add_item(button)
 
-@bot.event
-async def on_guild_channel_create(channel):
-    if channel.guild is None: return
-    embed = discord.Embed(
-        title="🆕 KÊNH MỚI ĐƯỢC TẠO", 
-        description=f"**Server:** `{channel.guild.name}`\n**Kênh:** {channel.mention}", 
-        color=0x00FF00
-    )
-    await send_log_to_all(channel.guild.id, embed)
+    def make_callback(self, category_name):
+        async def callback(interaction: discord.Interaction):
+            commands_list = HELP_CATEGORIES.get(category_name, [])
+            embed = discord.Embed(
+                title=f"📋 Danh mục: {category_name}",
+                description="\n".join(commands_list) if commands_list else "Không có lệnh nào.",
+                color=0x00FF00
+            )
+            embed.set_footer(text="Boss Bảo 💖")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        return callback
 
-@bot.event
-async def on_guild_channel_delete(channel):
-    if channel.guild is None: return
-    embed = discord.Embed(
-        title="🗑️ KÊNH BỊ XÓA", 
-        description=f"**Server:** `{channel.guild.name}`\n**Tên kênh:** `{channel.name}`", 
-        color=0xFF0000
-    )
-    await send_log_to_all(channel.guild.id, embed)
-
-# ==================== LỆNH SETUP (CẬP NHẬT) ====================
+# ==================== LỆNH SETUP (MỚI) ====================
 @bot.command(name="setup")
 @is_bot_owner()
 async def setup(ctx):
     embed = discord.Embed(
-        title="💖✨ HỆ THỐNG QUẢN TRỊ TỐI CAO CỦA BOSS BẢO ✨💖",
-        description=(
-            f"🌸 **Kênh kết nối:** {ctx.channel.mention}\n"
-            "📋 **Danh sách lệnh điều hành phục vụ Boss Bảo:**\n\n"
-            "🔹 **1. `nuked setup`** - Hiển thị bảng điều khiển.\n"
-            "🔹 **2. `nuked nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
-            "🔹 **3. `nuked setlv`** - Đặt level và cộng role hệ thống cho người dùng.\n"
-            "🔹 **4. `nuked lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
-            "🔹 **5. `nuked channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
-            "🔹 **6. `nuked addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
-            "🔹 **7. `nuked showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
-            "🔹 **8. `nuked spamchannels`** - Tạo kênh spam.\n"
-            "🔹 **9. `nuked spameveryone`** - Spam @everyone.\n"
-            "🔹 **10. `nuked deleteallchannels`** - Xóa tất cả kênh.\n"
-            "🔹 **11. `nuked spamroles`** - Tạo role spam.\n"
-            "🔹 **12. `nuked deleteallroles`** - Xóa tất cả role.\n"
-            "🔹 **13. `nuked kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **14. `nuked setservername`** - Đổi tên server.\n"
-            "🔹 **15. `nuked setservericon`** - Đổi avatar server.\n"
-            "🔹 **16. `nuked spam`** - Spam chửi mục tiêu.\n"
-            "🔹 **17. `nuked stop`** - Dừng spam.\n"
-            "🔹 **18. `nuked addowner`** - Thêm Owner.\n"
-            "🔹 **19. `nuked deleteowner`** - Xóa Owner.\n"
-            "🔹 **20. `nuked mute`** - Cấm nói (hỗ trợ m, d, w, t).\n"
-            "🔹 **21. `nuked unmute`** - Bỏ cấm nói.\n"
-            "🔹 **22. `nuked warn`** - Cảnh cáo.\n"
-            "🔹 **23. `nuked clear`** - Xóa tin nhắn.\n"
-            "🔹 **24. `nuked stats`** - Xem thông số server.\n"
-            "🔹 **25. `nuked log`** - Cài kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwelcome`** - Cài kênh chào mừng.\n"
-            "🔹 **27. `nuked setgoodbye`** - Cài kênh tạm biệt.\n"
-            "🔹 **28. `nuked help`** - Trợ giúp.\n"
-            "🔹 **29. `nuked kick`** - Kick thành viên.\n"
-            "🔹 **30. `nuked ban`** - Ban thành viên.\n"
-            "🔹 **31. `nuked unban`** - Unban thành viên.\n"
-            "🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
-            "🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
-            "🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
-            "🔹 **35. `nuked role`** - Thêm role cho người.\n"
-            "🔹 **36. `nuked removerole`** - Xóa role của người.\n"
-            "🔹 **37. `nuked lock`** - Khóa kênh.\n"
-            "🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
-            "🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\n"
-            "🔹 **40. `nuked backup`** - Backup cấu trúc server.\n"
-            "🔹 **41. `nuked restore`** - Khôi phục server từ backup.\n"
-            "🔹 **42. `nuked slowmode`** - Bật chế độ chậm cho kênh.\n"
-            "🔹 **43. `nuked nick`** - Đổi nickname cho người.\n"
-            "🔹 **44. `nuked resetnick`** - Reset nickname.\n"
-            "🔹 **45. `nuked vc`** - Tạo voice channel.\n"
-            "🔹 **46. `nuked hide`** - Ẩn kênh khỏi mọi người.\n"
-            "🔹 **47. `nuked reveal`** - Hiện kênh cho mọi người.\n"
-            "🔹 **48. `nuked rename`** - Đổi tên server.\n"
-            "🔹 **49. `nuked icon`** - Đổi icon server.\n"
-            "🔹 **50. `nuked emoji`** - Xem danh sách emoji.\n"
-            "🔹 **51. `nuked steal`** - Copy emoji vào server.\n"
-            "🔹 **52. `nuked moveall`** - Di chuyển tất cả voice.\n"
-            "🔹 **53. `nuked massban`** - Ban nhiều thành viên.\n"
-            "🔹 **54. `nuked masskick`** - Kick nhiều thành viên.\n"
-            "🔹 **55. `nuked clonechannel`** - Clone kênh.\n"
-            "🔹 **56. `nuked webhookspam`** - Spam qua webhook.\n"
-            "🔹 **57. `nuked serverinfo`** - Thông tin server.\n"
-            "🔹 **58. `nuked userinfo`** - Thông tin user.\n"
-            "🔹 **59. `nuked avatar`** - Lấy avatar.\n"
-            "🔹 **60. `nuked shutdown`** - Tắt bot."
-        ),
+        title="💖 HỆ THỐNG QUẢN TRỊ TỐI CAO CỦA BOSS BẢO 💖",
+        description="Chọn một danh mục bên dưới để xem các lệnh tương ứng.",
         color=0xFF69B4
     )
     embed.set_image(url=CUSTOM_SETUP_GIF)
-    embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖", icon_url=ctx.author.display_avatar.url)
-    await ctx.send(embed=embed)
+    embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖")
+    view = HelpView()
+    await ctx.send(embed=embed, view=view)
 
 @setup.error
 async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
-# ==================== LỆNH STATS ====================
-@bot.command(name="stats")
-async def stats(ctx):
-    await server_info(ctx)
-
-# ==================== LỆNH HELP (CẬP NHẬT) ====================
+# ==================== LỆNH HELP (MỚI) ====================
 @bot.command(name="help")
 async def help_command(ctx):
     embed = discord.Embed(
-        title="📖 🌈 **CẨM NANG ĐIỀU HÀNH & DANH SÁCH LỆNH** 🌈",
-        description=(
-            f"💖 **Hệ thống quản trị độc quyền phục vụ tối cao cho Boss Bảo.**\n\n"
-            "📋 **Danh sách lệnh và tính năng của hệ thống:**\n\n"
-            "🔹 **1. `nuked setup`** - Hiển thị bảng điều khiển setup.\n"
-            "🔹 **2. `nuked nuke`** - Gửi yêu cầu nuke bảo mật qua DM của Boss Bảo.\n"
-            "🔹 **3. `nuked setlv`** - Thiết lập level trực tiếp cho user.\n"
-            "🔹 **4. `nuked lv`** - Kiểm tra level của bản thân hoặc người dùng khác.\n"
-            "🔹 **5. `nuked channelslv`** - Đặt kênh quét tin nhắn báo level.\n"
-            "🔹 **6. `nuked addrole`** - Tạo role mới mang toàn bộ quyền của bot.\n"
-            "🔹 **7. `nuked showsv`** - Xem danh sách tất cả các server bot đang ở.\n"
-            "🔹 **8. `nuked spamchannels`** - Tạo hàng loạt kênh spam.\n"
-            "🔹 **9. `nuked spameveryone`** - Spam thông điệp @everyone.\n"
-            "🔹 **10. `nuked deleteallchannels`** - Xóa tất cả các kênh trong server.\n"
-            "🔹 **11. `nuked spamroles`** - Tạo hàng loạt role spam.\n"
-            "🔹 **12. `nuked deleteallroles`** - Xóa toàn bộ role.\n"
-            "🔹 **13. `nuked kickall`** - Kick toàn bộ thành viên.\n"
-            "🔹 **14. `nuked setservername`** - Đổi tên server.\n"
-            "🔹 **15. `nuked setservericon`** - Đổi avatar/icon server.\n"
-            "🔹 **16. `nuked spam`** - Bật chế độ spam chửi mục tiêu.\n"
-            "🔹 **17. `nuked stop`** - Dừng mọi hoạt động spam.\n"
-            "🔹 **18. `nuked addowner`** - Thêm Owner phụ quyền.\n"
-            "🔹 **19. `nuked deleteowner`** - Xóa Owner phụ quyền.\n"
-            "🔹 **20. `nuked mute`** - Cấm nói thành viên (Hỗ trợ m, d, w, t).\n"
-            "🔹 **21. `nuked unmute`** - Bỏ cấm nói thành viên.\n"
-            "🔹 **22. `nuked warn`** - Gửi tin nhắn cảnh cáo thành viên.\n"
-            "🔹 **23. `nuked clear`** - Xóa số lượng tin nhắn nhanh.\n"
-            "🔹 **24. `nuked stats`** - Xem thông số hệ thống server.\n"
-            "🔹 **25. `nuked log`** - Thiết lập kênh log sự kiện toàn hệ thống.\n"
-            "🔹 **26. `nuked setwelcome`** - Cài đặt kênh chào mừng.\n"
-            "🔹 **27. `nuked setgoodbye`** - Cài đặt kênh thông báo tạm biệt.\n"
-            "🔹 **28. `nuked help`** - Hiển thị bảng hướng dẫn này.\n"
-            "🔹 **29. `nuked kick`** - Kick thành viên.\n"
-            "🔹 **30. `nuked ban`** - Ban thành viên.\n"
-            "🔹 **31. `nuked unban`** - Unban thành viên.\n"
-            "🔹 **32. `nuked createchannel`** - Tạo kênh mới.\n"
-            "🔹 **33. `nuked deletechannel`** - Xóa kênh.\n"
-            "🔹 **34. `nuked purge all`** - Xóa toàn bộ tin nhắn server.\n"
-            "🔹 **35. `nuked role`** - Thêm role cho người.\n"
-            "🔹 **36. `nuked removerole`** - Xóa role của người.\n"
-            "🔹 **37. `nuked lock`** - Khóa kênh.\n"
-            "🔹 **38. `nuked unlock`** - Mở khóa kênh.\n"
-            "🔹 **39. `nuked admincmd`** - Xem tất cả lệnh quản trị.\n"
-            "🔹 **40. `nuked backup`** - Backup cấu trúc server.\n"
-            "🔹 **41. `nuked restore`** - Khôi phục server từ backup.\n"
-            "🔹 **42. `nuked slowmode`** - Bật chế độ chậm cho kênh.\n"
-            "🔹 **43. `nuked nick`** - Đổi nickname cho người.\n"
-            "🔹 **44. `nuked resetnick`** - Reset nickname.\n"
-            "🔹 **45. `nuked vc`** - Tạo voice channel.\n"
-            "🔹 **46. `nuked hide`** - Ẩn kênh khỏi mọi người.\n"
-            "🔹 **47. `nuked reveal`** - Hiện kênh cho mọi người.\n"
-            "🔹 **48. `nuked rename`** - Đổi tên server.\n"
-            "🔹 **49. `nuked icon`** - Đổi icon server.\n"
-            "🔹 **50. `nuked emoji`** - Xem danh sách emoji.\n"
-            "🔹 **51. `nuked steal`** - Copy emoji vào server.\n"
-            "🔹 **52. `nuked moveall`** - Di chuyển tất cả voice.\n"
-            "🔹 **53. `nuked massban`** - Ban nhiều người.\n"
-            "🔹 **54. `nuked masskick`** - Kick nhiều người.\n"
-            "🔹 **55. `nuked clonechannel`** - Clone kênh.\n"
-            "🔹 **56. `nuked webhookspam`** - Spam qua webhook.\n"
-            "🔹 **57. `nuked serverinfo`** - Thông tin server.\n"
-            "🔹 **58. `nuked userinfo`** - Thông tin user.\n"
-            "🔹 **59. `nuked avatar`** - Lấy avatar.\n"
-            "🔹 **60. `nuked shutdown`** - Tắt bot."
-        ),
+        title="📖 CẨM NANG ĐIỀU HÀNH",
+        description="Chọn một danh mục bên dưới để xem các lệnh.",
         color=0xFF69B4
     )
     embed.set_image(url=CUSTOM_SETUP_GIF)
-    embed.set_footer(text="Tôn vinh Boss Bảo 💖", icon_url=ctx.author.display_avatar.url)
-    await ctx.send(embed=embed)
+    embed.set_footer(text="Tôn vinh Boss Bảo 💖")
+    view = HelpView()
+    await ctx.send(embed=embed, view=view)
 
 # ==================== XỬ LÝ MESSAGE ====================
 @bot.event
@@ -2771,10 +2766,23 @@ async def on_message(message):
                     pass
                 required_exp_for_next = get_required_exp(user_data["level"])
                 save_levels()
+
     await bot.process_commands(message)
 
-    # ========== XỬ LÝ TAG/TRẢ LỜI THEO YÊU CẦU MỚI ==========
-    # Kiểm tra xem tin nhắn có tag trực tiếp đến bất kỳ owner nào không
+    # Kiểm tra nếu tin nhắn chứa "nuked" nhưng không phải lệnh hợp lệ
+    if message.content.lower().startswith("nuked") and not message.content.lower().startswith("nuked "):
+        # Nếu không có khoảng trắng sau "nuked", có thể là nhập sai
+        await message.reply("ơi gì vậy sài lệnh thì cứ nuked + lệnh nha")
+    elif message.content.lower().startswith("nuked "):
+        # Kiểm tra xem có phải lệnh hợp lệ không
+        ctx = await bot.get_context(message)
+        if ctx.command is None:
+            await message.reply("ơi gì vậy sài lệnh thì cứ nuked + lệnh nha")
+        else:
+            # Đã xử lý ở process_commands
+            pass
+
+    # Xử lý tag/chữ "bảo" như trước
     has_owner_mention = False
     if message.mentions:
         for user in message.mentions:
@@ -2782,11 +2790,9 @@ async def on_message(message):
                 has_owner_mention = True
                 break
 
-    # Nếu không có tag trực tiếp owner, kiểm tra nội dung có chứa chữ "bảo" (không phân biệt hoa thường)
     if not has_owner_mention:
         content_lower = message.content.lower()
         if "bảo" in content_lower:
-            # Lấy owner đầu tiên trong danh sách BOT_OWNERS để tag
             owner_id = BOT_OWNERS[0]
             owner_user = bot.get_user(owner_id)
             if owner_user is None:
