@@ -2513,6 +2513,21 @@ async def clear_user_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
+# ==================== LỆNH GUITHU (DÀNH CHO MỌI NGƯỜI) ====================
+@bot.command(name="guithu")
+async def guithu(ctx, member: discord.Member, *, noidung: str = None):
+    if noidung is None:
+        await ctx.send("📌 Cú pháp: `nuked guithu @user nội dung`")
+        return
+    try:
+        await ctx.send(f"Thưa bạn {member.mention} có người muốn gửi thư cho bạn với nội dung: {noidung}")
+    except Exception as e:
+        await ctx.send(f"❌ Lỗi: {str(e)}")
+
+@guithu.error
+async def guithu_error(ctx, error):
+    await ctx.send(f"❌ Lỗi: {str(error)}")
+
 # ==================== HỆ THỐNG LOG ====================
 async def send_log_to_all(source_guild_id, embed):
     for g_id, ch_id in SERVER_LOG_CHANNELS.items():
