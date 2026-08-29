@@ -2575,6 +2575,259 @@ async def guithu(ctx, member: discord.Member, *, noidung: str = None):
 async def guithu_error(ctx, error):
     await ctx.send(f"❌ Lỗi: {str(error)}")
 
+# ==================== CÁC LỆNH TÌNH YÊU ====================
+# Danh sách GIF cho các hành động
+GIF_HUG = [
+    "https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif",
+    "https://media.giphy.com/media/IRUb7GTCaPU8E/giphy.gif",
+    "https://media.giphy.com/media/ZQN9jsRWp1M76/giphy.gif",
+    "https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif",
+]
+
+GIF_KISS = [
+    "https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif",
+    "https://media.giphy.com/media/bm2O3nXTcKJeU/giphy.gif",
+    "https://media.giphy.com/media/nyGFcsP0kAobm/giphy.gif",
+    "https://media.giphy.com/media/12VXIxKaIEarL2/giphy.gif",
+]
+
+GIF_SLAP = [
+    "https://media.giphy.com/media/Zau0yrl17uzdK/giphy.gif",
+    "https://media.giphy.com/media/xUO4t2gkWBxDi/giphy.gif",
+    "https://media.giphy.com/media/10L0x1F7v4WcWc/giphy.gif",
+    "https://media.giphy.com/media/3o7aDczKXOCM2QNq6Y/giphy.gif",
+]
+
+GIF_PAT = [
+    "https://media.giphy.com/media/ARSp9T7wwxNcs/giphy.gif",
+    "https://media.giphy.com/media/109ltuoSQT212w/giphy.gif",
+    "https://media.giphy.com/media/3oz8xRF0v9WMAUVLNK/giphy.gif",
+    "https://media.giphy.com/media/4T3Vkz4B8cTZm/giphy.gif",
+]
+
+GIF_CUDDLE = [
+    "https://media.giphy.com/media/13Y6LAZJqRspI4/giphy.gif",
+    "https://media.giphy.com/media/3og0IMJcSI8p6hYQXS/giphy.gif",
+    "https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif",
+]
+
+GIF_LOVE = [
+    "https://media.giphy.com/media/26u4lOMA8JKSnL9Uk/giphy.gif",
+    "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif",
+    "https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif",
+]
+
+# Lệnh love: tính phần trăm tình yêu giữa hai người
+@bot.command(name="love", aliases=["tinhyeu"])
+async def love(ctx, user1: discord.Member = None, user2: discord.Member = None):
+    """Tính phần trăm tình yêu giữa hai người. Nếu chỉ tag 1 người, người còn lại là chính bạn."""
+    if user1 is None:
+        await ctx.send("📌 Cú pháp: `nuked love @user1 @user2` hoặc `nuked love @user`")
+        return
+    if user2 is None:
+        user2 = ctx.author
+        user1, user2 = user2, user1  # đảm bảo user1 là bạn, user2 là người được tag
+    # Nếu cả hai đều được tag, giữ nguyên
+
+    percent = random.randint(0, 100)
+    if percent < 30:
+        result = "💔 Có vẻ không hợp nhau lắm..."
+    elif percent < 60:
+        result = "😊 Cũng tạm được, có tiềm năng!"
+    elif percent < 80:
+        result = "❤️ Khá hợp nhau đấy!"
+    else:
+        result = "💖 Trời sinh một cặp!"
+
+    embed = discord.Embed(
+        title="💘 TỶ LỆ TÌNH YÊU",
+        description=f"{user1.mention} và {user2.mention}\n\n**{percent}%** {result}",
+        color=0xFF69B4
+    )
+    embed.set_thumbnail(url=user2.display_avatar.url)
+    embed.set_image(url=random.choice(GIF_LOVE))
+    await ctx.send(embed=embed)
+
+# Lệnh hug: ôm ai đó
+@bot.command(name="hug", aliases=["om"])
+async def hug(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked hug @user`")
+        return
+    embed = discord.Embed(
+        title="🤗 ÔM",
+        description=f"{ctx.author.mention} ôm {member.mention} thật chặt!",
+        color=0xFFA500
+    )
+    embed.set_image(url=random.choice(GIF_HUG))
+    await ctx.send(embed=embed)
+
+# Lệnh kiss: hôn ai đó
+@bot.command(name="kiss", aliases=["hon"])
+async def kiss(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked kiss @user`")
+        return
+    embed = discord.Embed(
+        title="😘 HÔN",
+        description=f"{ctx.author.mention} hôn {member.mention} say đắm!",
+        color=0xFF1493
+    )
+    embed.set_image(url=random.choice(GIF_KISS))
+    await ctx.send(embed=embed)
+
+# Lệnh slap: tát ai đó
+@bot.command(name="slap", aliases=["tat"])
+async def slap(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked slap @user`")
+        return
+    embed = discord.Embed(
+        title="👋 TÁT",
+        description=f"{ctx.author.mention} tát {member.mention} một phát!",
+        color=0xFF0000
+    )
+    embed.set_image(url=random.choice(GIF_SLAP))
+    await ctx.send(embed=embed)
+
+# Lệnh pat: vỗ đầu
+@bot.command(name="pat", aliases=["vodau"])
+async def pat(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked pat @user`")
+        return
+    embed = discord.Embed(
+        title="🫳 VỖ ĐẦU",
+        description=f"{ctx.author.mention} vỗ đầu {member.mention} nhẹ nhàng.",
+        color=0xFFD700
+    )
+    embed.set_image(url=random.choice(GIF_PAT))
+    await ctx.send(embed=embed)
+
+# Lệnh cuddle: âu yếm
+@bot.command(name="cuddle", aliases=["auyem"])
+async def cuddle(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked cuddle @user`")
+        return
+    embed = discord.Embed(
+        title="🥰 ÂU YẾM",
+        description=f"{ctx.author.mention} âu yếm {member.mention}.",
+        color=0xFF69B4
+    )
+    embed.set_image(url=random.choice(GIF_CUDDLE))
+    await ctx.send(embed=embed)
+
+# Lệnh marry: kết hôn giả lập (lưu vào file)
+MARRIAGE_FILE = "marriages.json"
+
+def load_marriages():
+    try:
+        with open(MARRIAGE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+def save_marriages(data):
+    with open(MARRIAGE_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+marriages = load_marriages()
+
+@bot.command(name="marry", aliases=["cuoi"])
+async def marry(ctx, member: discord.Member = None):
+    """Kết hôn với người được tag. Nếu cả hai đã kết hôn với người khác sẽ báo lỗi."""
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked marry @user`")
+        return
+    if member.id == ctx.author.id:
+        await ctx.send("❌ Bạn không thể tự kết hôn với chính mình!")
+        return
+    guild_id = str(ctx.guild.id)
+    if guild_id not in marriages:
+        marriages[guild_id] = {}
+    user1 = str(ctx.author.id)
+    user2 = str(member.id)
+    if user1 in marriages[guild_id] or user2 in marriages[guild_id]:
+        await ctx.send("❌ Một trong hai người đã kết hôn rồi!")
+        return
+    marriages[guild_id][user1] = user2
+    marriages[guild_id][user2] = user1
+    save_marriages(marriages)
+    embed = discord.Embed(
+        title="💍 ĐÁM CƯỚI",
+        description=f"Chúc mừng {ctx.author.mention} và {member.mention} đã trở thành vợ chồng!",
+        color=0xFF69B4
+    )
+    embed.set_image(url=random.choice(GIF_LOVE))
+    await ctx.send(embed=embed)
+
+@bot.command(name="divorce", aliases=["lyhon"])
+async def divorce(ctx, member: discord.Member = None):
+    """Ly hôn với người đã kết hôn."""
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked divorce @user`")
+        return
+    guild_id = str(ctx.guild.id)
+    user1 = str(ctx.author.id)
+    user2 = str(member.id)
+    if guild_id in marriages and marriages[guild_id].get(user1) == user2:
+        del marriages[guild_id][user1]
+        del marriages[guild_id][user2]
+        save_marriages(marriages)
+        embed = discord.Embed(
+            title="💔 LY HÔN",
+            description=f"{ctx.author.mention} và {member.mention} đã chia tay.",
+            color=0x0000FF
+        )
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("❌ Hai bạn không phải là vợ chồng!")
+
+# Lệnh ship: ghép đôi (tương tự love nhưng có thể dùng cho người khác)
+@bot.command(name="ship", aliases=["ghepdoi"])
+async def ship(ctx, user1: discord.Member = None, user2: discord.Member = None):
+    if user1 is None:
+        await ctx.send("📌 Cú pháp: `nuked ship @user1 @user2`")
+        return
+    if user2 is None:
+        user2 = ctx.author
+    percent = random.randint(0, 100)
+    if percent < 30:
+        result = "💔 Chắc không thành đâu."
+    elif percent < 60:
+        result = "😊 Có duyên đấy."
+    elif percent < 80:
+        result = "❤️ Khá là hợp."
+    else:
+        result = "💖 Sinh ra để dành cho nhau."
+    embed = discord.Embed(
+        title="💘 GHÉP ĐÔI",
+        description=f"{user1.mention} và {user2.mention}\n\n**{percent}%** {result}",
+        color=0xFF1493
+    )
+    embed.set_image(url=random.choice(GIF_LOVE))
+    await ctx.send(embed=embed)
+
+# Lệnh crush: tỏ tình
+@bot.command(name="crush", aliases=["totoinh"])
+async def crush(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send("📌 Cú pháp: `nuked crush @user`")
+        return
+    responses = [
+        f"{member.mention} ơi, {ctx.author.mention} nói là thích bạn đó!",
+        f"💌 {member.mention} nhận được lời tỏ tình từ {ctx.author.mention}!",
+        f"{member.mention} có biết rằng {ctx.author.mention} crush bạn không?",
+    ]
+    embed = discord.Embed(
+        title="💘 TỎ TÌNH",
+        description=random.choice(responses),
+        color=0xFF69B4
+    )
+    embed.set_image(url=random.choice(GIF_LOVE))
+    await ctx.send(embed=embed)
+
 # ==================== DỮ LIỆU DANH MỤC LỆNH ====================
 HELP_CATEGORIES = {
     "🛡️ Quản lý Mod": [
@@ -2668,6 +2921,18 @@ HELP_CATEGORIES = {
         "`nuked clear <số>` - Xóa tin nhắn",
         "`nuked purge all` - Xóa toàn bộ tin nhắn server",
     ],
+    "💘 Tình yêu": [
+        "`nuked love @user1 @user2` - Tỷ lệ tình yêu",
+        "`nuked hug @user` - Ôm",
+        "`nuked kiss @user` - Hôn",
+        "`nuked slap @user` - Tát",
+        "`nuked pat @user` - Vỗ đầu",
+        "`nuked cuddle @user` - Âu yếm",
+        "`nuked marry @user` - Kết hôn",
+        "`nuked divorce @user` - Ly hôn",
+        "`nuked ship @user1 @user2` - Ghép đôi",
+        "`nuked crush @user` - Tỏ tình",
+    ],
 }
 
 HELP_CATEGORY_DESCRIPTIONS = {
@@ -2682,6 +2947,7 @@ HELP_CATEGORY_DESCRIPTIONS = {
     "👑 Quản lý Owner": "Thêm/xóa owner, xem danh sách server...",
     "🔊 Voice & Emoji": "Quản lý voice, di chuyển, emoji...",
     "✉️ Tiện ích": "Gửi thư, đổi nickname, xóa tin nhắn...",
+    "💘 Tình yêu": "Các lệnh tình yêu, cặp đôi, tương tác vui vẻ...",
 }
 
 # ==================== CLASS VIEW TƯƠNG TÁC ====================
