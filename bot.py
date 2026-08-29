@@ -2575,7 +2575,7 @@ async def guithu(ctx, member: discord.Member, *, noidung: str = None):
 async def guithu_error(ctx, error):
     await ctx.send(f"❌ Lỗi: {str(error)}")
 
-# ==================== HỆ THỐNG MENU TƯƠNG TÁC ====================
+# ==================== DỮ LIỆU DANH MỤC LỆNH ====================
 HELP_CATEGORIES = {
     "🛡️ Quản lý Mod": [
         "`nuked kick @user` - Kick thành viên",
@@ -2684,9 +2684,11 @@ HELP_CATEGORY_DESCRIPTIONS = {
     "✉️ Tiện ích": "Gửi thư, đổi nickname, xóa tin nhắn...",
 }
 
+# ==================== CLASS VIEW TƯƠNG TÁC ====================
 class HelpView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
+        # Tạo nút cho mỗi danh mục
         for category_name in HELP_CATEGORIES.keys():
             button = discord.ui.Button(
                 label=category_name,
@@ -2709,7 +2711,7 @@ class HelpView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         return callback
 
-# ==================== LỆNH SETUP (MỚI) ====================
+# ==================== LỆNH SETUP (CHỈ OWNER) ====================
 @bot.command(name="setup")
 @is_bot_owner()
 async def setup(ctx):
@@ -2722,7 +2724,7 @@ async def setup(ctx):
     for category_name, desc in HELP_CATEGORY_DESCRIPTIONS.items():
         embed.add_field(name=category_name, value=desc, inline=False)
     embed.set_image(url=CUSTOM_SETUP_GIF)
-    embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖")
+    embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖", icon_url=ctx.author.display_avatar.url)
     view = HelpView()
     await ctx.send(embed=embed, view=view)
 
@@ -2731,21 +2733,7 @@ async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
-@bot.command(name="help")
-async def help_command(ctx):
-    embed = discord.Embed(
-        title="📖 CẨM NANG ĐIỀU HÀNH",
-        description="Chọn một danh mục bên dưới để xem các lệnh.",
-        color=0xFF69B4
-    )
-    for category_name, desc in HELP_CATEGORY_DESCRIPTIONS.items():
-        embed.add_field(name=category_name, value=desc, inline=False)
-    embed.set_image(url=CUSTOM_SETUP_GIF)
-    embed.set_footer(text="Tôn vinh Boss Bảo 💖")
-    view = HelpView()
-    await ctx.send(embed=embed, view=view)
-
-# ==================== LỆNH HELP (MỚI) ====================
+# ==================== LỆNH HELP (CÔNG KHAI) ====================
 @bot.command(name="help")
 async def help_command(ctx):
     """
@@ -2760,7 +2748,7 @@ async def help_command(ctx):
     for category_name, desc in HELP_CATEGORY_DESCRIPTIONS.items():
         embed.add_field(name=category_name, value=desc, inline=False)
     embed.set_image(url=CUSTOM_SETUP_GIF)
-    embed.set_footer(text="Tôn vinh Boss Bảo 💖")
+    embed.set_footer(text="Tôn vinh Boss Bảo 💖", icon_url=ctx.author.display_avatar.url)
     view = HelpView()
     await ctx.send(embed=embed, view=view)
 
