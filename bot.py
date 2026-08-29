@@ -2576,98 +2576,18 @@ async def guithu_error(ctx, error):
     await ctx.send(f"❌ Lỗi: {str(error)}")
 
 # ==================== HỆ THỐNG MENU TƯƠNG TÁC ====================
-HELP_CATEGORIES = {
-    "🛡️ Quản lý Mod": [
-        "`nuked kick @user` - Kick thành viên",
-        "`nuked ban @user` - Ban thành viên",
-        "`nuked unban <id>` - Unban thành viên",
-        "`nuked mute @user [thời gian]` - Mute thành viên",
-        "`nuked unmute @user` - Unmute thành viên",
-        "`nuked warn @user` - Cảnh cáo thành viên",
-        "`nuked kickall` - Kick toàn bộ thành viên",
-        "`nuked massban` - Ban nhiều người",
-        "`nuked masskick` - Kick nhiều người",
-        "`nuked timeout @user <thời gian>` - Timeout thành viên",
-        "`nuked clearuser @user` - Xóa tin nhắn của user",
-    ],
-    "📢 Quản lý Kênh": [
-        "`nuked createchannel <tên>` - Tạo kênh mới",
-        "`nuked deletechannel #kênh` - Xóa kênh",
-        "`nuked createcategory <tên>` - Tạo category",
-        "`nuked renamechannel #kênh <tên mới>` - Đổi tên kênh",
-        "`nuked lock #kênh` - Khóa kênh",
-        "`nuked unlock #kênh` - Mở khóa kênh",
-        "`nuked hide #kênh` - Ẩn kênh",
-        "`nuked reveal #kênh` - Hiện kênh",
-        "`nuked clonechannel #kênh` - Clone kênh",
-        "`nuked vc <tên>` - Tạo voice channel",
-        "`nuked settopic #kênh <nội dung>` - Đặt chủ đề kênh",
-        "`nuked setnsfw #kênh <true/false>` - Bật/tắt NSFW",
-        "`nuked deleteallchannels` - Xóa tất cả kênh",
-        "`nuked spamchannels` - Tạo kênh spam",
-        "`nuked slowmode <giây>` - Bật slowmode",
-    ],
-    "🎭 Quản lý Role": [
-        "`nuked addrole <tên>` - Tạo role mới",
-        "`nuked role @user <role>` - Thêm role cho người",
-        "`nuked removerole @user <role>` - Xóa role của người",
-        "`nuked spamroles` - Tạo role spam",
-        "`nuked deleteallroles` - Xóa tất cả role",
-        "`nuked listroles` - Liệt kê role",
-    ],
-    "📊 Hệ thống Level": [
-        "`nuked setlv <level> @user` - Set level",
-        "`nuked lv [@user]` - Xem level",
-        "`nuked channelslv #kênh` - Cài kênh thông báo level",
-    ],
-    "🎉 Chào mừng & Tạm biệt": [
-        "`nuked setwelcome #kênh` - Cài kênh chào mừng",
-        "`nuked setgoodbye #kênh` - Cài kênh tạm biệt",
-    ],
-    "📋 Log & Thông tin": [
-        "`nuked log #kênh` - Cài kênh log",
-        "`nuked serverinfo` - Thông tin server",
-        "`nuked userinfo @user` - Thông tin user",
-        "`nuked avatar @user` - Lấy avatar",
-        "`nuked membercount` - Số lượng thành viên",
-        "`nuked listchannels` - Danh sách kênh",
-    ],
-    "⚠️ Spam & Nuke": [
-        "`nuked spam @user` - Spam chửi",
-        "`nuked stop` - Dừng spam",
-        "`nuked spameveryone` - Spam @everyone",
-        "`nuked nuke` - NUKE SERVER",
-        "`nuked webhookspam` - Spam qua webhook",
-    ],
-    "⚙️ Cấu hình Server": [
-        "`nuked setservername <tên>` - Đổi tên server",
-        "`nuked setservericon [url]` - Đổi icon server",
-        "`nuked rename <tên>` - Đổi tên server (alias)",
-        "`nuked icon [url]` - Đổi icon server (alias)",
-        "`nuked backup` - Backup server",
-        "`nuked restore` - Khôi phục server",
-        "`nuked shutdown` - Tắt bot",
-    ],
-    "👑 Quản lý Owner": [
-        "`nuked addowner @user` - Thêm Owner",
-        "`nuked deleteowner @user` - Xóa Owner",
-        "`nuked showsv` - Xem danh sách server",
-    ],
-    "🔊 Voice & Emoji": [
-        "`nuked moveall #voice` - Di chuyển tất cả voice",
-        "`nuked move @user #voice` - Di chuyển 1 người",
-        "`nuked deafen @user` - Làm điếc",
-        "`nuked undeafen @user` - Bỏ điếc",
-        "`nuked emoji` - Danh sách emoji",
-        "`nuked steal <id> <tên>` - Copy emoji",
-    ],
-    "✉️ Tiện ích": [
-        "`nuked guithu @user <nội dung>` - Gửi thư cho user",
-        "`nuked nick @user <tên>` - Đổi nickname",
-        "`nuked resetnick @user` - Reset nickname",
-        "`nuked clear <số>` - Xóa tin nhắn",
-        "`nuked purge all` - Xóa toàn bộ tin nhắn server",
-    ],
+HELP_CATEGORY_DESCRIPTIONS = {
+    "🛡️ Quản lý Mod": "Các lệnh quản lý thành viên như kick, ban, mute, warn, timeout...",
+    "📢 Quản lý Kênh": "Tạo, xóa, đổi tên, khóa/mở khóa kênh, quản lý kênh...",
+    "🎭 Quản lý Role": "Tạo role, gán role, xóa role, spam role...",
+    "📊 Hệ thống Level": "Thiết lập level, xem level, cấu hình kênh thông báo level...",
+    "🎉 Chào mừng & Tạm biệt": "Cài đặt kênh chào mừng và tạm biệt thành viên...",
+    "📋 Log & Thông tin": "Cấu hình log, xem thông tin server, user, avatar...",
+    "⚠️ Spam & Nuke": "Các lệnh spam, phá server, nuke...",
+    "⚙️ Cấu hình Server": "Đổi tên, đổi icon, backup, restore server...",
+    "👑 Quản lý Owner": "Thêm/xóa owner, xem danh sách server...",
+    "🔊 Voice & Emoji": "Quản lý voice, di chuyển, emoji...",
+    "✉️ Tiện ích": "Gửi thư, đổi nickname, xóa tin nhắn...",
 }
 
 class HelpView(discord.ui.View):
@@ -2685,9 +2605,10 @@ class HelpView(discord.ui.View):
     def make_callback(self, category_name):
         async def callback(interaction: discord.Interaction):
             commands_list = HELP_CATEGORIES.get(category_name, [])
+            description = HELP_CATEGORY_DESCRIPTIONS.get(category_name, "")
             embed = discord.Embed(
                 title=f"📋 Danh mục: {category_name}",
-                description="\n".join(commands_list) if commands_list else "Không có lệnh nào.",
+                description=f"**Công dụng:** {description}\n\n" + "\n".join(commands_list) if commands_list else "Không có lệnh nào.",
                 color=0x00FF00
             )
             embed.set_footer(text="Boss Bảo 💖")
@@ -2703,6 +2624,9 @@ async def setup(ctx):
         description="Chọn một danh mục bên dưới để xem các lệnh tương ứng.",
         color=0xFF69B4
     )
+    # Thêm các danh mục và công dụng vào embed
+    for category_name, desc in HELP_CATEGORY_DESCRIPTIONS.items():
+        embed.add_field(name=category_name, value=desc, inline=False)
     embed.set_image(url=CUSTOM_SETUP_GIF)
     embed.set_footer(text="Độc quyền phục vụ Boss Bảo 💖")
     view = HelpView()
@@ -2713,7 +2637,6 @@ async def setup_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(' NGU À? CÓ PHẢI BOSS BẢO KHÔNG MÀ SÀI? 🤣🤣🤣😂😂😒')
 
-# ==================== LỆNH HELP (MỚI) ====================
 @bot.command(name="help")
 async def help_command(ctx):
     embed = discord.Embed(
@@ -2721,6 +2644,27 @@ async def help_command(ctx):
         description="Chọn một danh mục bên dưới để xem các lệnh.",
         color=0xFF69B4
     )
+    for category_name, desc in HELP_CATEGORY_DESCRIPTIONS.items():
+        embed.add_field(name=category_name, value=desc, inline=False)
+    embed.set_image(url=CUSTOM_SETUP_GIF)
+    embed.set_footer(text="Tôn vinh Boss Bảo 💖")
+    view = HelpView()
+    await ctx.send(embed=embed, view=view)
+
+# ==================== LỆNH HELP (MỚI) ====================
+@bot.command(name="help")
+async def help_command(ctx):
+    """
+    Lệnh này ai cũng có thể sử dụng, không yêu cầu quyền Owner.
+    """
+    embed = discord.Embed(
+        title="📖 CẨM NANG ĐIỀU HÀNH",
+        description="Chọn một danh mục bên dưới để xem các lệnh.",
+        color=0xFF69B4
+    )
+    # Thêm thông tin danh mục và công dụng vào embed
+    for category_name, desc in HELP_CATEGORY_DESCRIPTIONS.items():
+        embed.add_field(name=category_name, value=desc, inline=False)
     embed.set_image(url=CUSTOM_SETUP_GIF)
     embed.set_footer(text="Tôn vinh Boss Bảo 💖")
     view = HelpView()
